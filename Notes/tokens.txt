@@ -1,0 +1,20 @@
+Terminals
+
+if,else,for,while,return
+string,int,float,bool,ptr
+[,],[,],{,},(,)
++,-,*,\,^,%,?,++,--
+==,+=,-=,!=,=,&&,||,&, , , ; ,!
+
+Non-Terminals:
+stat (Statement): A seperate command to run in the program.
+exp (Expression): An evaluating statement.
+type: A type terminal. string,int,float,bool,ptr
+name: A variable or function name.
+cond (conditional): An break in a program flow. if,else,for,while
+
+stat -> stat; stat
+stat -> act (exp) {stat}
+stat -> return exp
+
+//Note, we need a way to seperate an evaluation from an expression. For loops should also be able to express a range. 

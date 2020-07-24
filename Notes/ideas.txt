@@ -1,0 +1,13 @@
+Define the size of the data type you want to use.
+Make sure you have default values.
+If users want the datatype to have a size that can be modified,
+have a range defining the possible size of the data type.
+
+Ex: <2,6>. 2 is the minimum amount of bytes, 6 is the maximum. If the field is blank, we are allowed to go to 0
+for the min and infinity for the max.
+ If the first field equals the last field, we know the size is constant.
+
+Next pointers, the compiler should be able to figure out what type of pointer we're using so
+a ptr data type should do.
+
+To get the value stored in the pointer we can use &. We use this instead of & because & is a bit wise operator.
