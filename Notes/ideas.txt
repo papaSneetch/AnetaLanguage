@@ -11,3 +11,8 @@ Next pointers, the compiler should be able to figure out what type of pointer we
 a ptr data type should do.
 
 To get the value stored in the pointer we can use &. We use this instead of & because & is a bit wise operator.
+
+We might be able to get rid of the while loop and just use a for loop.
+
+
+

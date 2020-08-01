@@ -10,11 +10,38 @@ Non-Terminals:
 stat (Statement): A seperate command to run in the program.
 exp (Expression): An evaluating statement.
 type: A type terminal. string,int,float,bool,ptr
-name: A variable or function name.
+call: A variable or function call.
+varID: Looks up a name on the variable table.
+funcID: Looks up a name on the function table
 cond (conditional): An break in a program flow. if,else,for,while
+param (parameters): Fills in parameters for a function.
+decl (declaration): A variable of function declaration.
+decls (declarations): Multiple declarations for function parameters.
 
-stat -> stat; stat
-stat -> act (exp) {stat}
-stat -> return exp
+stat -> stat stat
+stat -> return exp;
+stat -> varID = exp;
+stat -> funcID(param);
+stat -> decl;
+decl -> type [a-zA-Z_]+[0-9]*;
+decl -> type [a-zA-Z_]+[0-9]* = exp;
+stat -> type [a-zA-Z_]+[0-9]* (decls) {stat}
+decls -> decls,decl
+decls -> decl
+stat -> ifstat elsestat
+stat -> ifstat elseifstat
+exp -> varID
+exp -> funcID(param) //Still yet to determine how to create parameters.
+exp -> exp + exp
+exp -> exp - exp
+exp -> exp * exp
+exp -> exp \ exp
+exp -> exp & exp
+exp -> exp ^ exp
+exp -> (exp)
+param -> param, param
+param -> exp 
 
 //Note, we need a way to seperate an evaluation from an expression. For loops should also be able to express a range. 
+ 
+//Note, we only have 1 look ahead. We need to keep nonterminals from having colisions in statments.
