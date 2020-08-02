@@ -18,29 +18,64 @@ param (parameters): Fills in parameters for a function.
 decl (declaration): A variable of function declaration.
 decls (declarations): Multiple declarations for function parameters.
 
-stat -> stat stat
-stat -> return exp;
-stat -> varID = exp;
-stat -> funcID(param);
-stat -> decl;
-decl -> type [a-zA-Z_]+[0-9]*;
-decl -> type [a-zA-Z_]+[0-9]* = exp;
-stat -> type [a-zA-Z_]+[0-9]* (decls) {stat}
-decls -> decls,decl
-decls -> decl
-stat -> ifstat elsestat
-stat -> ifstat elseifstat
+stats -> stat stat
+stat -> varDecl;
+stat -> arrayDecl
+stat -> funcCall;
+stat -> funcDecl 
+stat -> condStat
+stat -> asignStat
+stat -> whileloop
+whileloop -> while (tfexpr) {stats}
+arrayDecl -> typeDecl [int] = {paramDecls};
+asignStat -> varID = exp
+condStat -> ifStat
+condStat -> ifStat postIfStat
+postIfStat -> elseIfStat postIfStat
+postIfStat -> elseStat
+ifStat -> if (tfexpr) {stats}
+elseIfStat -> else if (tfexpr) {stats}
+elseStat -> else (tfexpr) {stats}
+varDecl -> typeDecl; 
+varDecl -> typeDecl = exp;
+funcDecl -> typeDecl (paramDecls) {stats retstat} 
+paramDecls -> paramDecl, paramDecls   
+paramDecls -> paramDecl
+paramDecl -> typeDecl
+paramDecl -> typeDecl = exp
+funcCall -> funcID (params)
+tfexpr -> tfexpr & tfexpr
+tfexpr -> tfexpr | tfexpr
+tfexpr -> tfexpr ^ tfexpr
+tfexpr -> !tfexpr
+tfexpr -> tfvalue
+tfvalue -> true
+tfvalue -> false
+tfvalue -> boolVarID
+tfvalue -> exp == exp
+params -> exp, params
+params -> exp
 exp -> varID
-exp -> funcID(param) //Still yet to determine how to create parameters.
-exp -> exp + exp
-exp -> exp - exp
-exp -> exp * exp
-exp -> exp \ exp
-exp -> exp & exp
-exp -> exp ^ exp
-exp -> (exp)
-param -> param, param
-param -> exp 
+exp -> funcCall
+exp -> addexp
+exp -> subextp
+exp -> multexp
+exp -> divexp
+exp -> andexp
+exp -> orexp
+exp -> xorexp
+exp -> powexp
+exp -> orexp
+addexp -> literal + exp
+subexp -> literal - exp
+multexp -> literal * exp
+divexp -> literal \ exp
+andexp -> literal & exp
+orexp -> literal | exp
+xorexp -> literal ^^ exp
+powexp -> literal ^ exp
+brackexp -> (exp)
+exp -> literal
 
 //Note, we need a way to seperate an evaluation from an expression. For loops should also be able to express a range. 
  
