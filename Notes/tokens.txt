@@ -2,8 +2,8 @@ Terminals
 
 if,else,for,while,return
 string,int,float,bool,ptr
-[,],[,],{,},(,)
-+,-,*,\,^,%,?,++,--
+[,],[,],{,},(,),<<,>>
++,-,*,\,^,%,++,--,..
 ==,+=,-=,!=,=,&&,||,&, , , ; ,!
 
 Non-Terminals:
@@ -18,105 +18,113 @@ param (parameters): Fills in parameters for a function.
 decl (declaration): A variable of function declaration.
 decls (declarations): Multiple declarations for function parameters.
 
+asg -> '==','-=','+='
+comp -> '<=','>=','<','>'
+eql -> '==', '!='
+type -> 'string','int','float','bool','ptr'
+addsub -> '+', '-'
+unary -> '++','--','&'
+shift -> '<<','>>'
+muldivmod -> '*','\','%'
+
 stats -> stat stat
 stat -> varDecl;
 stat -> arrayDecl
 stat -> funcCall;
 stat -> funcDecl 
 stat -> condStat
-stat -> asignStat
-stat -> whileloop
-whileloop -> while (tfexpr) {stats}
-arrayDecl -> typeDecl [int] = {paramDecls};
-asignStat -> varID = exp
+stat -> asnStat
+stat -> loop
+stat -> printStat
+
 condStat -> ifStat
 condStat -> ifStat postIfStat
-postIfStat -> elseIfStat postIfStat
-postIfStat -> elseStat
-ifStat -> if (tfexpr) {stats}
-elseIfStat -> else if (tfexpr) {stats}
-elseStat -> else (tfexpr) {stats}
-varDecl -> typeDecl; 
-varDecl -> typeDecl = exp;
-funcDecl -> typeDecl (paramDecls) {stats retstat} 
+branch -> elseIfStat branch 
+branch -> elseStat
+ifStat -> if (logexp) {stats}
+elseIfStat -> else if (logexp) {stats}
+elseStat -> else (logexp) {stats}
+
+varDecl -> varDefine; 
+varDecl -> varDefine asg exps;
+varDefine -> type varNames
+varNames -> varNames, varName
+varName -> a terminal
+
+arrayDecl -> arrays;
+arrayDecl -> arrays asg arrayConstructs;
+arrays -> type arrayNames
+arrayNames -> arrayNames, array[positiveInt]
+arrayNames -> array[posInt]
+arrayConstructs -> arrayConstructs, arrayConstruct
+arrayConstructs -> arrayConstruct
+arrayConstruct -> {exps};
+
+funcDecl -> type (paramDecls) {stats retstat} 
 paramDecls -> paramDecl, paramDecls   
 paramDecls -> paramDecl
 paramDecl -> typeDecl
 paramDecl -> typeDecl = exp
-funcCall -> funcID (params)
-tfexpr -> tfexpr & tfexpr
-tfexpr -> tfexpr | tfexpr
-tfexpr -> tfexpr ^ tfexpr
-tfexpr -> !tfexpr
-tfexpr -> tfvalue
-tfvalue -> true
-tfvalue -> false
-tfvalue -> boolVarID
-tfvalue -> exp == exp
-params -> exp, params
-params -> exp
-exp -> varID
-exp -> funcCall
-exp -> addexp
-exp -> subextp
-exp -> multexp
-exp -> divexp
-exp -> andexp
-exp -> orexp
-exp -> xorexp
-exp -> powexp
-exp -> orexp
-addexp -> literal + exp
-subexp -> literal - exp
-multexp -> literal * exp
-divexp -> literal \ exp
-andexp -> literal & exp
-orexp -> literal | exp
-xorexp -> literal ^^ exp
-powexp -> literal ^ exp
-brackexp -> (exp)
-exp -> literal
+typeDecl -> type varName
+
+funcCall -> funcID (exps)
+
+asgStat -> varCalls = exps
+varCalls -> varCalls, arrayCall
+varCalls -> varCalls, varCall
+varCalls -> arrayCall
+varCalls -> varCall
+arrayCall -> arrayID [posInd]
+varCall -> varID
+
+loop -> whileloop
+loop -> forloop
+whileloop -> while (logexp) {stats}
+forloop -> for varName in range {stats}
+range -> int .. int .. int
+range -> int .. int
+range -> intID .. intID .. intID
+range -> intID .. intID
+range -> arrayID [range]
+
+printStat -> print(string);
+printStat -> print(string,varCalls);
+
+exps -> exp1, exps //Comma
+exps -> exp1
+exp1 -> exp2
+exp1 -> exp1 | exp2 //Or
+exp2 -> exp3
+exp2 -> exp2 ^ exp3 //Xor
+exp3 -> exp4
+exp3 -> exp3 && exp4 //And
+exp4 -> exp4.1
+exp4 -> exp4 eql exp4.1 //Logical Compare
+exp4.1-> boolID
+exp4.1 -> exp5
+exp5 -> exp5 comp exp6
+exp6 -> exp6 shift exp7 //Bit Shift
+exp7 -> exp8
+exp7 -> exp7 addsub exp8 //Addition Subtraction Oberation
+exp8 -> exp8.5
+exp8.5 -> exp8.5 muldivmod exp9
+exp8.5 -> exp9
+exp8 -> exp8 ^^ exp9 //Power Operator
+exp9 -> exp10
+exp9 -> unary exp10 //Needed to exist in the comparison precedence.
+exp10 -> call
+
+logexp -> logexp | logexp1
+logexp -> logexp1
+logexp1 -> logexp1 ^ logexp2
+logexp1 -> logexp2
+logexp2 -> logexp2 && logexp3
+logexp2 -> logexp3
+logexp3 -> logexp3 == logexp4
+logexp3 -> logexp4
+logexp4 -> logexp4 comp exp6
 
 //Note, we need a way to seperate an evaluation from an expression. For loops should also be able to express a range. 
  
 //Note, we only have 1 look ahead. We need to keep nonterminals from having colisions in statments.
 
-
-Precendence rules in an expression.
-
-() [] -> . :: Function call, scope, array/member access
-! ~ - + * & sizeof type cast ++ -- unary operators, sizeof and type casts
-^ Exponential
-* / % mod Multiplication, division, modulo
-+ - addition and subtraction
-<< >> Bitwise shifts
-< <= > >= Comparisons
-== != Bitwise AND
-& Bitwise exclusive OR (XOR)
-^^ Bitwise inclusive OR
-| Bitwise inclusive OR
-&& Logical AND
-|| Logical OR
-?: Conditional expression (ternary)
-= == -= *= /= %= &= != ^= <<= >>= Assignment operators
-, Comma operator
-
-
-exps -> exp1, exps
-exp1 -> exp2
-exp1 -> exp1 | exp2
-exp2 -> exp3
-exp2 -> exp2 ^ exp3
-exp3 -> exp4
-exp3 -> exp3 && exp4
-exp4 -> exp5
-exp4 -> exp4 comp exp5
-exp5 -> exp6
-exp6 -> exp6 shift exp7
-exp7 -> exp8
-exp7 -> exp7 addsub exp8
-exp8 -> exp9
-exp8 -> exp8 ^^ exp9
-exp9 -> exp10
-exp9 -> unary exp10
-exp10 -> call
