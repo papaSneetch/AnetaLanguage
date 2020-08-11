@@ -86,6 +86,9 @@ range -> int .. int
 range -> intID .. intID .. intID
 range -> intID .. intID
 range -> arrayID [range]
+//For loop needs a way to tell where to compare. 
+//Example: for 3 .. -2 vs -2 .. 3 needs a way to distinquish which 
+//way we're going.
 
 printStat -> print(string);
 printStat -> print(string,varCalls);
@@ -108,8 +111,7 @@ exp7 -> exp8
 exp7 -> exp7 addsub exp8 //Addition Subtraction Oberation
 exp8 -> exp8.5
 exp8.5 -> exp8.5 muldivmod exp9
-exp8.5 -> exp9
-exp8 -> exp8 ^^ exp9 //Power Operator
+exp8.5 -> exp9 //Not including power, going to be external function.
 exp9 -> exp10
 exp9 -> unary exp10 //Needed to exist in the comparison precedence.
 exp10 -> call
