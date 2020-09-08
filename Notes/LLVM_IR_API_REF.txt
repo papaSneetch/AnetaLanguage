@@ -1,0 +1,108 @@
+//Dependicies #include "llvm/IR/LLVMContext.h" #include "llvm/IR/IRBuilder.h" 
+//Make sure you include the following opjects.
+static LLVMContext IRContext;
+static IRBuilder<> Builder(IRContext);
+static std::unique_ptr<Module> CurModule;
+
+addexp ->
+if (!float)
+{
+return Builder.CreateAdd(register1,register2,"addTmp");
+if (float)
+{
+return Builder.CreataFAdd(register1,register2, "fAddTmp");
+}
+
+subexp ->
+if (!float)
+{
+return Builder.CreateSub(register1,register2,"subTmp");
+}
+if (float)
+{
+return Builder.CreateFSub(register1,register2,"fSubTmp");
+}
+
+mulexp ->
+if (!float)
+{
+return Builder.CreateMul(register1,register2,"mulTmp");
+}
+if (float)
+{
+return Builder.CreateFMul(register1,register2,"fMulTmp");
+}
+
+divexp ->
+if (!float)
+{
+return Builder.CreateSDiv(register1,register2,"sDivTmp");
+}
+if (float)
+{
+return Builder.CreateFDiv(register1,register2,"fDivTmp");
+} 
+
+++exp -> return CreateAdd(register1,,"inc");
+--exp -> return CreateSub(register1,,"dec");
+
+<<exp -> return
+>>exp -> return
+
+&exp -> return
+^exp -> return
+|exp -> return
+
+^^exp ->
+
+<exp ->
+ if (signed)
+{
+return CreateICmpSLT(register1,register2,"icmp_slt");
+}
+if (unsigned)
+{
+return CreateICmpULT(register1,register2,"icmp_ult");
+}
+>exp -> 
+ if (signed)
+{
+return CreateICmpSGT(register1,register2,"icmp_sgt");
+}
+if (unsigned)
+{
+return CreateICmpUGT(register1,register2,"icmp_ugt");
+}
+<=exp -> 
+ if (signed)
+{
+return CreateICmpSLE(register1,register2,"icmp_sle");
+}
+if (unsigned)
+{
+return CreateICmpULE(register1,register2,"icmp_ule");
+}
+>=exp -> 
+ if (signed)
+{
+return CreateICmpSGE(register1,register2,"icmp_sge");
+}
+if (unsigned)
+{
+return CreateICmpUGE(register1,register2,"icmp_uge");
+}
+==exp -> return CreateICmpEQ(register1,register2,"icmp_eq");
+!=exp -> return CreateICmpNE(register1,register2,"icmp_ne");
+
+whileloop ->
+
+ifStat ->
+
+varDefine ->
+
+varCall ->
+
+asgStat ->
+
+FuncDecl ->
+
