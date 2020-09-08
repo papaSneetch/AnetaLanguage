@@ -43,56 +43,56 @@ if (float)
 return Builder.CreateFDiv(register1,register2,"fDivTmp");
 } 
 
-++exp -> return CreateAdd(register1,,"inc");
---exp -> return CreateSub(register1,,"dec");
+++exp -> return Builder.CreateAdd(register1,,"inc");
+--exp -> return Builder.CreateSub(register1,,"dec");
 
-<<exp -> return
->>exp -> return
+<<exp -> return Builder.CreateShl(register1,register2,"shl");
+>>exp -> return Builder.CreateLShr(register1,register2,"LShr");
 
-&exp -> return
-^exp -> return
-|exp -> return
+&exp -> return Builder.CreateAnd(register1,register2,"and");
+^exp -> return Builder.CreateXor(register1,register2,"xor");
+|exp -> return Builder.CreateOr(register1,register2,"or");
 
 ^^exp ->
 
 <exp ->
  if (signed)
 {
-return CreateICmpSLT(register1,register2,"icmp_slt");
+return Builder.CreateICmpSLT(register1,register2,"icmp_slt");
 }
 if (unsigned)
 {
-return CreateICmpULT(register1,register2,"icmp_ult");
+return Builder.CreateICmpULT(register1,register2,"icmp_ult");
 }
 >exp -> 
  if (signed)
 {
-return CreateICmpSGT(register1,register2,"icmp_sgt");
+return Builder.CreateICmpSGT(register1,register2,"icmp_sgt");
 }
 if (unsigned)
 {
-return CreateICmpUGT(register1,register2,"icmp_ugt");
+return Builder.CreateICmpUGT(register1,register2,"icmp_ugt");
 }
 <=exp -> 
  if (signed)
 {
-return CreateICmpSLE(register1,register2,"icmp_sle");
+return Builder.CreateICmpSLE(register1,register2,"icmp_sle");
 }
 if (unsigned)
 {
-return CreateICmpULE(register1,register2,"icmp_ule");
+return Builder.CreateICmpULE(register1,register2,"icmp_ule");
 }
 >=exp -> 
  if (signed)
 {
-return CreateICmpSGE(register1,register2,"icmp_sge");
+return Builder.CreateICmpSGE(register1,register2,"icmp_sge");
 }
 if (unsigned)
 {
 return CreateICmpUGE(register1,register2,"icmp_uge");
 }
-==exp -> return CreateICmpEQ(register1,register2,"icmp_eq");
-!=exp -> return CreateICmpNE(register1,register2,"icmp_ne");
+==exp -> return Builder.CreateICmpEQ(register1,register2,"icmp_eq");
+!=exp -> return Builder.CreateICmpNE(register1,register2,"icmp_ne");
 
 whileloop ->
 
@@ -100,9 +100,17 @@ ifStat ->
 
 varDefine ->
 
+
 varCall ->
 
 asgStat ->
 
 FuncDecl ->
 
+value ->
+if (int)
+{
+}
+if (float)
+{
+}

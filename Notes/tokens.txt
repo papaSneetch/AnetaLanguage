@@ -77,6 +77,7 @@ varCalls -> varCall
 arrayCall -> arrayID [posInd]
 varCall -> varID
 
+
 loop -> whileloop
 loop -> forloop
 whileloop -> while (logexp) {stats}
@@ -115,6 +116,10 @@ exp8.5 -> exp9 //Not including power, going to be external function.
 exp9 -> exp10
 exp9 -> unary exp10 //Needed to exist in the comparison precedence.
 exp10 -> call
+
+call -> varCall
+call -> arrayCall
+call -> value
 
 logexp -> logexp | logexp1
 logexp -> logexp1
