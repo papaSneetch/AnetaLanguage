@@ -43,8 +43,27 @@ if (float)
 return Builder.CreateFDiv(register1,register2,"fDivTmp");
 } 
 
-++exp -> return Builder.CreateAdd(register1,,"inc");
---exp -> return Builder.CreateSub(register1,,"dec");
+++exp ->
+ConstantData* num;
+if (int)
+{
+num = ConstantInt::get(IRContext,APInt(4,1));
+}
+if (float)
+{
+num = ConstantFP::get(IRContext,APFloat(1.0f));
+}
+ return Builder.CreateAdd(register1,num,"inc");
+--exp ->
+ConstantData* num;
+if (int)
+{
+num = ConstantInt::get(IRContext,APInt(4,1));
+}
+if (float)
+{
+num = ConstantFP::get(IRContext,APFloat(1.0f));
+}return Builder.CreateSub(register1,num,"dec");
 
 <<exp -> return Builder.CreateShl(register1,register2,"shl");
 >>exp -> return Builder.CreateLShr(register1,register2,"LShr");
@@ -101,16 +120,12 @@ ifStat ->
 varDefine ->
 
 
+
 varCall ->
 
 asgStat ->
 
 FuncDecl ->
-
-value ->
-if (int)
-{
-}
-if (float)
-{
-}
+//generateReturnType is a fill in function to define how we'll decide on what the return type will be.
+Type *retType = generateReturnType();
+FunctionType* funcType = FunctionType::get(retType,ArrayRef //The ref can be generated from a vector of types, refer to https://llvm.org/docs/tutorial/MyFirstLanguageFrontend/LangImpl03.html, false);
