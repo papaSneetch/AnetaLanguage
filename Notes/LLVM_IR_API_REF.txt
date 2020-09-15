@@ -115,17 +115,38 @@ return CreateICmpUGE(register1,register2,"icmp_uge");
 
 whileloop ->
 
+
 ifStat ->
+Function *ifBranchFunc = Builder.GetInsertBlock() -> getParent();
+BasicBlock *ifBB = BasicBlock::Create(IRContext,"ifStats");
+BasicBlock *ElseBB = BasicBlock::Create(IRContext,"elseStats");
+BasicBlock *MergeBB = BasicBlock::Create(IRContext,"merge"); 
+Builder.CreateCondBr(Condtion_Statement_Register,ifBB,ElseBB);
+
+
+
 
 varDefine ->
 
 
 
+
 varCall ->
 
+
 asgStat ->
+
 
 FuncDecl ->
 //generateReturnType is a fill in function to define how we'll decide on what the return type will be.
 Type *retType = generateReturnType();
 FunctionType* funcType = FunctionType::get(retType,ArrayRef //The ref can be generated from a vector of types, refer to https://llvm.org/docs/tutorial/MyFirstLanguageFrontend/LangImpl03.html, false);
+Function* func = Function::Create(funcType,Function::ExternalLinkage,functionNameString,CurModule.get());
+BasicBlock *funcBlock = BasicBlock::Create(IRContext,functionNameString + "block",func);
+Builder.SetInsertPoint(funcBlock);
+FunctionInternalsCodeGen();
+Builder.CreateRet(RetVal);
+verifyFunction(*func);
+return func;
+
+
