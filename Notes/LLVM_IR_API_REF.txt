@@ -114,14 +114,36 @@ return CreateICmpUGE(register1,register2,"icmp_uge");
 !=exp -> return Builder.CreateICmpNE(register1,register2,"icmp_ne");
 
 whileloop ->
-
+BasicBlock *loop = BasicBlock::Create(IRContext,"loop");
+BasicBlock *endLoop = BasicBlock::Create(IRContext,"endLoop");
+BasicBlock *condEval = BasicBlock::Create(IRContext,"condEval",function);
+Builder.SetInsertPoint(condEval);
+generateConditionalCode();
+Builder.CreateCondBr(Condition_Statement_Register,loop,endLoop);
+Builder.SetInsertPoint(loop);
+GenerateLoopCode();
+Builder.CreateBr(condEval);
+Builder.SetInsertPoint(endLoop);
+GenerateRestOfFunctionCode();
 
 ifStat ->
 Function *ifBranchFunc = Builder.GetInsertBlock() -> getParent();
-BasicBlock *ifBB = BasicBlock::Create(IRContext,"ifStats");
+ //The function is the current function being built. Change name to function being built.
+BasicBlock *ifBB = BasicBlock::Create(IRContext,"ifStats",ifBranchFunc);
 BasicBlock *ElseBB = BasicBlock::Create(IRContext,"elseStats");
 BasicBlock *MergeBB = BasicBlock::Create(IRContext,"merge"); 
 Builder.CreateCondBr(Condtion_Statement_Register,ifBB,ElseBB);
+Builder.SetInsertPoint(ifBranchFunc);
+generateIfBranch(); //Generates the code in the if branch.
+Builder.CreatBr(MergeBB);
+MergeBB = Builder.GetInsertBlock(); //Updates branch in case of recursive function.
+ifBranchFunc->getBasicBlockList().push_back(ElseBB); //Adds block to function.
+Builder.SetInsertPoint(ElseBB);
+generateElseBranc(); //Generates the code for the else branch.
+Builder.CreateBr(MergeBB);
+MergeBB = Builder.GetInsertBlock();
+ifBranchFunc->Builder.GetBasicBlockList().push_back(MergeBB);
+Builder.SetInsertPoint(MergeBB);
 
 
 
