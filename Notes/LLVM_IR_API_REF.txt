@@ -149,15 +149,19 @@ Builder.SetInsertPoint(MergeBB);
 
 
 varDefine ->
-
-
-
+AllocaInst *varName = Builder.CreateAlloca(Type::getVariableType(IRContext),0,varNameString);
+//The getVariableType is the type function that gets the type of the variable we want to create.
 
 varCall ->
-
+return Builder.CreateLoad(ValuePointerToMemory,nameOfVariable);
+//ValuePointerToMemory is a value object that points to the memory address
+found in our table for codegen. Make sure you have a lookup table.
+//nameOfVariable is the name of the variable on the lookup table.
 
 asgStat ->
-
+Builder.CreateStore(StartVal,ValuePointerToMemory);
+//The startval is what we're assigning.
+//The value pointer is the pointer to where we're storing.
 
 FuncDecl ->
 //generateReturnType is a fill in function to define how we'll decide on what the return type will be.
@@ -171,4 +175,7 @@ Builder.CreateRet(RetVal);
 verifyFunction(*func);
 return func;
 
-
+FuncCall ->
+Builder.CreateCall(function,ArgsV,"calltmp");
+//function is the pointer to the functions we wnat to call.
+//ArgsV is a vector of our arguments.
