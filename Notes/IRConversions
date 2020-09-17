@@ -1,0 +1,95 @@
+varDefine ->
+%varName =  alloca type 
+if (asg)
+{
+	store type expResultRegister, type* %varname
+}
+varCall ->local/global reg = load type, type* %varName 
+
+asgStat -> store type expResultRegister, type* %varname
+
+funcDecl -> define returnType @funcName(type %varname, ..)
+{
+stats
+}
+
+funcCall -> call returnType local/global functionName (type,%var1,..)
+
+addexp -> 
+if (!float)
+{
+local/global reg = add type register1, register2
+}
+if (float)
+{
+local/global reg = fadd type register1, register2
+}
+
+subexp ->
+if (!float)
+{
+ local/global reg = sub type register1, register2
+}
+if (float)
+{
+local/global reg = fsub type register1, register2
+}
+
+mulexp ->
+if (!float)
+{
+local/global reg = mul type register1, register2 
+}
+if (float)
+{
+local/global reg = fmul type register1, register2 
+}
+
+divexp ->
+if (!float)
+{
+local/global reg = sdiv type register1, register2
+}
+if (float)
+{
+local/global reg = fdiv type register1, register2 
+}
+
+++exp -> local/global reg = add type register1, 1
+--exp -> local/global reg = sub type register1, 1
+
+<<exp -> local/global reg = shl type register1, bitshiftReg 
+>>exp -> local/global reg = lshr type register1, bitshiftReg
+
+&exp -> local/global reg = and type register1, register2
+^exp -> local/global reg = xor type register1, register2
+|exp -> local/global reg = or type register1, register2
+
+^^exp -> implement a power function in the program it is:
+
+<exp -> local/global reg = icmp (u/s)lt type register1, register2
+>exp -> local/global reg = icmp (u/s)gt type register1, register2
+<=exp -> local/global reg = icmp (u/s)le type register1, register2
+<=exp -> local/global reg = icmp (u/s)ge type register1, register2
+==exp -> local/global reg = icmp eq type register1, register2
+!=exp -> local/global reg = icmp ne type register1, register2
+
+// (u/s) is used to distinquish between unsigned comparisons and signed comparisons.
+
+whileloop ->
+br i1 true, %loop, %leaveloop, %errorBranch
+loop:
+loopStats
+condStat:
+condEvaluation
+br i1 %loop, %leaveloop, %errorBranch
+leaveloop:
+
+
+ifStat -> br i1 %cond, %ifStats, %notIfStats, %errorBranch 
+ifStats:
+	if statments
+notIfStats:
+	outside Branch Statments
+
+//The errorBranch will generate a runtime error in the code.
