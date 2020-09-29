@@ -18,10 +18,10 @@ string* string_val;
 %token stringD intD floatD boolD
 %token leftSh rightSh add sub
 %token mul div pow xor mod inc dec
-%token eq leq geq lt gt neq
+%token eql leq geq lt gt neq
 %token aeq meq asg and or
 %token '[' ']' '{' '}'
-%token ',' ';'
+%token ',' ';' '(' ')'
 
 %type <int_val> intV
 %type <bool_val> boolV
@@ -32,6 +32,113 @@ string* string_val;
 
 /* Grammar Definitions */
 %%
+
+stats:
+	  stat stat
+	| varDecl
+	| arrayDecl
+	| funcCall
+	| condStat
+	| asnStat
+	| loop
+
+condStat:
+ 	  ifStat
+	| ifStat postIfStat
+
+branch:
+	  elseIfStat
+	| elseStat
+
+ifStat:
+	  ifS '(' logexp ')' '{' stats '}'
+
+elseIfStat:
+	  elseS ifS '(' logexp ')' '{' stats '}'
+
+elseStat:
+	  elseS '(' logexp ')' '{' stats '}'
+
+varDecl:
+	  varDefine ';'
+	| varDevine asg exps ';'
+
+varDefine:
+   	  type varNames
+
+varNames:
+	  varNames ',' varName
+
+varName:
+	  nameV 
+
+arrayDecl:
+      arrays ';'
+	| arrays asg listInits ';'
+
+arrays:
+	  type arrayNames
+
+arrayNames:
+	  arrayNames ',' array '[' posInt ']'
+	| array '[' posInt ']'
+
+listInits:
+	  listInits ',' listInit
+	| listInit
+
+listInit:
+	  '{' exps '}'
+
+funcCall:
+	  funcId '(' exps ')' ';'
+
+asgStat:
+	  varCalls eql exps ';'
+
+varCalls:
+	  varCalls ',' arrayCall
+	| varCalls ',' varCall
+	| arrayCall
+	| varCall
+
+arrayCall:
+	  arrayID '[' posInt ']'
+
+varCall:
+	  varID
+
+loop:
+	  whileloop
+
+whileloop:
+	  whileS '(' logexp ')' '{' stats '}'
+
+exps:
+      exp1 ',' exps
+	| exp1
+
+exp1:
+	  exp1 or exp2
+	| exp2
+
+exp2:
+	  exp2 xor exp3
+	| exp3
+
+exp3:
+	  exp3 and exp4
+	| exp4
+
+exp4:
+	  exp4 logcmp exp5
+	| exp5
+
+exp5:
+	  boolID
+	| exp6
+
+
 %%
 
 int main()
