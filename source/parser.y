@@ -22,12 +22,14 @@ string* string_val;
 %token aeq meq asg and or
 %token '[' ']' '{' '}'
 %token ',' ';' '(' ')'
+%token intV boolV floatV stringV
+%token intID boolID floatID stringID funcID arrayID
 
 %type <int_val> intV
 %type <bool_val> boolV
 %type <float_val> floatV
-%type <name_val> nameV
 %type <string_val> stringV
+%type <name_val> intID boolID floatID stringID arrayID
 
 
 /* Grammar Definitions */
@@ -35,18 +37,20 @@ string* string_val;
 
 stats:
 	  stat stat
-	| varDecl
+
+stat:
+	  varDecl
 	| arrayDecl
 	| funcCall
 	| condStat
-	| asnStat
+	| asgStat
 	| loop
 
 condStat:
  	  ifStat
 	| ifStat postIfStat
 
-branch:
+postIfStat:
 	  elseIfStat
 	| elseStat
 
@@ -61,7 +65,7 @@ elseStat:
 
 varDecl:
 	  varDefine ';'
-	| varDevine asg exps ';'
+	| varDefine asg exps ';'
 
 varDefine:
    	  type varNames
@@ -70,18 +74,26 @@ varNames:
 	  varNames ',' varName
 
 varName:
-	  nameV 
+	  intID
+	| floatID
+	| boolID
+	| stringID
 
+type:
+	  intD
+	| floatD
+	| boolD
+	| stringD
 arrayDecl:
       arrays ';'
 	| arrays asg listInits ';'
 
 arrays:
-	  type arrayNames
+	  type arrayIDs
 
-arrayNames:
-	  arrayNames ',' array '[' posInt ']'
-	| array '[' posInt ']'
+arrayIDs:
+	  arrayIDs ',' array '[' posInt ']'
+	| arrayID '[' posInt ']'
 
 listInits:
 	  listInits ',' listInit
@@ -91,7 +103,7 @@ listInit:
 	  '{' exps '}'
 
 funcCall:
-	  funcId '(' exps ')' ';'
+	  funcID '(' exps ')' ';'
 
 asgStat:
 	  varCalls eql exps ';'
@@ -106,7 +118,15 @@ arrayCall:
 	  arrayID '[' posInt ']'
 
 varCall:
-	  varID
+	  intID
+	| floatID
+	| boolID
+	| stringID
+	| arrayID 
+
+shift:
+	  leftSh 
+	| rightSh
 
 loop:
 	  whileloop
@@ -115,8 +135,12 @@ whileloop:
 	  whileS '(' logexp ')' '{' stats '}'
 
 exps:
-      exp1 ',' exps
-	| exp1
+      exp0 ',' exps
+	| exp0
+
+exp0:
+	  exp1
+	| logexp1
 
 exp1:
 	  exp1 or exp2
@@ -135,8 +159,87 @@ exp4:
 	| exp5
 
 exp5:
-	  boolID
+	  exp5 cmp exp6
 	| exp6
+
+exp6:
+	  exp6 shift exp7
+	| exp7
+
+exp7:
+	  exp7 addsub exp8
+	| exp8
+
+exp8:
+	  exp8 muldivmod exp9
+	| exp9
+
+exp9:
+	  unary exp10
+	| exp10
+
+exp10:
+	  exp10 pow exp11
+	| exp11
+
+exp11:
+	  varCall
+	| exp12	
+
+exp12:
+	  '(' exp1 ')' 
+
+logexp:
+	  logexp1
+	 
+
+logexp1:
+	  logexp1 or logexp2
+	| logexp2
+
+logexp2:
+	  logexp2 xor logexp3
+	| logexp3
+
+logexp3:
+	  logexp3 and logexp4
+	| logexp4
+
+logexp4:
+	  logexp4 eql logexp5
+	| logexp5
+
+logexp5:
+	  boolID
+
+unary:
+	  inc
+	| dec
+
+addsub:
+	  add
+	| sub
+
+muldivmod:
+	  mul
+	| div
+	| mod
+
+cmp:
+      eql
+	| neq
+
+logcmp:
+	  leq
+	| geq
+	| lt
+	| gt
+
+posInt:
+	  intV
+	| intID
+
+array:
 
 
 %%
