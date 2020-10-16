@@ -1,36 +1,54 @@
 %{
 /* C/C++ code */
-#include <iostream>
-#include <string>
+
+#include <stdio.h>
+#include <stdbool.h>
+#include "lexer.yy.h"
+
+#define YYPARSE_PARAM yyscan_t scanner
+#define YYLEX_PARAM scanner
+
+void yyerror (char const *s)
+{
+  fprintf (stderr, "%s\n", s);
+}
 %}
 
 /*Token Declarations */
+
+%require "3.7.3"
+%define api.pure
 
 %union{
 int int_val;
 bool bool_val;
 float float_val;
-string* name_val;
-string* string_val;
 }
 
 %token ifS elseS whileS returnS
 %token stringD intD floatD boolD
 %token leftSh rightSh add sub
-%token mul div pow xor mod inc dec
+%token mul Div pow Xor mod inc dec
 %token eql leq geq lt gt neq
-%token aeq meq asg and or
+%token aeq meq asg And Or
 %token '[' ']' '{' '}'
 %token ',' ';' '(' ')'
-%token intV boolV floatV stringV
-%token intID boolID floatID stringID funcID arrayID
+%token intV boolV floatV stringV nameV
 
 %type <int_val> intV
 %type <bool_val> boolV
 %type <float_val> floatV
-%type <string_val> stringV
-%type <name_val> intID boolID floatID stringID arrayID
 
+%left ','
+%left Or 
+%left Xor
+%left And
+%left eql neq
+%left leq geq lt gt
+%left leftSh rightSh
+%left add sub
+%left mul Div mod
+%precedence inc dec
 
 /* Grammar Definitions */
 %%
@@ -41,6 +59,7 @@ stats:
 stat:
 	  varDecl
 	| arrayDecl
+	| funcDecl
 	| funcCall
 	| condStat
 	| asgStat
@@ -48,20 +67,19 @@ stat:
 
 condStat:
  	  ifStat
-	| ifStat postIfStat
-
-postIfStat:
-	  elseIfStat
-	| elseStat
+	| ifStat elseIfStat
+	| ifStat elseStat
 
 ifStat:
-	  ifS '(' logexp ')' '{' stats '}'
+	  ifS '(' exps ')' '{' stats '}'
 
 elseIfStat:
-	  elseS ifS '(' logexp ')' '{' stats '}'
+	  elseS ifS '(' exps ')' '{' stats '}' elseStat
+    | elseS ifS '(' exps ')' '{' stats '}' elseIfStat
+	| elseS ifS '(' exps ')' '{' stats '}'  
 
 elseStat:
-	  elseS '(' logexp ')' '{' stats '}'
+	  elseS '{' stats '}'
 
 varDecl:
 	  varDefine ';'
@@ -71,29 +89,32 @@ varDefine:
    	  type varNames
 
 varNames:
-	  varNames ',' varName
-
-varName:
-	  intID
-	| floatID
-	| boolID
-	| stringID
+	  varNames ',' nameV
+	| nameV
 
 type:
 	  intD
 	| floatD
 	| boolD
 	| stringD
+
+funcDecl:
+	  type nameV '(' argDecl ')'
+
+argDecl:
+	  type nameV ',' argDecl
+	| type nameV
+
 arrayDecl:
-      arrays ';'
-	| arrays asg listInits ';'
+      arrayDefine ';'
+	| arrayDefine asg listInits ';'
 
-arrays:
-	  type arrayIDs
+arrayDefine:
+	  type arrayNames
 
-arrayIDs:
-	  arrayIDs ',' array '[' posInt ']'
-	| arrayID '[' posInt ']'
+arrayNames:
+	  arrayNames ',' nameV '[' intV ']'
+	| nameV '[' intV ']'
 
 listInits:
 	  listInits ',' listInit
@@ -103,7 +124,7 @@ listInit:
 	  '{' exps '}'
 
 funcCall:
-	  funcID '(' exps ')' ';'
+	  nameV '(' exps ')' ';'
 
 asgStat:
 	  varCalls eql exps ';'
@@ -115,137 +136,44 @@ varCalls:
 	| varCall
 
 arrayCall:
-	  arrayID '[' posInt ']'
+	  nameV '[' intV ']'
 
 varCall:
-	  intID
-	| floatID
-	| boolID
-	| stringID
-	| arrayID 
+	  nameV
 
-shift:
-	  leftSh 
-	| rightSh
+call:
+	  varCall	  
+	| funcCall
+	| arrayCall
 
 loop:
 	  whileloop
 
 whileloop:
-	  whileS '(' logexp ')' '{' stats '}'
+	  whileS '(' exps ')' '{' stats '}'
 
 exps:
-      exp0 ',' exps
-	| exp0
-
-exp0:
-	  exp1
-	| logexp1
-
-exp1:
-	  exp1 or exp2
-	| exp2
-
-exp2:
-	  exp2 xor exp3
-	| exp3
-
-exp3:
-	  exp3 and exp4
-	| exp4
-
-exp4:
-	  exp4 logcmp exp5
-	| exp5
-
-exp5:
-	  exp5 cmp exp6
-	| exp6
-
-exp6:
-	  exp6 shift exp7
-	| exp7
-
-exp7:
-	  exp7 addsub exp8
-	| exp8
-
-exp8:
-	  exp8 muldivmod exp9
-	| exp9
-
-exp9:
-	  unary exp10
-	| exp10
-
-exp10:
-	  exp10 pow exp11
-	| exp11
-
-exp11:
-	  varCall
-	| exp12	
-
-exp12:
-	  '(' exp1 ')' 
-
-logexp:
-	  logexp1
-	 
-
-logexp1:
-	  logexp1 or logexp2
-	| logexp2
-
-logexp2:
-	  logexp2 xor logexp3
-	| logexp3
-
-logexp3:
-	  logexp3 and logexp4
-	| logexp4
-
-logexp4:
-	  logexp4 eql logexp5
-	| logexp5
-
-logexp5:
-	  boolID
-
-unary:
-	  inc
-	| dec
-
-addsub:
-	  add
-	| sub
-
-muldivmod:
-	  mul
-	| div
-	| mod
-
-cmp:
-      eql
-	| neq
-
-logcmp:
-	  leq
-	| geq
-	| lt
-	| gt
-
-posInt:
-	  intV
-	| intID
-
-array:
-
+      exps ',' exps
+	| exps Or exps
+	| exps Xor exps
+	| exps And exps
+	| exps leq exps
+	| exps geq exps
+	| exps lt exps
+	| exps gt exps
+	| exps eql exps
+	| exps neq exps
+	| exps leftSh exps
+	| exps rightSh exps
+	| exps add exps
+	| exps sub exps
+	| exps mul exps
+	| exps Div exps
+	| exps mod exps
+	| inc exps
+	| dec exps
+	| call
+	| '(' exps ')' 
 
 %%
 
-int main()
-{
- 	yyparse();
-	return 0;
-}

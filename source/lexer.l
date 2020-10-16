@@ -1,8 +1,12 @@
 %{
 /* C/C++ code to be copied */
-#include <iostream>
+#include <stdio.h>
+#include "parser.tab.h"
+
 %}
+
 %option noyywrap
+%option bison-bridge
 
 %{
 /* Lex Statements/Rules */
@@ -11,242 +15,275 @@
 %%
 
 if {
-std::cout << "Found a if token." << std::endl;
+printf( "Found a if token." );
+printf("\n"); 
 return ifS;
 }
 
 else {
-std::cout << "Found a else token." << std::endl;
+printf( "Found a else token." );
+printf("\n");
 return elseS;
 }
 
 while {
-std::cout << "Found a while token." << std::endl;
+printf( "Found a while token." );
+printf("\n"); 
 return whileS;
 }
 
 return {
-std::cout << "Found a return token." << std::endl;
+printf( "Found a return token." );
+printf("\n"); 
 return returnS;
 }
 
-
 string {
-std::cout << "Found a string token." << std::endl;
+printf( "Found a string token." );
+printf("\n"); 
 return stringD;
 }
 
 int {
-std::cout << "Found a int token." << std::endl;
+printf( "Found a int token." );
+printf("\n"); 
 return intD;
 }
 
 float {
-std::cout << "Found a float token." << std::endl;
+printf( "Found a float token." );
+printf("\n"); 
 return floatD;
 }
 
 bool {
-std::cout << "Found a bool token." << std::endl;
+printf( "Found a bool token." );
+printf("\n"); 
 return boolD;
 }
 
-
 "[" {
-std::cout << "Found a [ token." << std::endl;
+printf( "Found a [ token." );
+printf("\n"); 
 return '[';
 }
 
 "]" {
-std::cout << "Found a ] token." << std::endl;
+printf( "Found a ] token." );
+printf("\n"); 
 return ']';
 }
 
 "{" {
-std::cout << "Found a { token." << std::endl;
+printf( "Found a { token." );
+printf("\n"); 
 return '{';
 }
 
 "}" {
-std::cout << "Found a } token." << std::endl;
+printf( "Found a } token." );
+printf("\n"); 
 return '}';
 }
 
 "(" {
-std::cout << "Found a ( token." << std::endl;
+printf( "Found a ( token." );
+printf("\n"); 
 return '(';
 }
 
 ")" {
-std::cout << "Found a ) token." << std::endl;
+printf( "Found a ) token." );
+printf("\n"); 
 return ')';
 }
 
 "<<" {
-std::cout << "Found a << token." << std::endl;
+printf( "Found a << token." );
+printf("\n"); 
 return leftSh;
 }
 
 ">>" {
-std::cout << "Found a >> token." << std::endl;
+printf( "Found a >> token." );
+printf("\n"); 
 return rightSh;
 }
 
 
 "+" {
-std::cout << "Found a + token." << std::endl;
+printf( "Found a + token." );
+printf("\n"); 
 return add;
 }
 
 "-" {
-std::cout << "Found a - token." << std::endl;
-return sub
+printf( "Found a - token." );
+printf("\n"); 
+return sub;
 }
 
 "*" {
-std::cout << "Found a * token." << std::endl;
+printf( "Found a * token." );
+printf("\n"); 
 return mul;
 }
 
 "/" {
-std::cout << "Found a / token." << std::endl;
-return div;
+printf( "Found a / token." );
+printf("\n"); 
+return Div;
 }
 
 "^^" {
-std::cout << " Found a ^^ token." << std::endl;
+printf( " Found a ^^ token." );
+printf("\n"); 
 return pow;
+}
 
 "^" {
-std::cout << "Found a ^ token." << std::endl;
-return xor;
+printf( "Found a ^ token." );
+printf("\n"); 
+return Xor;
 }
 
 "%" {
-std::cout << "Found a % token." << std::endl;
+printf( "Found a %% token." );
+printf("\n"); 
 return mod;
 }
 
 "++" {
-std::cout << "Found a ++ token." << std::endl;
+printf( "Found a ++ token." );
+printf("\n"); 
 return inc;
 }
 
 "--" {
-std::cout << "Found a -- token." << std::endl;
+printf( "Found a -- token." );
+printf("\n"); 
 return dec;
 }
 
-
 "==" {
-std::cout << "Found a == token." << std::endl;
-return eq;
+printf( "Found a == token." );
+printf("\n"); 
+return eql;
 }
 
 "<=" {
-std::cout << "Found a <= token." << std::endl;
+printf( "Found a <= token." );
+printf("\n"); 
 return leq;
 }
 
 ">=" {
-std::cout << "Found a >= token." << std::endl;
+printf( "Found a >= token." );
+printf("\n"); 
 return geq;
 }
 
 "<" {
-std::cout << "Found a < token." << std::endl;
+printf( "Found a < token." );
+printf("\n"); 
 return lt;
 }
 
 ">" {
-std::cout << "Found a > token." << std::endl;
+printf( "Found a > token." );
+printf("\n"); 
 return gt;
 }
 
 "!=" {
-std::cout << "Found a != token." << std::endl;
+printf( "Found a != token." );
+printf("\n"); 
 return neq;
 }
 
 
 "+=" {
-std::cout << "Found a += token." << std::endl;
+printf( "Found a += token." );
+printf("\n"); 
 return aeq;
 }
 
 "-=" {
-std::cout << "Found a -= token." << std::endl;
+printf( "Found a -= token." );
+printf("\n"); 
 return meq;
 }
 
 "=" {
-std::cout << "Found a = token." << std::endl;
+printf( "Found a = token." );
+printf("\n"); 
 return asg;
 }
 
 "&&" {
-std::cout << "Found a && token." << std::endl;
-return and;
+printf( "Found a && token." );
+printf("\n"); 
+return And;
 }
 
 "|" {
-std::cout << "Found a | token." << std::endl;
-return or;
+printf( "Found a | token." );
+printf("\n"); 
+return Or;
 }
 
 "," {
-std::cout << "Found a , token." << std::endl;
+printf( "Found a , token." );
+printf("\n"); 
 return ',';
 }
 
 ";" {
-std::cout << "Found a ; token." << std::endl;
+printf( "Found a ; token." );
+printf("\n"); 
 return ';';
 }
 
-"!" {
-std::cout << "Found a ! token." << std::endl;
-return nop;
-}
-
-
 true {
-std::cout << "Found a bool Value token." << std::endl;
+yylval-> bool_val = true;
+printf( "Found a bool Value token." );
+printf("\n"); 
 return boolV;
 }
 
 false {
-std::cout << "Found a bool Value token." << std::endl;
+yylval-> bool_val = false;
+printf( "Found a bool Value token." );
+printf("\n"); 
 return boolV;
 }
 
 
 [0-9]+ {
-std::cout << "Found a intValue token." << std::endl;
+yylval->int_val = atoi(yytext);
+printf( "Found a intValue token." );
+printf("\n"); 
 return intV;
 }
 
 [0-9]+\.[0-9]+ {
-std::cout << "Found a floatValue token." << std::endl;
+yylval->float_val = atof(yytext);
+printf( "Found a floatValue token." );
+printf("\n"); 
 return floatV;
 }
 
 [a-zA-Z][a-zA-Z0-9_]* {
-std::cout << "Found a name token." << std::endl;
+printf( "Found a name token." );
+printf("\n"); 
 return nameV;
 }
 
 \"[^\n"]+\"  {
-std::cout << "Found a stringValue token." << std::endl;
+printf( "Found a stringValue token." );
+printf("\n"); 
 return stringV;
 }
 
 
 %%
-
-int main()
-{
- yylex();
- return 0;
-}
-
