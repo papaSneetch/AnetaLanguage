@@ -6,11 +6,14 @@ genDir = ./gen
 dataDir = ./data
 mainDir = ./main
 depsDir = ./deps
+testDir = ./test
+testScriptsDir = $(testDir)/bashScripts
 
 lexSource = lexer.l
 lexOutput = lexer.yy.h
 lexBin = lexer.bin
 lexMain = lexMain.cpp
+lexTestScript = lexerTest.sh
 
 bisonSource = parser.y
 parserInclude = parser.tab.h
@@ -27,6 +30,7 @@ lexSourceLoc = $(sourceDir)/$(lexSource)
 lexIncludeLoc = $(includeDir)/$(lexOutput)
 lexMainLoc = $(mainDir)/$(lexMain)
 lexBinLoc = $(binDir)/$(lexBin)
+lexTestLoc = $(testScriptsDir)/$(lexTestScript)
 
 parserLexerObject = parserLexer.o
 parserLexerObjectLoc = $(objectDir)/$(parserLexerObject)
@@ -64,6 +68,7 @@ $(parserLexerTargets): $(parserLexerPrereq)
 
 $(lexerBinTargets): $(lexerBinPrereq)
 	g++ -Wall -I$(includeDir) $(lexMainLoc) -o$(lexBinLoc)
+	$(lexTestLoc)
 
 $(parserBinTargets): $(parserBinPrereq)
 	g++ -Wall -I$(includeDir) $(parserMainLoc) $(parserLexerObjectLoc) -o$(parserBinLoc)

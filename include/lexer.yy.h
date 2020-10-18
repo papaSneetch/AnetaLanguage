@@ -811,408 +811,320 @@ case 1:
 YY_RULE_SETUP
 #line 17 "./source/lexer.l"
 {
-printf( "Found a if token." );
-printf("\n"); 
 return ifS;
 }
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 23 "./source/lexer.l"
+#line 21 "./source/lexer.l"
 {
-printf( "Found a else token." );
-printf("\n");
 return elseS;
 }
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 29 "./source/lexer.l"
+#line 25 "./source/lexer.l"
 {
-printf( "Found a while token." );
-printf("\n"); 
 return whileS;
 }
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 35 "./source/lexer.l"
+#line 29 "./source/lexer.l"
 {
-printf( "Found a return token." );
-printf("\n"); 
 return returnS;
 }
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 41 "./source/lexer.l"
+#line 33 "./source/lexer.l"
 {
-printf( "Found a string token." );
-printf("\n"); 
 return stringD;
 }
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 47 "./source/lexer.l"
+#line 37 "./source/lexer.l"
 {
-printf( "Found a int token." );
-printf("\n"); 
 return intD;
 }
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 53 "./source/lexer.l"
+#line 41 "./source/lexer.l"
 {
-printf( "Found a float token." );
-printf("\n"); 
 return floatD;
 }
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 59 "./source/lexer.l"
+#line 45 "./source/lexer.l"
 {
-printf( "Found a bool token." );
-printf("\n"); 
 return boolD;
 }
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 65 "./source/lexer.l"
+#line 49 "./source/lexer.l"
 {
-printf( "Found a [ token." );
-printf("\n"); 
 return '[';
 }
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 71 "./source/lexer.l"
+#line 53 "./source/lexer.l"
 {
-printf( "Found a ] token." );
-printf("\n"); 
 return ']';
 }
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 77 "./source/lexer.l"
+#line 57 "./source/lexer.l"
 {
-printf( "Found a { token." );
-printf("\n"); 
 return '{';
 }
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 83 "./source/lexer.l"
+#line 61 "./source/lexer.l"
 {
-printf( "Found a } token." );
-printf("\n"); 
 return '}';
 }
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 89 "./source/lexer.l"
+#line 65 "./source/lexer.l"
 {
-printf( "Found a ( token." );
-printf("\n"); 
 return '(';
 }
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 95 "./source/lexer.l"
+#line 69 "./source/lexer.l"
 {
-printf( "Found a ) token." );
-printf("\n"); 
 return ')';
 }
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 101 "./source/lexer.l"
+#line 73 "./source/lexer.l"
 {
-printf( "Found a << token." );
-printf("\n"); 
 return leftSh;
 }
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 107 "./source/lexer.l"
+#line 77 "./source/lexer.l"
 {
-printf( "Found a >> token." );
-printf("\n"); 
 return rightSh;
 }
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 114 "./source/lexer.l"
+#line 82 "./source/lexer.l"
 {
-printf( "Found a + token." );
-printf("\n"); 
 return add;
 }
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 120 "./source/lexer.l"
+#line 86 "./source/lexer.l"
 {
-printf( "Found a - token." );
-printf("\n"); 
 return sub;
 }
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 126 "./source/lexer.l"
+#line 90 "./source/lexer.l"
 {
-printf( "Found a * token." );
-printf("\n"); 
 return mul;
 }
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 132 "./source/lexer.l"
+#line 94 "./source/lexer.l"
 {
-printf( "Found a / token." );
-printf("\n"); 
 return Div;
 }
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 138 "./source/lexer.l"
+#line 98 "./source/lexer.l"
 {
-printf( " Found a ^^ token." );
-printf("\n"); 
 return pow;
 }
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 144 "./source/lexer.l"
+#line 102 "./source/lexer.l"
 {
-printf( "Found a ^ token." );
-printf("\n"); 
 return Xor;
 }
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 150 "./source/lexer.l"
+#line 106 "./source/lexer.l"
 {
-printf( "Found a %% token." );
-printf("\n"); 
 return mod;
 }
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 156 "./source/lexer.l"
+#line 110 "./source/lexer.l"
 {
-printf( "Found a ++ token." );
-printf("\n"); 
 return inc;
 }
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 162 "./source/lexer.l"
+#line 114 "./source/lexer.l"
 {
-printf( "Found a -- token." );
-printf("\n"); 
 return dec;
 }
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 168 "./source/lexer.l"
+#line 118 "./source/lexer.l"
 {
-printf( "Found a == token." );
-printf("\n"); 
 return eql;
 }
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 174 "./source/lexer.l"
+#line 122 "./source/lexer.l"
 {
-printf( "Found a <= token." );
-printf("\n"); 
 return leq;
 }
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 180 "./source/lexer.l"
+#line 126 "./source/lexer.l"
 {
-printf( "Found a >= token." );
-printf("\n"); 
 return geq;
 }
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 186 "./source/lexer.l"
+#line 130 "./source/lexer.l"
 {
-printf( "Found a < token." );
-printf("\n"); 
 return lt;
 }
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 192 "./source/lexer.l"
+#line 134 "./source/lexer.l"
 {
-printf( "Found a > token." );
-printf("\n"); 
 return gt;
 }
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 198 "./source/lexer.l"
+#line 138 "./source/lexer.l"
 {
-printf( "Found a != token." );
-printf("\n"); 
 return neq;
 }
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 205 "./source/lexer.l"
+#line 143 "./source/lexer.l"
 {
-printf( "Found a += token." );
-printf("\n"); 
-return aeq;
+return aeg;
 }
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 211 "./source/lexer.l"
+#line 147 "./source/lexer.l"
 {
-printf( "Found a -= token." );
-printf("\n"); 
-return meq;
+return meg;
 }
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 217 "./source/lexer.l"
+#line 151 "./source/lexer.l"
 {
-printf( "Found a = token." );
-printf("\n"); 
 return asg;
 }
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
-#line 223 "./source/lexer.l"
+#line 155 "./source/lexer.l"
 {
-printf( "Found a && token." );
-printf("\n"); 
 return And;
 }
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
-#line 229 "./source/lexer.l"
+#line 159 "./source/lexer.l"
 {
-printf( "Found a | token." );
-printf("\n"); 
 return Or;
 }
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
-#line 235 "./source/lexer.l"
+#line 163 "./source/lexer.l"
 {
-printf( "Found a , token." );
-printf("\n"); 
 return ',';
 }
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
-#line 241 "./source/lexer.l"
+#line 167 "./source/lexer.l"
 {
-printf( "Found a ; token." );
-printf("\n"); 
 return ';';
 }
 	YY_BREAK
 case 39:
 YY_RULE_SETUP
-#line 247 "./source/lexer.l"
+#line 171 "./source/lexer.l"
 {
 yylval-> bool_val = true;
-printf( "Found a bool Value token." );
-printf("\n"); 
 return boolV;
 }
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
-#line 254 "./source/lexer.l"
+#line 176 "./source/lexer.l"
 {
 yylval-> bool_val = false;
-printf( "Found a bool Value token." );
-printf("\n"); 
 return boolV;
 }
 	YY_BREAK
 case 41:
 YY_RULE_SETUP
-#line 262 "./source/lexer.l"
+#line 182 "./source/lexer.l"
 {
 yylval->int_val = atoi(yytext);
-printf( "Found a intValue token." );
-printf("\n"); 
 return intV;
 }
 	YY_BREAK
 case 42:
 YY_RULE_SETUP
-#line 269 "./source/lexer.l"
+#line 187 "./source/lexer.l"
 {
 yylval->float_val = atof(yytext);
-printf( "Found a floatValue token." );
-printf("\n"); 
 return floatV;
 }
 	YY_BREAK
 case 43:
 YY_RULE_SETUP
-#line 276 "./source/lexer.l"
+#line 192 "./source/lexer.l"
 {
-printf( "Found a name token." );
-printf("\n"); 
 return nameV;
 }
 	YY_BREAK
 case 44:
 YY_RULE_SETUP
-#line 282 "./source/lexer.l"
+#line 196 "./source/lexer.l"
 {
-printf( "Found a stringValue token." );
-printf("\n"); 
 return stringV;
 }
 	YY_BREAK
 case 45:
 YY_RULE_SETUP
-#line 289 "./source/lexer.l"
+#line 201 "./source/lexer.l"
 ECHO;
 	YY_BREAK
-#line 1216 "./include/lexer.yy.h"
+#line 1128 "./include/lexer.yy.h"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -2217,6 +2129,6 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 289 "./source/lexer.l"
+#line 201 "./source/lexer.l"
 
 
