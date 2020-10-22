@@ -55,6 +55,15 @@ float float_val;
 /* Grammar Definitions */
 %%
 
+progs:
+	  prog
+	| progs prog
+
+prog:
+	  funcDecl {printf("Syntax Object: stat. \n");}
+	| arrayDecl ';' {printf("Syntax Object: stat. \n");}
+	| varDecl ';' {printf("Syntax Object: stat. \n");}
+
 stats:
 	  stats stat {printf("Syntax Object: stats. \n");}
 	| stat
@@ -62,7 +71,6 @@ stats:
 stat:
 	  varDecl ';' {printf("Syntax Object: stat. \n");}
 	| arrayDecl ';' {printf("Syntax Object: stat. \n");}
-	| funcDecl {printf("Syntax Object: stat. \n");}
 	| funcCall ';' {printf("Syntax Object: stat. \n");}
 	| condStat {printf("Syntax Object: stat. \n");}
 	| exps ';' {printf("Syntax Object: stat. \n");}
@@ -75,12 +83,12 @@ condStat:
 	| ifStat elseStat {printf("Syntax Object: condStat. \n");}
 
 ifStat:
-	  ifS '(' exps ')' '{' stats '}' {printf("Syntax Object: ifStat. \n");}
+	  ifS '(' exps ')' block {printf("Syntax Object: ifStat. \n");}
 
 elseIfStat:
-	  elseS ifS '(' exps ')' '{' stats '}' elseStat {printf("Syntax Object: elseIfStat. \n");}
-    | elseS ifS '(' exps ')' '{' stats '}' elseIfStat {printf("Syntax Object: elseIfStat. \n");}
-	| elseS ifS '(' exps ')' '{' stats '}'   {printf("Syntax Object: elseIfStat. \n");}
+	  elseS ifStat elseStat {printf("Syntax Object: elseIfStat. \n");}
+    | elseS ifStat block elseIfStat {printf("Syntax Object: elseIfStat. \n");}
+	| elseS ifStat block  {printf("Syntax Object: elseIfStat. \n");}
 
 elseStat:
 	  elseS '{' stats '}' {printf("Syntax Object: elseStat. \n");}
@@ -108,9 +116,11 @@ funcDecl:
 	| funcDef {printf("Syntax Object: funcDecl. \n");} 
 
 funcDef:
-	| type nameV '(' argDecl ')' '{' stats '}' {printf("Syntax Object: funcDef. \n");}
-	| type nameV '(' ')' '{' stats '}' {printf("Syntax Object: funcDef. \n");}
+	| type nameV '(' argDecl ')' block {printf("Syntax Object: funcDef. \n");}
+	| type nameV '(' ')' block {printf("Syntax Object: funcDef. \n");}
  
+block:
+	   '{' stats '}' {printf("Syntax Object: block. \n");}
 
 argDecl:
 	  type nameV ',' argDecl {printf("Syntax Object: argDecl. \n");}
@@ -129,12 +139,6 @@ arrayNames:
 
 funcCall:
 	  nameV '(' exps ')' {printf("Syntax Object: listInit. \n");}
-
-varCalls:
-	  varCalls ',' arrayCall {printf("Syntax Object: varCalls. \n");}
-	| varCalls ',' varCall {printf("Syntax Object: varCalls. \n");}
-	| arrayCall {printf("Syntax Object: varCalls. \n");}
-	| varCall {printf("Syntax Object: varCall. \n");}
 
 arrayCall:
 	  nameV '[' intV ']' {printf("Syntax Object: arrayCall. \n");}
@@ -158,7 +162,7 @@ value:
 
 
 whileloop:
-	  whileS '(' exps ')' '{' stats '}' {printf("Syntax Object: whileloop. \n");}
+	  whileS '(' exps ')' block {printf("Syntax Object: whileloop. \n");}
 
 exps:
       exps ',' exps {printf("Syntax Object: exps. \n");}
