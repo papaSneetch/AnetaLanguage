@@ -3,7 +3,7 @@
 #include <string>
 
 class genContext;
-typedef std::vector<AstStat> statementList; 
+typedef std::vector<AstStat*> statementList; 
 typedef std::vector<AstExp> expressionList;
 typedef std::vector<AstVariableDeclaration> variableList
 
@@ -51,115 +51,115 @@ lhs(lhs), rhs(rhs) { }
 virtual llvm::Value* codeGen(genContext& context);
 };
 
-class AstOr: public AstExp
+class AstOr: public AstBinOp
 {
 AstOr(AstExp& lhs, AstExp& rhs):AstExp(lhs,rhs){} 
 llvm::Value* codeGen(genContext& context);
 };
 
-class AstXor: public AstExp
+class AstXor: public AstBinOp
 {
 AstXor(AstExp& lhs, AstExp& rhs):AstExp(lhs,rhs){}
 llvm::Value* codeGen(genContext& context);
 };
 
-class AstAnd: public AstExp
+class AstAnd: public AstBinOp
 {
 AstAnd (AstExp& lhs, AstExp& rhs):AstExp(lhs,rhs){}
 llvm::Value* codeGen(genContext& context);
 };
 
-class Astleq: public AstExp
+class Astleq: public AstBinOp
 {
 Astleq (AstExp& lhs, AstExp& rhs):AstExp(lhs,rhs){}
 llvm::Value* codeGen(genContext& context);
 };
 
-class Astgeq: public AstExp
+class Astgeq: public AstBinOp
 {
 Astgeq(AstExp& lhs, AstExp& rhs):AstExp(lhs,rhs){}
 llvm::Value* codeGen(genContext& context);
 };
 
-class Astlt: public AstExp
+class Astlt: public AstBinOp
 {
 Astlt(AstExp& lhs, AstExp& rhs):AstExp(lhs,rhs){}
 llvm::Value* codeGen(genContext& context);
 };
 
-class Astgt: public AstExp
+class Astgt: public AstBinOp
 {
 Astgt(AstExp& lhs, AstExp& rhs):AstExp(lhs,rhs){}
 llvm::Value* codeGen(genContext& context);
 };
 
-class Asteql: public AstExp
+class Asteql: public AstBinOp
 {
 Asteql(AstExp& lhs, AstExp& rhs):AstExp(lhs,rhs){}
 llvm::Value* codeGen(genContext& context);
 };
 
-class Astneq: public AstExp
+class Astneq: public AstBinOp
 {
 Astneq(AstExp& lhs, AstExp& rhs):AstExp(lhs,rhs){}
 llvm::Value* codeGen(genContext& context);
 };
 
-class AstLeftSh: public AstExp
+class AstLeftSh: public AstBinOp
 {
 AstLeftSh(AstExp& lhs, AstExp& rhs):AstExp(lhs,rhs){}
 llvm::Value* codeGen(genContext& context);
 };
 
-class AstRightSh: public AstExp
+class AstRightSh: public AstBinOp
 {
 AstRightSh(AstExp& lhs, AstExp& rhs):AstExp(lhs,rhs){}
 llvm::Value* codeGen(genContext& context);
 };
 
-class AstAdd: public AstExp
+class AstAdd: public AstBinOp
 {
 AstAdd(AstExp& lhs, AstExp& rhs):AstExp(lhs,rhs){}
 llvm::Value* codeGen(genContext& context);
 };
 
-class AstSub: public AstExp
+class AstSub: public AstBinOp
 {
 AstSub(AstExp& lhs, AstExp& rhs):AstExp(lhs,rhs){}
 llvm::Value* codeGen(genContext& context);
 };
 
-class AstMul: public AstExp
+class AstMul: public AstBinOp
 {
 AstMul(AstExp& lhs, AstExp& rhs):AstExp(lhs,rhs){}
 llvm::Value* codeGen(genContext& context);
 };
 
-class AstDiv: public AstExp
+class AstDiv: public AstBinOp
 {
 AstDiv(AstExp& lhs, AstExp& rhs):AstExp(lhs,rhs){}
 llvm::Value* codeGen(genContext& context);
 };
 
-class AstMod: public AstExp
+class AstMod: public AstBinOp
 {
 AstMod(AstExp& lhs, AstExp& rhs):AstExp(lhs,rhs){}
 llvm::Value* codeGen(genContext& context);
 };
 
-class AstAsg: public AstExp
+class AstAsg: public AstBinOp
 {
 AstAsg(AstExp& lhs, AstExp& rhs):AstExp(lhs,rhs){}
 llvm::Value* codeGen(genContext& context);
 };
 
-class AstAeg: public AstExp
+class AstAeg: public AstBinOp
 {
 AstAeg(AstExp& lhs, AstExp& rhs):AstExp(lhs,rhs){}
 llvm::Value* codeGen(genContext& context);
 };
 
-class AstMeg: public AstExp
+class AstMeg: public AstBinOp
 {
 (AstExp& lhs, AstExp& rhs):AstExp(lhs,rhs){}
 llvm::Value* codeGen(genContext& context);
@@ -228,18 +228,18 @@ AstVariableDeclaration(AstName& variableName, AstType& variableType): variableNa
 llvm::Value* codeGen(genContext& context);
 };
 
-class functionCall: public AstCall
+class AstFunctionCall: public AstCall
 {
 AstName& functionName;
 expressionList args;
-functionCall(AstName& functionName, expressionList& args): functionName(functionName),args(args) {}
+AstFunctionCall(AstName& functionName, expressionList& args): functionName(functionName),args(args) {}
 llvm::Value* codeGen(genContext& context);
 };
 
-class variableCall: public AstCall
+class AstVariableCall: public AstCall
 {
 std::string& variableName;
-variableCall(std::string& variableName):variableName(variableName) {}
+AstVariableCall(std::string& variableName):variableName(variableName) {}
 llvm::Value* codeGen(genContext& context);
 }
 
