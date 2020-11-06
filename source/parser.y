@@ -1,9 +1,9 @@
 %{
 /* C/C++ code */
 
-#include <stdio.h>
-#include <stdbool.h>
+#include <iostream>
 #include "lexer.yy.h"
+#include "llvmHeaders.h"
 
 #define YYPARSE_PARAM yyscan_t scanner
 #define YYLEX_PARAM scanner
@@ -23,21 +23,25 @@ void yyerror (char const *s)
 int int_val;
 bool bool_val;
 float float_val;
+char* string;
 }
 
-%token ifS elseS whileS returnS
-%token stringD intD floatD boolD
-%token leftSh rightSh add sub
-%token mul Div pow Xor mod inc dec
-%token eql leq geq lt gt neq
-%token aeg meg asg And Or
+%token <AstNode> ifS elseS whileS returnS
+%token <AstNode> stringD intD floatD boolD
+%token <AstNode> leftSh rightSh add sub
+%token <AstNode> mul Div pow Xor mod inc dec
+%token <AstNode> eql leq geq lt gt neq
+%token <AstNode> aeg meg asg And Or
 %token '[' ']' '{' '}'
 %token ',' ';' '(' ')'
-%token intV boolV floatV stringV nameV
+%token <AstNode> intV boolV floatV stringV nameV
 
 %type <int_val> intV
 %type <bool_val> boolV
 %type <float_val> floatV
+%type <string> stringV
+%type <string> nameV
+
 
 %left ','
 %right aeq meq asg
@@ -60,138 +64,237 @@ progs:
 	| progs prog
 
 prog:
-	  funcDecl {printf("Syntax Object: stat. \n");}
-	| arrayDecl ';' {printf("Syntax Object: stat. \n");}
-	| varDecl ';' {printf("Syntax Object: stat. \n");}
+	  funcDecl { std::cout << "Syntax Object: stat." << std::endl; }
+	| arrayDecl ';' {std::cout << "Syntax Object: stat. " << std::endl;}
+	| varDecl ';' {std::cout << "Syntax Object: stat. " << std::endl;}
 
 stats:
-	  stats stat {printf("Syntax Object: stats. \n");}
-	| stat
+	  stats stat {
+$1 -> statements.push_back($2);
+std::cout << "Syntax Object: stats. " << std::endl;}
+	| stat {
+$$ = new AstBlock(); $$->statements.push_back($1);
+std::cout << "Created New Block. Syntax Objcet: stats. " << std::endl;
 
 stat:
-	  varDecl ';' {printf("Syntax Object: stat. \n");}
-	| arrayDecl ';' {printf("Syntax Object: stat. \n");}
-	| funcCall ';' {printf("Syntax Object: stat. \n");}
-	| condStat {printf("Syntax Object: stat. \n");}
-	| exps ';' {printf("Syntax Object: stat. \n");}
-	| whileloop {printf("Syntax Object: stat. \n");}
-	| returnStat ';' {printf("Syntax Object: exps. \n");} 
+	  varDecl ';' {std::cout << "Syntax Object: stat. " << std::endl;}
+	| arrayDecl ';' {std::cout << "Syntax Object: stat. " << std::endl;}
+	| funcCall ';' {std::cout << "Syntax Object: stat. " << std::endl;}
+	| condStat {std::cout << "Syntax Object: stat. " << std::endl;}
+	| exps ';' {std::cout << "Syntax Object: stat. " << std::endl;}
+	| whileloop {std::cout << "Syntax Object: stat. " << std::endl;}
+	| returnStat ';' {std::cout << "Syntax Object: exps. " << std::endl;} 
 
 condStat:
- 	  ifStat {printf("Syntax Object: condStat. \n");}
-	| ifStat elseIfStat {printf("Syntax Object: condStat. \n");}
-	| ifStat elseStat {printf("Syntax Object: condStat. \n");}
+ 	  ifStat {std::cout << "Syntax Object: condStat. " << std::endl;}
+	| ifStat elseIfStat {std::cout << "Syntax Object: condStat. \" << std::endl;}
+	| ifStat elseStat {std::cout << "Syntax Object: condStat. " << std::endl;}
 
 ifStat:
-	  ifS '(' exps ')' block {printf("Syntax Object: ifStat. \n");}
+	  ifS '(' exps ')' block {
+$$ = new
+std::cout << "Syntax Object: ifStat. " << std::endl;
+   
+}
 
 elseIfStat:
-	  elseS ifStat elseStat {printf("Syntax Object: elseIfStat. \n");}
-    | elseS ifStat block elseIfStat {printf("Syntax Object: elseIfStat. \n");}
-	| elseS ifStat block  {printf("Syntax Object: elseIfStat. \n");}
+	  elseS ifStat elseStat {std::cout << "Syntax Object: elseIfStat. " << std::endl;}
+    | elseS ifStat block elseIfStat {std::cout << "Syntax Object: elseIfStat. " << std::endl;}
+	| elseS ifStat block  {std::cout << "Syntax Object: elseIfStat. " << std::endl;}
 
 elseStat:
-	  elseS '{' stats '}' {printf("Syntax Object: elseStat. \n");}
+	  elseS '{' stats '}' {std::cout << "Syntax Object: elseStat. " << std::endl;}
 
 varDecl:
-	  varDefine  {printf("Syntax Object: varDecl. \n");}
-	| varDefine asg exps  {printf("Syntax Object: varDecl. \n");}
+	  varDefine  {std::cout << "Syntax Object: varDecl. " << std::endl;}
+	| varDefine asg exps  {std::cout << "Syntax Object: varDecl. " << std::endl;}
 
 varDefine:
-   	  type varNames {printf("Syntax Object: varDefine. \n");}
+   	  type varNames {
+for (
+$$ = new AstVariableDeclaration($2,$1);
+std::cout << "Syntax Object: varDefine. " << std::endl;}
 
 varNames:
-	  varNames ',' nameV {printf("Syntax Object: varNames. \n");}
-	| nameV {printf("Syntax Object: varNames. \n");}
+	nameV {
+$$ = new AstName(std::string($1));
+std::cout << "Syntax Object: varNames. " << std::endl;}
 
 type:
-	  intD {printf("Syntax Object: type. \n");}
-	| floatD {printf("Syntax Object: type. \n");}
-	| boolD {printf("Syntax Object: type. \n");}
-	| stringD {printf("Syntax Object: type. \n");}
+	  intD {
+$$ = new AstIntType();
+std::cout << "Syntax Object: type. " << std::endl;}
+	| floatD {
+$$ = new AstFloatType();
+std::cout << "Syntax Object: type. " << std::endl;}
+	| boolD {
+$$ = new AstBoolType();
+std::cout << "Syntax Object: type. " << std::endl;}
+	| stringD {
+$$ = new AstStringType();
+std::cout << "Syntax Object: type. " << std::endl;}
 
 funcDecl:
-	  type nameV '(' argDecl ')' ';' {printf("Syntax Object: funcDecl. \n");}
-	| type nameV '(' ')' ';' {printf("Syntax Object: funcDecl. \n");}
-	| funcDef {printf("Syntax Object: funcDecl. \n");} 
+	  type nameV '(' argDecl ')' block ';' {
+$$ = new AstFunctionDeclaration($1,$2,,$6);
+std::cout << "Syntax Object: funcDecl. " << std::endl;}
+	| type nameV '(' ')' block ';' {
+$$ = new AstFunctionDeclaration($1,$2,variableList(),$6);
+std::cout << "Syntax Object: funcDecl. " << std::endl;}
 
 funcDef:
-	| type nameV '(' argDecl ')' block {printf("Syntax Object: funcDef. \n");}
-	| type nameV '(' ')' block {printf("Syntax Object: funcDef. \n");}
+	| type nameV '(' argDecl ')' block {std::cout << "Syntax Object: funcDef. " << std::endl;}
+	| type nameV '(' ')' block {std::cout << "Syntax Object: funcDef. " << std::endl;}
  
 block:
-	   '{' stats '}' {printf("Syntax Object: block. \n");}
+	   '{' stats '}' {
+$$ = $2;
+std::cout << "Syntax Object: block. " << std::endl;}
 
 argDecl:
-	  type nameV ',' argDecl {printf("Syntax Object: argDecl. \n");}
-	| type nameV {printf("Syntax Object: argDecl. \n");}
+	  argDecl ',' type nameV {
+$1->push_back(AstVariableDeclaration($4,$3);
+std::cout << "Syntax Object: argDecl. " << std::endl;}
+	| type nameV {
+$$ = new variableList(); $$->push_back($2,$1);
+std::cout << "Syntax Object: argDecl. " << std::endl;}
 
 arrayDecl:
-      arrayDefine  {printf("Syntax Object: arrayDecl. \n");}
-	| arrayDefine asg exps  {printf("Syntax Object: arrayDecl. \n");}
+      arrayDefine  {std::cout << "Syntax Object: arrayDecl. " << std::endl;}
+	| arrayDefine asg exps  {std::cout << "Syntax Object: arrayDecl. " << std::endl;}
 
 arrayDefine:
-	  type arrayNames '[' intV ']' {printf("Syntax Object: arrayDefine. \n");}
+	  type arrayNames '[' intV ']' {
+$$ = new AstArrayDeclaration($2,$1,$3);
+std::cout << "Syntax Object: arrayDefine. " << std::endl;}
 
 arrayNames:
-	  arrayNames ',' nameV {printf("Syntax Object: arrayNames. \n");}
-	| nameV {printf("Syntax Object: arrayNames. \n");}
+	nameV {
+$$ = new AstName(std::string($1));
+std::cout << "Syntax Object: arrayNames. " << std::endl;}
 
 funcCall:
-	  nameV '(' exps ')' {printf("Syntax Object: listInit. \n");}
+	  nameV '(' exps ')' {
+$$ = new AstFunctionCall($1,$3);
+std::cout << "Syntax Object: listInit. " << std::endl;}
 
 arrayCall:
-	  nameV '[' intV ']' {printf("Syntax Object: arrayCall. \n");}
+	  nameV '[' intV ']' {
+$$ = new AstArrayCall(std::string($1,$2),
+std::cout << "Syntax Object: arrayCall. " << std::endl;}
 
 varCall:
-	  nameV {printf("Syntax Object: varCall. \n");}
+	  nameV {
+$$ = AstVariableCall(std::string($1));
+std::cout << "Syntax Object: varCall. " << std::endl;}
 
 returnStat:
 	  returnS exps
 
 call:
-	  varCall	   {printf("Syntax Object: call. \n");}
-	| funcCall {printf("Syntax Object: call. \n");}
-	| arrayCall {printf("Syntax Object: call. \n");}
+	  varCall	   {std::cout << "Syntax Object: call. " << std::endl;}
+	| funcCall {std::cout << "Syntax Object: call. " << std::endl;}
+	| arrayCall {std::cout << "Syntax Object: call. " << std::endl;}
 
 value:
-	  intV {printf("Syntax Object: value. \n");}
-	| boolV {printf("Syntax Object: value. \n");}
-	| floatV {printf("Syntax Object: value. \n");}
-	| stringV {printf("Syntax Object: value. \n");}
+	  intV {
+$$ = new AstIntValue(std::stoi($1);
+std::cout << "Syntax Object: value. " << std::endl;
+}
+	| boolV {
+$$ = new AstBoolValue($1 == "true");
+$$ = new AstBoolValue()
+std::cout << "Syntax Object: value. " << std::endl;
+}
+	| floatV {
+$$ = new AstFloatValue(std::stof($1);
+std::cout << "Syntax Object: value. " << std::endl;
+}
+	| stringV {
+$$ = new AstStringValue(std::string($1));
+std::cout << "Syntax Object: value. " << std::endl;
+}
 
 
 whileloop:
-	  whileS '(' exps ')' block {printf("Syntax Object: whileloop. \n");}
+	  whileS '(' exps ')' block {
+$$ = new AstWhileLoop($5,$3);
+std::cout << "Syntax Object: whileloop. " << std::endl;}
 
 exps:
-      exps ',' exps {printf("Syntax Object: exps. \n");}
-	| exps Or exps {printf("Syntax Object: exps. \n");}
-	| exps Xor exps {printf("Syntax Object: exps. \n");}
-	| exps And exps {printf("Syntax Object: exps. \n");}
-	| exps leq exps {printf("Syntax Object: exps. \n");}
-	| exps geq exps {printf("Syntax Object: exps. \n");}
-	| exps lt exps {printf("Syntax Object: exps. \n");}
-	| exps gt exps {printf("Syntax Object: exps. \n");}
-	| exps eql exps {printf("Syntax Object: exps. \n");}
-	| exps neq exps {printf("Syntax Object: exps. \n");}
-	| exps leftSh exps {printf("Syntax Object: exps. \n");}
-	| exps rightSh exps {printf("Syntax Object: exps. \n");}
-	| exps add exps {printf("Syntax Object: exps. \n");}
-	| exps sub exps {printf("Syntax Object: exps. \n");}
-	| exps mul exps {printf("Syntax Object: exps. \n");}
-	| exps Div exps {printf("Syntax Object: exps. \n");}
-	| exps mod exps {printf("Syntax Object: exps. \n");}
-	| inc exps %prec preInc  {printf("Syntax Object: exps. \n");}
-	| dec exps %prec preDec {printf("Syntax Object: exps. \n");}
-	| exps inc %prec postInc {printf("Syntax Object: exps. \n");}
-	| exps dec %prec postDec {printf("Syntax Object: exps. \n");}
-	| exps asg exps {printf("Syntax Object: exps. \n");}
-	| exps aeg exps {printf("Syntax Object: exps. \n");}
-	| exps meg exps {printf("Syntax Object: exps. \n");}
-	| call {printf("Syntax Object: exps. \n");}
-	| value {printf ("Syntax Object: exps. \n");}
-	| '(' exps ')'  {printf("Syntax Object: exps. \n");}
+      exps ',' exp {
+$1 -> push_back($3);
+std::cout << "Syntax Object: exps. " << std::endl;}
+	| exp {
+$$ = new expressionList(); $$->push_back($1);
+std::cout << "Syntax Object: exps. " << std::endl;}
+
+exp:
+	| exp Or exps {
+$$ = new AstOr($1,$2);
+std::cout << "Syntax Object: exp. " << std::endl;}
+	| exp Xor exps {
+$$ = new AstXor($1,$2);
+std::cout << "Syntax Object: exp. " << std::endl;}
+	| exp And exps {
+$$ = new AstAnd($1,$2);
+std::cout << "Syntax Object: exp. " << std::endl;}
+	| exp leq exps {
+$$ = new Astleq($1,$2);
+std::cout << "Syntax Object: exp. " << std::endl;}
+	| exp geq exps {
+$$ = new Astgeq($1,$2);
+std::cout << "Syntax Object: exp. " << std::endl;}
+	| exp lt exps {
+$$ = new Astlt($1,$2);
+std::cout << "Syntax Object: exp. " << std::endl;}
+	| exp gt exps {
+$$ = new Astgt($1,$2);
+std::cout << "Syntax Object: exp. " << std::endl;}
+	| exp eql exps {
+$$ = new Asteql($1,$2);
+std::cout << "Syntax Object: exp. " << std::endl;}
+	| exp neq exps {
+$$ = new Astneq($1,$2);
+std::cout << "Syntax Object: exp. " << std::endl;}
+	| exp leftSh exps {
+$$ = new AstLeftSh($1,$2);
+std::cout << "Syntax Object: exp. " << std::endl;}
+	| exp rightSh exps {
+$$ = new AstRightSh($1,$2);
+std::cout << "Syntax Object: exp. " << std::endl;}
+	| exp add exps {
+$$ = new AstAdd($1,$2);
+std::cout << "Syntax Object: exp. " << std::endl;}
+	| exp sub exps {
+$$ = new AstSub($1,$2);
+std::cout << "Syntax Object: exp. " << std::endl;}
+	| exp mul exps {
+$$ = new AstMul($1,$2);
+std::cout << "Syntax Object: exp. " << std::endl;}
+	| exp Div exps {
+$$ = new AstDiv($1,$2);
+std::cout << "Syntax Object: exp. " << std::endl;}
+	| exp mod exps {
+$$ = new AstMod($1,$2);
+std::cout << "Syntax Object: exp. " << std::endl;}
+	| inc exp %prec preInc  {
+std::cout << "Syntax Object: exp. " << std::endl;}
+	| dec exp %prec preDec {std::cout << "Syntax Object: exps. " << std::endl;}
+	| exp inc %prec postInc {std::cout << "Syntax Object: exps. " << std::endl;}
+	| exp dec %prec postDec {std::cout << "Syntax Object: exps. " << std::endl;}
+	| exp asg exps {
+$$ = new AstAsg($1,$2);
+std::cout << "Syntax Object: exp. " << std::endl;}
+	| exp aeg exps {
+$$ = new AstAeg($1,$2);
+std::cout << "Syntax Object: exp. " << std::endl;}
+	| exp meg exps {
+$$ = new AstMeg($1,$2);
+std::cout << "Syntax Object: exp. " << std::endl;}
+	| call {std::cout << "Syntax Object: exp. " << std::endl;}
+	| value {printf ("Syntax Object: exp. " << std::endl;}
+	| '(' exp ')'  {std::cout << "Syntax Object: exps. " << std::endl;}
 
 %%
 

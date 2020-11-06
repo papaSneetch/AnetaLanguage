@@ -64,7 +64,7 @@ $(lexerTargets): $(lexerPrereq)
 	flex -o$(lexIncludeLoc) $(lexSourceLoc) 
 
 $(parserLexerTargets): $(parserLexerPrereq)
-	gcc -Wall -I$(includeDir) -L$(depsDir) -c $(parserLibLoc) -o$(parserLexerObjectLoc)
+	g++ -Wall -I$(includeDir) -L$(depsDir) -c $(parserLibLoc) -o$(parserLexerObjectLoc)
 
 $(lexerBinTargets): $(lexerBinPrereq)
 	g++ -Wall -I$(includeDir) $(lexMainLoc) -o$(lexBinLoc)

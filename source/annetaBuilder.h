@@ -1,8 +1,12 @@
+#include "llvmHeaders.h"
+
 #include <vector>
 #include <map>
 #include <string>
 
-class genContext;
+#ifndef annetaBuilder
+#define annetaBuilder
+
 typedef std::vector<AstStat*> statementList; 
 typedef std::vector<AstExp> expressionList;
 typedef std::vector<AstVariableDeclaration> variableList
@@ -26,6 +30,7 @@ class AstStat : public AstNode {
 };
 
 class AstType : public AstNode {
+virtual llvm::Type* typeOf(genContext& context);
 };
 
 class AstName : public AstNode {
@@ -34,12 +39,84 @@ std::string& name;
 AstName(std::string& name):name(name){}
 };
 
-class AstBlock : public AstNode {
+class AstBlock: public AstNode {
 public:
 statementList statements;
+std::map<std::string,llvm::AllocaInst*> variableMap
 AstBlock() {};
+AstBlock(statementList& statements): statements(statements){};
 llvm::Value* codeGen(genContext& context);
 };
+
+class AstIntType: public AstType
+{
+llvm::Type* typeOf(genContext& context);
+};
+
+class AstStringType: public AstType
+{
+llvm::Type* typeOf(genContext& context);
+};
+
+class AstBoolType: public AstType
+{
+llvm::Type* typeOf(genContext& context);
+};
+
+class AstFloatType: public AstType
+{
+llvm::Type* typeOf(genContext& context);
+};
+
+class AstConstant: public AstExp
+{
+};
+
+class AstIntValue: public AstConstant
+{
+signed int value;
+AstIntValue(signed int value}:value(value){}
+llvm::Value* codeGen(genContext& context);
+};
+
+class AstStringValue: public AstConstant
+{
+std::string value;
+AstStringValue(std::string value):value(value){}
+llvm::Value* codeGen(genContext& context);
+};
+
+class AstBoolValue: public AstConstant
+{
+bool value;
+AstBoolValue(bool value):value(value){}
+llvm::Value* codeGen(genContext& context);
+};
+
+class AstFloatValue: public AstConstant
+{
+float value;
+AstFloatValue(float value):value(value){}
+llvm::Value* codeGen(genContext& context);
+};
+
+class AstIfElseStat: public AstStat
+{
+public:
+AstBlock& ifBlock;
+AstBlock& elseBlock;
+AstExp& testCondition;
+AstIfElseStat(AstBlock& ifBlock, AstBlock& elseBlock, AstExp& testCondition):ifBlock(ifBlock),elseBlock(elseBlock),returnBlock(returnBlock),testCondition(testCondition){}
+llvm::Value* codeGen(genContext& context);
+}
+
+class AstWhileLoop: public AstStat
+{
+AstBlock& whileBlock;
+AstExp& testCondition;
+AstWhileLoop(AstBlock& whileBlock,AstExp& testCondition):whileBlock(whileBlock),testCondition(testCondition){}
+llvm::Value* codeGen(genContext& context);
+}
 
 class AstBinOp: public AstExp
 {
@@ -174,40 +251,6 @@ expNode(expNode) { }
 virtual llvm::Value* codeGen(genContext& context);
 }	
 
-class AstInt : public AstExp
-{
-public:
-int val;
-AstInt(int val): val(val) {}
-llvm::Value* codeGen(genContext& context);
-};
-
-class AstFloat : public AstExp
-{
-public:
-float val;
-AstFloat(float val): val(val) {}
-llvm::Value* codeGen(genContext& context);
-};
-
-class AstBool : public AstExp
-{
-public:
-bool val;
-AstBool(bool val): val(val) {}
-llvm::Value* codeGen(genContext& context);
-};
-
-class AstString : public AstExp
-{
-public:
-std::string val;
-AstString(std::string val): val(val){}
-llvm::Value* codeGen(genContext& context);
-};
-
-
-
 class AstFunctionDeclaration : public AstStat //Note: The function declaration needs to ensure the vector memory contigentcy remains. Functions can only be defined once. May need to investigate std::move.
 {
 public:
@@ -228,8 +271,19 @@ AstVariableDeclaration(AstName& variableName, AstType& variableType): variableNa
 llvm::Value* codeGen(genContext& context);
 };
 
+class AstArrayDeclaration : public AstStat
+{
+public:
+AstName& variableName;
+AstType& variableType;
+AstIntValue& arraySize;
+AstVariableDeclaration(AstName& variableName, AstType& variableType, Value& arraySize): variableName(variableName), variableType(variableType), arraySize(arraySize) {}
+llvm::Value* codeGen(genContext& context);
+}
+
 class AstFunctionCall: public AstCall
 {
+public:
 AstName& functionName;
 expressionList args;
 AstFunctionCall(AstName& functionName, expressionList& args): functionName(functionName),args(args) {}
@@ -238,9 +292,19 @@ llvm::Value* codeGen(genContext& context);
 
 class AstVariableCall: public AstCall
 {
+public:
 std::string& variableName;
 AstVariableCall(std::string& variableName):variableName(variableName) {}
 llvm::Value* codeGen(genContext& context);
 }
 
+class AstArrayCall : public AstCall
+{
+public:
+std::string& variableName;
+AstIntValue& index;
+AstVariableCall(std::string& variableName,Value& index):variableName(variableName), index(index) {}
+llvm::Value* codeGen(genContext& context);
+};
 
+#endif annetaBuilder

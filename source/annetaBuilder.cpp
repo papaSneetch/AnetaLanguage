@@ -1,28 +1,83 @@
+#include "annetBuilder.h"
 
-llvm::Value* AstOr::codeGen()
+llvm::Type* AstIntType::typeOf(genContext& context)
 {
-return Builder.CreateOr(lhs.codeGen(),rhs.codeGen(),"or");
+return llvm::Type::getInt32Ty(context.IRContext); } 
+llvm::Type* AstStringType::typeOf(genContext& context)
+{
 }
 
-llvm::Value* AstXor::codeGen()
+llvm::Type* AstBoolType::typeOf(genContext& context)
 {
-return Builder.CreateXor(lhs,rhs,"xor");	
+return llvm::Type::getFloatTy(context.IRContext);
 }
 
-llvm::Value* AstAnd::codeGen()
+llvm::Type* AstFloatType::typeOf(genContext& context)
 {
-return Builder.CreateAnd(lhs,rhs,"and");
+return llvm::Type::getInt1Ty(context.IRContext);
 }
 
-llvm::Value* AstEql::codeGen()
+llvm::Value* AstIfElseStat::codeGen(genContext& context)
 {
-if ((lhs.getType() == IntegerTyID) && (rhs.getType() == IntegerTyID))
-{
-return Builder.CreateICmpEQ(lhs.codeGen(),rhs.codeGen(),"icmp_eq");
+BasicBlock *ifBB = BasicBlock::Create(context.IRContext,"ifStats",ifBranchFunc);
+BasicBlock *ElseBB = BasicBlock::Create(context.IRContext,"elseStats");
+BasicBlock *MergeBB = BasicBlock::Create(context.IRContext,"merge");
+llvm::Value* testResult = testCondition.codeGen(context.IRContext);
+Builder.CreateCondBr(testResult,ifBB,ElseBB);
+Builder.SetInsertPoint(ifBranchFunc);
+ifBlock.codeGen(context.IRContext); //Generates the code in the if branch.
+Builder.CreatBr(MergeBB);
+MergeBB = Builder.GetInsertBlock(); //Updates branch in case of recursive function.
+ifBranchFunc->getBasicBlockList().push_back(ElseBB); //Adds block to function.
+Builder.SetInsertPoint(ElseBB);
+elseBlock.codeGen(context.IRContext); //Generates the code for the else branch.
+Builder.CreateBr(MergeBB);
+MergeBB = Builder.GetInsertBlock();
+ifBranchFunc->Builder.GetBasicBlockList().push_back(MergeBB);
+Builder.SetInsertPoint(MergeBB);
 }
-else if ((lhs.getType() == FloatTyId) && (rhs.getType() == FloatTyId))
+
+AstWhileLoop::codeGen(genContext& context)
 {
-return Builder.CreateFCmpOEQ(lhs.codeGen(),rhs.codeGen(),"fAddTmp");
+BasicBlock *loop = BasicBlock::Create(IRContext,"loop");
+BasicBlock *endLoop = BasicBlock::Create(IRContext,"endLoop");
+BasicBlock *condEval = BasicBlock::Create(IRContext,"condEval",function);
+Builder.SetInsertPoint(condEval);
+testCondition.codeGen(context.IRContext)
+Builder.CreateCondBr(Condition_Statement_Register,loop,endLoop);
+Builder.SetInsertPoint(loop);
+whileBlock.codeGen(context.IRContext);
+Builder.CreateBr(condEval);
+Builder.SetInsertPoint(endLoop);
+}
+
+llvm::Value* AstOr::codeGen(genContext& context)
+{
+return Builder.CreateOr(lhs.codeGen(context),rhs.codeGen(context),"or");
+}
+
+llvm::Value* AstXor::codeGen(genContext& context)
+{
+return Builder.CreateXor(lhs.codeGen(context),rhs.codeGen(context),"xor");	
+}
+
+llvm::Value* AstAnd::codeGen(genContext& context)
+{
+return Builder.CreateAnd(lhs.codeGen(context),rhs.codeGen(context),"and");
+}
+
+llvm::Value* AstEql::codeGen(genContext& context)
+{
+llvm::Value* lhsValue = lhs.codeGen(context);
+llvm::Value* rhsValue = rhs.codeGen(context);
+
+if ((lhsValue.getType() == IntegerTyID) && (rhs.getType() == IntegerTyID))
+{
+return Builder.CreateICmpEQ(lhsValue(context),rhs.codeGen(context),"icmp_eq");
+}
+else if ((lhsValue.getType() == FloatTyId) && (rhs.getType() == FloatTyId))
+{
+return Builder.CreateFCmpOEQ(lhsValue(context),rhs.codeGen(context),"fAddTmp");
 }
 else
 {
@@ -31,15 +86,18 @@ exit;
 }
 }
 
-llvm::Value* Astneq::codeGen()
+llvm::Value* Astneq::codeGen(genContext& context)
 {
-if ((lhs.getType() == IntegerTyID) && (rhs.getType() == IntegerTyID))
+llvm::Value* lhsValue = lhs.codeGen(context);
+llvm::Value* rhsValue = rhs.codeGen(context);
+
+if ((lhsValue.getType() == IntegerTyID) && (rhs.getType() == IntegerTyID))
 {
-return Builder.CreateICmpNE(lhs.codeGen(),rhs.codeGen(),"icmp_ne");
+return Builder.CreateICmpNE(lhsValue(context),rhs.codeGen(context),"icmp_ne");
 }
-else if ((lhs.getType() == FloatTyId) && (rhs.getType() == FloatTyId))
+else if ((lhsValue.getType() == FloatTyId) && (rhs.getType() == FloatTyId))
 {
-return Builder.CreateFCmpONE(lhs.codeGen(),rhs.codeGen(),"fAddTmp");
+return Builder.CreateFCmpONE(lhsValue(context),rhs.codeGen(context),"fAddTmp");
 }
 else
 {
@@ -48,30 +106,33 @@ exit;
 }
 }
 
-llvm::Value* AstLeftSh::codeGen()
+llvm::Value* AstLeftSh::codeGen(genContext& context)
 {
-return Builder.CreateShl(lhs.codeGen(),rhs.codeGen(),"shl");
+return Builder.CreateShl(lhs.codeGen(context),rhs.codeGen(context),"shl");
 }
 
-llvm::Value* AstRightSh::codeGen()
+llvm::Value* AstRightSh::codeGen(genContext& context)
 {
-return Builder.CreateLShr(lhs.codeGen(),rhs.codeGen(),"LShr");
+return Builder.CreateLShr(lhs.codeGen(context),rhs.codeGen(context),"LShr");
 }
 
-llvm::Value* AstAsg::codeGen()
+llvm::Value* AstAsg::codeGen(genContext& context)
 {
-return Builder.CreateStore(lhs.codeGen(),rhs.codeGen());
+return Builder.CreateStore(lhs.codeGen(context),rhs.codeGen(context));
 }
 
-llvm::Value* Astleq::codeGen()
+llvm::Value* Astleq::codeGen(genContext& context)
 {
+llvm::Value* lhsValue = lhs.codeGen(context);
+llvm::Value* rhsValue = rhs.codeGen(context);
+
 if ((lhs.getType() == IntegerTyID) && (rhs.getType() == IntegerTyID))
 {
-return Builder.CreateICmpSLE(lhs.codeGen(),rhs.codeGen(),"icmp_ule");
+return Builder.CreateICmpSLE(lhsValue(context),rhs.codeGen(context),"icmp_ule");
 }
-else if ((lhs.getType() == FloatTyId) && (rhs.getType() == FloatTyId))
+else if ((lhsValue.getType() == FloatTyId) && (rhs.getType() == FloatTyId))
 {
-return Builder.CreateFCmpOLE(lhs.codeGen(),rhs.codeGen(),"fAddTmp");
+return Builder.CreateFCmpOLE(lhsValue(context),rhs.codeGen(context),"fAddTmp");
 }
 else
 {
@@ -79,15 +140,18 @@ std::cout<<"Type Mismatch!" std::endl;
 exit;
 }
 
-llvm::Value* Astgeq::codeGen()
+llvm::Value* Astgeq::codeGen(genContext& context)
 {
-if ((lhs.getType() == IntegerTyID) && (rhs.getType() == IntegerTyID))
+llvm::Value* lhsValue = lhs.codeGen(context);
+llvm::Value* rhsValue = rhs.codeGen(context);
+
+if ((lhsValue.getType() == IntegerTyID) && (rhs.getType() == IntegerTyID))
 {
-return Builder.CreateICmpSGE(lhs.codeGen(),rhs.codeGen(),"icmp_uge");
+return Builder.CreateICmpSGE(lhsValue(context),rhs.codeGen(context),"icmp_uge");
 }
-else if ((lhs.getType() == FloatTyId) && (rhs.getType() == FloatTyId))
+else if ((lhsValue.getType() == FloatTyId) && (rhs.getType() == FloatTyId))
 {
-return Builder.CreateFCmpOGE(lhs.codeGen(),rhs.codeGen(),"fAddTmp");
+return Builder.CreateFCmpOGE(lhsValue(context),rhs.codeGen(context),"fAddTmp");
 }
 else
 {
@@ -95,15 +159,18 @@ std::cout<<"Type Mismatch!" std::endl;
 exit;
 }
 
-llvm::Value* Astlt::codeGen()
+llvm::Value* Astlt::codeGen(genContext& context)
 {
-if ((lhs.getType() == IntegerTyID) && (rhs.getType() == IntegerTyID))
+llvm::Value* lhsValue = lhs.codeGen(context);
+llvm::Value* rhsValue = rhs.codeGen(context);
+
+if ((lhsValue.getType() == IntegerTyID) && (rhs.getType() == IntegerTyID))
 {
-return Builder.CreateICmpSLT(lhs.codeGen(),rhs.codeGen(),"icmp_ult");
+return Builder.CreateICmpSLT(lhsValue(context),rhs.codeGen(context),"icmp_ult");
 }
-else if ((lhs.getType() == FloatTyId) && (rhs.getType() == FloatTyId))
+else if ((lhsValue.getType() == FloatTyId) && (rhs.getType() == FloatTyId))
 {
-return Builder.CreateFCmpOLT(lhs.codeGen(),rhs.codeGen(),"fAddTmp");
+return Builder.CreateFCmpOLT(lhsValue(context),rhs.codeGen(context),"fAddTmp");
 }
 else
 {
@@ -111,15 +178,17 @@ std::cout<<"Type Mismatch!" std::endl;
 exit;
 }
 
-llvm::Value* Astgt::codeGen()
+llvm::Value* Astgt::codeGen(genContext& context)
 {
-if ((lhs.getType() == IntegerTyID) && (rhs.getType() == IntegerTyID))
+llvm::Value* lhsValue = lhs.codeGen(context);
+llvm::Value* rhsValue = rhs.codeGen(context);
+if ((lhsValue.getType() == IntegerTyID) && (rhs.getType() == IntegerTyID))
 {
-return Builder.CreateICmpSGT(lhs.codeGen(),rhs.codeGen(),"icmp_ugt");
+return Builder.CreateICmpSGT(lhsValue(context),rhs.codeGen(context),"icmp_ugt");
 }
-else if ((lhs.getType() == FloatTyId) && (rhs.getType() == FloatTyId))
+else if ((lhsValue.getType() == FloatTyId) && (rhs.getType() == FloatTyId))
 {
-return Builder.CreateFCmpOGT(lhs.codeGen(),rhs.codeGen(),"fAddTmp");
+return Builder.CreateFCmpOGT(lhsValue(context),rhs.codeGen(context),"fAddTmp");
 }
 else
 {
@@ -127,49 +196,18 @@ std::cout<<"Type Mismatch!" std::endl;
 exit;
 }
 
-llvm::Value* AstAdd::codeGen()
+llvm::Value* AstAdd::codeGen(genContext& context)
 {
-if ((lhs.getType() == IntegerTyID) && (rhs.getType() == IntegerTyID))
-{
-return Builder.CreateAdd(lhs.codeGen(),rhs.codeGen(),"addTmp");
-}
-else if ((lhs.getType() == FloatTyId) && (rhs.getType() == FloatTyId))
-{
-return Builder.CreateFAdd(lhs.codeGen(),rhs.codeGen(),"fAddTmp");
-}
-else
-{
-std::cout<<"Type Mismatch!" std::endl;
-exit;
-}
-}
+llvm::Value* lhsValue = lhs.codeGen(context);
+llvm::Value* rhsValue = rhs.codeGen(context);
 
-llvm::Value* AstSub::codeGen()
+if ((lhsValue.getType() == IntegerTyID) && (rhs.getType() == IntegerTyID))
 {
-if ((lhs.getType() == IntegerTyID) && (rhs.getType() == IntegerTyID))
-{
-return Builder.CreateSub(lhs.codeGen(),rhs.codeGen(),"subTmp");
+return Builder.CreateAdd(lhsValue(context),rhs.codeGen(context),"addTmp");
 }
-else if ((lhs.getType() == FloatTyId) && (rhs.getType() == FloatTyId))
+else if ((lhsValue.getType() == FloatTyId) && (rhs.getType() == FloatTyId))
 {
-return Builder.CreateFSub(lhs.codeGen(),rhs.codeGen(),"fSubTmp");
-}
-else
-{
-std::cout<<"Type Mismatch!" std::endl;
-exit;
-}
-}
-
-llvm::Value* AstMul::codeGen()
-{
-if ((lhs.getType() == IntegerTyID) && (rhs.getType() == IntegerTyID))
-{
-return Builder.CreateMul(lhs.codeGen(),rhs.codeGen(),"mulTmp");
-}
-else if ((lhs.getType() == FloatTyId) && (rhs.getType() == FloatTyId))
-{
-return Builder.CreateFMul(lhs.codeGen(),rhs.codeGen(),"CreateFMul");
+return Builder.CreateFAdd(lhsValue(context),rhs.codeGen(context),"fAddTmp");
 }
 else
 {
@@ -178,15 +216,18 @@ exit;
 }
 }
 
-llvm::Value* AstDiv::codeGen()
+llvm::Value* AstSub::codeGen(genContext& context)
 {
-if ((lhs.getType() == IntegerTyID) && (rhs.getType() == IntegerTyID))
+llvm::Value* lhsValue = lhs.codeGen(context);
+llvm::Value* rhsValue = rhs.codeGen(context);
+
+if ((lhsValue.getType() == IntegerTyID) && (rhs.getType() == IntegerTyID))
 {
-return Builder.CreateSDiv(lhs.codeGen(),rhs.codeGen(),"uDivTmp");
+return Builder.CreateSub(lhsValue(context),rhs.codeGen(context),"subTmp");
 }
-else if ((lhs.getType() == FloatTyId) && (rhs.getType() == FloatTyId))
+else if ((lhsValue.getType() == FloatTyId) && (rhs.getType() == FloatTyId))
 {
-return Builder.CreateFDiv(lhs.codeGen(),rhs.codeGen(),"fDivTmp");
+return Builder.CreateFSub(lhsValue(context),rhs.codeGen(context),"fSubTmp");
 }
 else
 {
@@ -195,15 +236,18 @@ exit;
 }
 }
 
-llvm::Value* AstMod::codeGen()
+llvm::Value* AstMul::codeGen(genContext& context)
 {
-if ((lhs.getType() == IntegerTyID) && (rhs.getType() == IntegerTyID))
+llvm::Value* lhsValue = lhs.codeGen(context);
+llvm::Value* rhsValue = rhs.codeGen(context);
+
+if ((lhsValue.getType() == IntegerTyID) && (rhs.getType() == IntegerTyID))
 {
-return Builder.CreateSRem(lhs.codeGen(),rhs.codeGen(),"uRemTmp");
+return Builder.CreateMul(lhsValue(context),rhs.codeGen(context),"mulTmp");
 }
-else if ((lhs.getType() == FloatTyId) && (rhs.getType() == FloatTyId))
+else if ((lhsValue.getType() == FloatTyId) && (rhs.getType() == FloatTyId))
 {
-return Builder.CreateFRem(lhs.codeGen(),rhs.codeGen(),"fRemTmp");
+return Builder.CreateFMul(lhsValue(context),rhs.codeGen(context),"CreateFMul");
 }
 else
 {
@@ -212,15 +256,18 @@ exit;
 }
 }
 
-llvm::Value* AstAdd::codeGen()
+llvm::Value* AstDiv::codeGen(genContext& context)
 {
-if ((lhs.getType() == IntegerTyID) && (rhs.getType() == IntegerTyID))
+llvm::Value* lhsValue = lhs.codeGen(context);
+llvm::Value* rhsValue = rhs.codeGen(context);
+
+if ((lhsValue.getType() == IntegerTyID) && (rhs.getType() == IntegerTyID))
 {
-return Builder.Create(lhs.codeGen(),rhs.codeGen(),);
+return Builder.CreateSDiv(lhsValue(context),rhs.codeGen(context),"uDivTmp");
 }
-else if ((lhs.getType() == FloatTyId) && (rhs.getType() == FloatTyId))
+else if ((lhsValue.getType() == FloatTyId) && (rhs.getType() == FloatTyId))
 {
-return Builder.CreateFAdd(lhs.codeGen(),rhs.codeGen(),);
+return Builder.CreateFDiv(lhsValue(context),rhs.codeGen(context),"fDivTmp");
 }
 else
 {
@@ -229,37 +276,89 @@ exit;
 }
 }
 
-llvm::Value* AstInt::codeGen()
+llvm::Value* AstMod::codeGen(genContext& context)
+{
+llvm::Value* lhsValue = lhs.codeGen(context);
+llvm::Value* rhsValue = rhs.codeGen(context);
+
+if ((lhsValue.getType() == IntegerTyID) && (rhs.getType() == IntegerTyID))
+{
+return Builder.CreateSRem(lhsValue(context),rhs.codeGen(context),"uRemTmp");
+}
+else if ((lhsValue.getType() == FloatTyId) && (rhs.getType() == FloatTyId))
+{
+return Builder.CreateFRem(lhsValue(context),rhs.codeGen(context),"fRemTmp");
+}
+else
+{
+std::cout<<"Type Mismatch!" std::endl;
+exit;
+}
+}
+
+llvm::Value* AstAdd::codeGen(genContext& context)
+{
+llvm::Value* lhsValue = lhs.codeGen(context);
+llvm::Value* rhsValue = rhs.codeGen(context);
+
+if ((lhsValue.getType() == IntegerTyID) && (rhs.getType() == IntegerTyID))
+{
+return Builder.Create(lhsValue(context),rhs.codeGen(context));
+}
+else if ((lhsValue.getType() == FloatTyId) && (rhs.getType() == FloatTyId))
+{
+return Builder.CreateFAdd(lhsValue(context),rhs.codeGen(context),);
+}
+else
+{
+std::cout<<"Type Mismatch!" std::endl;
+exit;
+}
+}
+
+llvm::Value* AstIntValue::codeGen(genContext& context)
 {
 return ConstantInt::get(IRContext,APInt(32,val)
 }
 
-llvm::Value* AstFloat::codeGen()
+llvm::Value* AstFloatValue::codeGen(genContext& context)
 {
 return ConstantFP::get(IRContext,APFloat(val));
 }
 
-llvm::Value* AstBool::codeGen()
+llvm::Value* AstBoolValue::codeGen(genContext& context)
 {
 return ConstantInt::get(IRContext,APInt(1,val));
 }
 
-llvm::Value* AstVariableDeclaration::codeGen()
+llvm::Value* AstVariableDeclaration::codeGen(genContext& context)
 {
-
-};
-
-llvm::Value* AstFunctionDeclaration::codeGen()
-{
-
+return Builder.CreateAlloca(variableType.typeOf(),"varDecl");
 }
 
-llvm::Value* AstVariableCall::codeGen()
+llvm::Value* AstArrayDeclaration::codeGen(genContext& context)
 {
-
+return Builder.CreateAlloca(variableType.typeOf(),arraySize.codeGen(context),"arrayDecl");
 }
 
-llvm::Value* AstFunctionCall::codeGen()
+llvm::Value* AstFunctionCall::codeGen(genContext& context)
+{
+return Builder.CreateCall(functionLookUp(functionName),args,"functionCall");
+}
+
+llvm::Value* AstVariableCall::codeGen(genContext& context)
+{
+return Builder.CreateLoad(context.varLookUp(variableName),"varCall"); 
+}
+
+llvm::Value* AstArrayCall::codeGen(genContext& context)
+{
+Value* variable = context.varLookUp(variableName);
+Value* arrayPointer = llvm::ConstantFolder::CreateGetElementPtr(variable*.typeOf(),variable,index);
+return Builder.CreateLoad(arrayPointer,"arrayCall");
+}
+
+llvm::Value* AstFunctionDeclaration::codeGen(genContext& context)
 {
 vector<const Type*> argTypes;
 variableList::const_iterator it;
@@ -267,25 +366,25 @@ for (it = arguments.begin(); it != arguments.end(); it++)
 {
 argTypes.push_back((typeof(**it).type));
 }
-FunctionType *ft = FunctionType::get(typeof(returnType),argTypes,false);
+FunctionType *ft = FunctionType::get(returnType.typeOf(),argTypes,false);
 Function* func = Function::Create(ft,Function::ExternalLinkage,functionName,CurModule.get());
 context.pushblock(block);
 for (it=arguments.begin(); it!= arguments.end(); it++)
 {
-(**it).codeGen();
+(**it).codeGen(context);
 }
-block.genCode();
+block.genCode(context);
 context.popblock(block);
 return func;
 }
 
-llvm::Value* AstBlock::codeGen()
+llvm::Value* AstBlock::codeGen(genContext& context)
 {
 statementList::const_iterator it;
 Value* genResult;
 for (it = statements.begin();it != statements.end(); it++)
 {
-genResult = (**it).codeGen();
+genResult = (**it).codeGen(context);
 }
 return genResult;
 }

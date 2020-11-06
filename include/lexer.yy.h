@@ -1109,22 +1109,24 @@ case 43:
 YY_RULE_SETUP
 #line 192 "./source/lexer.l"
 {
+yylval -> string = yytext;
 return nameV;
 }
 	YY_BREAK
 case 44:
 YY_RULE_SETUP
-#line 196 "./source/lexer.l"
+#line 197 "./source/lexer.l"
 {
+yylval -> string = yytext;
 return stringV;
 }
 	YY_BREAK
 case 45:
 YY_RULE_SETUP
-#line 201 "./source/lexer.l"
+#line 203 "./source/lexer.l"
 ECHO;
 	YY_BREAK
-#line 1128 "./include/lexer.yy.h"
+#line 1130 "./include/lexer.yy.h"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -2129,6 +2131,6 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 201 "./source/lexer.l"
+#line 203 "./source/lexer.l"
 
 

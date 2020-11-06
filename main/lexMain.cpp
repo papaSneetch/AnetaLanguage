@@ -1,9 +1,6 @@
-#include <iostream>
-extern "C"
-{
 #include <stdio.h>
+#include <iostream>
 #include "lexer.yy.h"
-}
 
 int main(int argc, char *argv[])
 {

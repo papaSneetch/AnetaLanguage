@@ -108,8 +108,9 @@ union YYSTYPE
 int int_val;
 bool bool_val;
 float float_val;
+char* string;
 
-#line 113 "./include/parser.tab.h"
+#line 114 "./include/parser.tab.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

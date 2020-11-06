@@ -190,10 +190,12 @@ return floatV;
 }
 
 [a-zA-Z][a-zA-Z0-9_]* {
+yylval -> string = yytext;
 return nameV;
 }
 
 \"[^\n"]+\"  {
+yylval -> string = yytext;
 return stringV;
 }
 
