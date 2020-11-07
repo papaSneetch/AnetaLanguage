@@ -267,6 +267,8 @@ class AstVariableDeclaration : public AstStat
 public:
 AstName& variableName;
 AstType& variableType;
+AstExp* initializer = nullptr;
+bool globalBool = false;
 AstVariableDeclaration(AstName& variableName, AstType& variableType): variableName(variableName), variableType(variableType) {}
 llvm::Value* codeGen(genContext& context);
 };
@@ -277,6 +279,8 @@ public:
 AstName& variableName;
 AstType& variableType;
 AstIntValue& arraySize;
+expressionList* initializer = nullptr;
+bool globalBool = false;
 AstVariableDeclaration(AstName& variableName, AstType& variableType, Value& arraySize): variableName(variableName), variableType(variableType), arraySize(arraySize) {}
 llvm::Value* codeGen(genContext& context);
 }

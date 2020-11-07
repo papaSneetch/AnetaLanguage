@@ -333,17 +333,31 @@ return ConstantInt::get(IRContext,APInt(1,val));
 
 llvm::Value* AstVariableDeclaration::codeGen(genContext& context)
 {
+if (globalBool)
+{
+return (*context.CurModule,variableType.typeOf(),false,llvm::GlobalVariable::ExternalLinkage,,variableName.name);
+}
+else
+{
 return Builder.CreateAlloca(variableType.typeOf(),"varDecl");
+}
 }
 
 llvm::Value* AstArrayDeclaration::codeGen(genContext& context)
 {
+if (globalBool)
+{
+}
+else
+{
 return Builder.CreateAlloca(variableType.typeOf(),arraySize.codeGen(context),"arrayDecl");
+}
 }
 
 llvm::Value* AstFunctionCall::codeGen(genContext& context)
 {
-return Builder.CreateCall(functionLookUp(functionName),args,"functionCall");
+llvm::Function* function = CurModule->getFunction(functionName);
+return Builder.CreateCall(function,args,"functionCall");
 }
 
 llvm::Value* AstVariableCall::codeGen(genContext& context)
