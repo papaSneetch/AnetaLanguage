@@ -226,9 +226,24 @@ llvm::Value* codeGen(genContext& context);
 
 class AstAsg: public AstBinOp
 {
-AstAsg(AstExp& lhs, AstExp& rhs):AstExp(lhs,rhs){}
-llvm::Value* codeGen(genContext& context);
 };
+
+class AstVariableAsg: public AstAsg
+{
+AstName& variableName;
+AstExp& rhs;
+AstVariableAsg(AstName& variableName, AstExp& rhs):variableName(variableName),rhs(rhs){}
+llvm::Value* codeGen(genContext& context);
+}
+
+class AstArrayAsg: public AstAsg
+{
+AstName& variableName;
+AstExp& rhs;
+AstIntValue& index;
+AstArrayAsg(AstName& variableName, AstExp& rhs, AstIntValue& index):variableName(variableName),rhs(rhs),index(index){}
+llvm::Value* codeGen(genContext& context);
+}
 
 class AstAeg: public AstBinOp
 {

@@ -236,7 +236,13 @@ std::cout << "Syntax Object: value. " << std::endl;
 	| stringV {
 $$ = new AstStringValue(std::string($1));
 std::cout << "Syntax Object: value. " << std::endl;
+
+	| arrayV {
+std::cout << "Syntax Object: value. " << std::endl;
 }
+
+arrayV:
+	  '{' exps '}'
 
 
 whileloop:
@@ -306,8 +312,8 @@ std::cout << "Syntax Object: exp. " << std::endl;}
 	| dec exp %prec preDec {std::cout << "Syntax Object: exps. " << std::endl;}
 	| exp inc %prec postInc {std::cout << "Syntax Object: exps. " << std::endl;}
 	| exp dec %prec postDec {std::cout << "Syntax Object: exps. " << std::endl;}
-	| exp asg exps {
-$$ = new AstAsg($1,$2);
+	| asgOptions
+$$ = $1
 std::cout << "Syntax Object: exp. " << std::endl;}
 	| exp aeg exp {
 $$ = new AstAeg($1,$2);
@@ -318,6 +324,16 @@ std::cout << "Syntax Object: exp. " << std::endl;}
 	| call {std::cout << "Syntax Object: exp. " << std::endl;}
 	| value {printf ("Syntax Object: exp. " << std::endl;}
 	| '(' exp ')'  {std::cout << "Syntax Object: exps. " << std::endl;}
+
+asgOptions:
+	  nameV asg exp {
+$$ = new AstVariableAsg($1,$3);
+std::cout << "Syntax Object: asgOptions." << std::endl;
+}
+	| nameV '[' intV ']' asg exp {
+$$ = new AstArrayAsg($1,$6,$3);
+std::cout << "Syntax Object: asgOptions." << std::endl;
+}
 
 %%
 

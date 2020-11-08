@@ -116,9 +116,14 @@ llvm::Value* AstRightSh::codeGen(genContext& context)
 return Builder.CreateLShr(lhs.codeGen(context),rhs.codeGen(context),"LShr");
 }
 
-llvm::Value* AstAsg::codeGen(genContext& context)
+llvm::Value* AstVariableAsg::codeGen(genContext& context)
 {
-return Builder.CreateStore(lhs.codeGen(context),rhs.codeGen(context));
+return Builder.CreateStore(context.varLookUp(variableName.name),rhs.codeGen(context),variableName.name);
+}
+
+llvm::Value* AstArrayAsg::codeGen(genContext& context)
+{
+return Builder.CreateInsertValue(context.varLookUp(variableName.name),rhs.codeGen(context),index.codeGen(context),variableName.name);
 }
 
 llvm::Value* Astleq::codeGen(genContext& context)
@@ -335,22 +340,24 @@ llvm::Value* AstVariableDeclaration::codeGen(genContext& context)
 {
 if (globalBool)
 {
-return (*context.CurModule,variableType.typeOf(),false,llvm::GlobalVariable::ExternalLinkage,,variableName.name);
+return GlobalVariable (*context.CurModule,variableType.typeOf(),false,llvm::GlobalVariable::ExternalLinkage,,variableName.name);
 }
 else
 {
-return Builder.CreateAlloca(variableType.typeOf(),"varDecl");
+return Builder.CreateAlloca(variableType.typeOf(),variableName.name);
 }
 }
 
 llvm::Value* AstArrayDeclaration::codeGen(genContext& context)
 {
+llvm::Type arrayType = llvm::ArrayType::get(variableType.typeOf(),arraySize.codeGen(context));
 if (globalBool)
 {
+return GlobalVariable(*context.CurModule,arrayType,false,llvm::GlobalVariable::ExternalLinkage,initializer,variableName.name);
 }
 else
 {
-return Builder.CreateAlloca(variableType.typeOf(),arraySize.codeGen(context),"arrayDecl");
+return Builder.CreateAlloca(arrayType,variableName.name);
 }
 }
 
@@ -362,14 +369,12 @@ return Builder.CreateCall(function,args,"functionCall");
 
 llvm::Value* AstVariableCall::codeGen(genContext& context)
 {
-return Builder.CreateLoad(context.varLookUp(variableName),"varCall"); 
+return Builder.CreateLoad(context.varLookUp(variableName),variableName); 
 }
 
 llvm::Value* AstArrayCall::codeGen(genContext& context)
 {
-Value* variable = context.varLookUp(variableName);
-Value* arrayPointer = llvm::ConstantFolder::CreateGetElementPtr(variable*.typeOf(),variable,index);
-return Builder.CreateLoad(arrayPointer,"arrayCall");
+return Builder.CreateExtractValue(context.varLookUp(variableName,index,variableName);
 }
 
 llvm::Value* AstFunctionDeclaration::codeGen(genContext& context)
