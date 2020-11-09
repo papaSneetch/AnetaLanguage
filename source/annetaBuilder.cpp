@@ -126,6 +126,25 @@ llvm::Value* AstArrayAsg::codeGen(genContext& context)
 return Builder.CreateInsertValue(context.varLookUp(variableName.name),rhs.codeGen(context),index.codeGen(context),variableName.name);
 }
 
+llvm::Value* AstArrayListAsg::codeGen(genContext& context)
+{
+Value* arrayLocation = context.varLookUp(variableName.name);
+arrayValues::const_iterator it;
+signed int curIndex = index.value;
+int arraySize = arrayLocation.getArraySize();
+for (it = arguments.begin(); it != arguments.end(); it++)
+{
+Builder.CreateInsertValue(arrayLocation,**it.codeGen(context),AstIntValue(curIndex).codeGen(context),variableName.name);
+curIndex++;
+if (curIndex > arraySize)
+{
+curIndex = 0;
+}
+
+}
+return arrayLocation;
+}
+
 llvm::Value* Astleq::codeGen(genContext& context)
 {
 llvm::Value* lhsValue = lhs.codeGen(context);
@@ -351,14 +370,25 @@ return Builder.CreateAlloca(variableType.typeOf(),variableName.name);
 llvm::Value* AstArrayDeclaration::codeGen(genContext& context)
 {
 llvm::Type arrayType = llvm::ArrayType::get(variableType.typeOf(),arraySize.codeGen(context));
-if (globalBool)
+Value* arrayLocation = Builder.CreateAlloca(arrayType,variableName.name);
+
+if (initializer)
 {
-return GlobalVariable(*context.CurModule,arrayType,false,llvm::GlobalVariable::ExternalLinkage,initializer,variableName.name);
-}
-else
+initializer::const_iterator it;
+signed int curIndex = 0;
+for (it = arguments.begin(); it != arguments.end(); it++)
 {
-return Builder.CreateAlloca(arrayType,variableName.name);
+Builder.CreateInsertValue(arrayLocation,**it.codeGen(context),AstIntValue(curIndex).codeGen(context),variableName.name);
+curIndex++;
+if (curIndex > arraySize.value)
+{
+curIndex = 0;
 }
+
+}
+}
+
+return arrayLocation
 }
 
 llvm::Value* AstFunctionCall::codeGen(genContext& context)

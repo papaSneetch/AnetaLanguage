@@ -184,7 +184,9 @@ arrayDecl:
       arrayDefine  {
 $$ = $1;
 std::cout << "Syntax Object: arrayDecl. " << std::endl;}
-	| arrayDefine asg exps  {std::cout << "Syntax Object: arrayDecl. " << std::endl;}
+	| arrayDefine asg exps  {
+$$ = $1; $1->initializer=$3;
+std::cout << "Syntax Object: arrayDecl. " << std::endl;}
 
 arrayDefine:
 	  type arrayNames '[' intV ']' {
@@ -332,6 +334,16 @@ std::cout << "Syntax Object: asgOptions." << std::endl;
 }
 	| nameV '[' intV ']' asg exp {
 $$ = new AstArrayAsg($1,$6,$3);
+std::cout << "Syntax Object: asgOptions." << std::endl;
+}
+
+	| nameV '[' intV ']' asg exps {
+$$ = new AstArrayListAsg($1,$6,$3);
+std::cout << "Syntax Object: asgOptions." << std::endl;
+}
+
+	| nameV '[' ']' asg exps {
+$$ = new AstArrayListAsg($1,$5,AstIntValue(0));
 std::cout << "Syntax Object: asgOptions." << std::endl;
 }
 

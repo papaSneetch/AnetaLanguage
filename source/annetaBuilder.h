@@ -100,6 +100,15 @@ AstFloatValue(float value):value(value){}
 llvm::Value* codeGen(genContext& context);
 };
 
+class AstArrayListAsg: public AstConstant
+{
+expressionList& arrayValues;
+AstName& variableName;
+AstIntValue& index;
+AstArrayValue(AstName& name,expressionList& arrayValue,AstIntValue& index = AstIntValue(0)):name(name),arrayValue(arrayValue), index(index){}
+llvm::Value* codeGen(genContext& context);
+}
+
 class AstIfElseStat: public AstStat
 {
 public:
@@ -295,7 +304,6 @@ AstName& variableName;
 AstType& variableType;
 AstIntValue& arraySize;
 expressionList* initializer = nullptr;
-bool globalBool = false;
 AstVariableDeclaration(AstName& variableName, AstType& variableType, Value& arraySize): variableName(variableName), variableType(variableType), arraySize(arraySize) {}
 llvm::Value* codeGen(genContext& context);
 }
