@@ -64,9 +64,9 @@ progs:
 	| progs prog
 
 prog:
-	  funcDecl { 
+	  funcDecl {
+$$ = $1; 
 std::cout << "Syntax Object: stat." << std::endl; }
-	| arrayDecl ';' {std::cout << "Syntax Object: stat. " << std::endl;}
 	| varDecl ';' {
 $$ = $1; $1->globalBool = true;
 std::cout << "Syntax Object: stat. " << std::endl;}
@@ -102,25 +102,25 @@ std::cout << "Syntax Object: stat. " << std::endl;}
 $$ = $1;
 std::cout << "Syntax Object: exps. " << std::endl;} 
 
-condStat:
- 	  ifStat {std::cout << "Syntax Object: condStat. " << std::endl;}
-	| ifStat elseIfStat {std::cout << "Syntax Object: condStat. \" << std::endl;}
-	| ifStat elseStat {std::cout << "Syntax Object: condStat. " << std::endl;}
 
-ifStat:
-	  ifS '(' exps ')' block {
-$$ = new
+condStat:
+	  ifS '(' exp ')' block condElseBlock{
+$$ = new AstIfElseStat($5,$3,$6);
 std::cout << "Syntax Object: ifStat. " << std::endl;
-   
 }
 
-elseIfStat:
-	  elseS ifStat elseStat {std::cout << "Syntax Object: elseIfStat. " << std::endl;}
-    | elseS ifStat block elseIfStat {std::cout << "Syntax Object: elseIfStat. " << std::endl;}
-	| elseS ifStat block  {std::cout << "Syntax Object: elseIfStat. " << std::endl;}
+	| ifS '(' exp ')' block {
+$$ = new AstIfElseStat($5,$3,nullptr);
+std::cout << "Syntax Object: ifStat. " << std::endl;
+}
 
-elseStat:
-	  elseS '{' stats '}' {std::cout << "Syntax Object: elseStat. " << std::endl;}
+condElseBlock:
+	  elseS condStat{
+$$ = new AstBlock(); $$->statements.push_back($1);
+std::cout << "Syntax Object: elseIfStat. " << std::endl;}
+	| elseS block {
+$$ = $2;
+std::cout << "Syntax Object: elseIfStat. " << std::endl};
 
 varDecl:
 	  varDefine  {
@@ -217,9 +217,15 @@ returnStat:
 	  returnS exps
 
 call:
-	  varCall	   {std::cout << "Syntax Object: call. " << std::endl;}
-	| funcCall {std::cout << "Syntax Object: call. " << std::endl;}
-	| arrayCall {std::cout << "Syntax Object: call. " << std::endl;}
+	  varCall	   {
+$$ = $1;
+std::cout << "Syntax Object: call. " << std::endl;}
+	| funcCall {
+$$ = $1;
+std::cout << "Syntax Object: call. " << std::endl;}
+	| arrayCall {
+$$ = $1;
+std::cout << "Syntax Object: call. " << std::endl;}
 
 value:
 	  intV {
@@ -239,13 +245,7 @@ std::cout << "Syntax Object: value. " << std::endl;
 $$ = new AstStringValue(std::string($1));
 std::cout << "Syntax Object: value. " << std::endl;
 
-	| arrayV {
-std::cout << "Syntax Object: value. " << std::endl;
 }
-
-arrayV:
-	  '{' exps '}'
-
 
 whileloop:
 	  whileS '(' exp ')' block {

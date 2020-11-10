@@ -99,7 +99,7 @@ float value;
 AstFloatValue(float value):value(value){}
 llvm::Value* codeGen(genContext& context);
 };
-
+ $$->
 class AstArrayListAsg: public AstConstant
 {
 expressionList& arrayValues;
@@ -113,9 +113,9 @@ class AstIfElseStat: public AstStat
 {
 public:
 AstBlock& ifBlock;
-AstBlock& elseBlock;
+AstBlock* elseBlock;
 AstExp& testCondition;
-AstIfElseStat(AstBlock& ifBlock, AstBlock& elseBlock, AstExp& testCondition):ifBlock(ifBlock),elseBlock(elseBlock),returnBlock(returnBlock),testCondition(testCondition){}
+AstIfElseStat(AstBlock& ifBlock, AstExp& testCondition,AstBlock* elseBlock = nullptr):ifBlock(ifBlock),elseBlock(elseBlock),returnBlock(returnBlock),testCondition(testCondition){}
 llvm::Value* codeGen(genContext& context);
 }
 
