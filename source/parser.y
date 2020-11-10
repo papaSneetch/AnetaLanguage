@@ -61,7 +61,15 @@ char* string;
 
 progs:
 	  prog
+{
+currentContext.codeObjects.push($1);
+std::cout << "Syntax Object: prog. " << std::endl;
+}
 	| progs prog
+{
+currentContext.codeObjects.push($2);
+std::cout << "Syntax Object: prog. " << std::endl;
+}
 
 prog:
 	  funcDecl {
@@ -164,8 +172,12 @@ $$ = new AstFunctionDeclaration($1,$2,variableList(),$6);
 std::cout << "Syntax Object: funcDecl. " << std::endl;}
 
 funcDef:
-	| type nameV '(' argDecl ')' block {std::cout << "Syntax Object: funcDef. " << std::endl;}
-	| type nameV '(' ')' block {std::cout << "Syntax Object: funcDef. " << std::endl;}
+	| type nameV '(' argDecl ')' block {
+$$ = new AstFunctionDeclaration($1,$2,$4,$6);
+std::cout << "Syntax Object: funcDef. " << std::endl;}
+	| type nameV '(' ')' block {
+$$ = new AstFunctionDeclaration($1,$2,nullptr,$5);
+std::cout << "Syntax Object: funcDef. " << std::endl;}
  
 block:
 	   '{' stats '}' {
@@ -214,7 +226,9 @@ $$ = AstVariableCall(std::string($1));
 std::cout << "Syntax Object: varCall. " << std::endl;}
 
 returnStat:
-	  returnS exps
+	  returnS exp {
+$$ = new AstReturnStat($2);
+}
 
 call:
 	  varCall	   {

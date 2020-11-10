@@ -427,6 +427,11 @@ context.popblock(block);
 return func;
 }
 
+llvm::Value* AstReturnStat::codeGen(genContext& context)
+{
+return Builder.CreateRet(returnValue.codeGen(context));
+}
+
 llvm::Value* AstBlock::codeGen(genContext& context)
 {
 statementList::const_iterator it;

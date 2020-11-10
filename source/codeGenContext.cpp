@@ -17,5 +17,18 @@ int genContext::popBlock(AstBlock* block)
 blockList.popBack(block);
 }
 
+int printCode()
+{
+CurModule->print(errs(),nullptr);
+}
 
+int genCode()
+{
+while (!codeObjects.empty())
+{
+codeObjects.front() -> codeGen(*this);
+codeObjects.pop();
+}
+return 0;
+}
 

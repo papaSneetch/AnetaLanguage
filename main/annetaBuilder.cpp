@@ -1,9 +1,7 @@
 #include <iostream>
-extern "C"
-{
 #include <stdio.h>
 #include "parser.tab.h"
-}
+#include "annetaBuilder.h"
 
 int main(int argc, char *argv[])
 {
@@ -17,5 +15,7 @@ if (argc >= 3)
 	}	
 
 	yyparse();
+	currentContext.genCode();
+	currentContext.printCode();
 	return 0;
 }

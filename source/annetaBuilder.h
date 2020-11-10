@@ -278,13 +278,21 @@ virtual llvm::Value* codeGen(genContext& context);
 class AstFunctionDeclaration : public AstStat //Note: The function declaration needs to ensure the vector memory contigentcy remains. Functions can only be defined once. May need to investigate std::move.
 {
 public:
-variableList arguments;
+variableList* arguments;
 AstType& returnType;
 AstName& functionName;
 AstBlock& block;
-AstFunctionDeclartion(AstType& returnType,AstName& functionName, variableList& arguments, AstBlock& block): returnType(returnType), functionName(functionName), arguments(arguments), block(block) {}
+AstFunctionDeclartion(AstType& returnType,AstName& functionName, variableList* arguments, AstBlock& block): returnType(returnType), functionName(functionName), arguments(arguments), block(block) {}
 llvm::Value* codeGen(genContext& context);
 };
+
+class AstReturnStat: public AstStat
+{
+public:
+AstExp& returnValue;
+AstReturnStat(AstExp& returnValue):returnValue(returnValue){}
+llvm::Value* codeGen(genContext& context);
+}
 
 class AstVariableDeclaration : public AstStat
 {
