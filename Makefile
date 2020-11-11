@@ -53,7 +53,36 @@ lexerBinPrereq = $(parserLexerObjectLoc) $(lexIncludeLoc) $(lexMainLoc)
 parserBinTargets = $(parserBinLoc)
 parserBinPrereq = $(parserLexerObjectLoc) $(parserIncludeLoc) $(parserMainLoc)
 
-targets = $(parserTargets) $(lexerTargets) $(parserLexerTargets) $(lexerBinTargets) $(parserBinTargets) 
+annetaBuilderSource = annetaBuilder.cpp
+annetaBuilderInclude = annetaBuilder.h
+annetaBuilderObject = annetaBuilder.o
+annetaBuilderSourceLoc = $(sourceDir)/$(annetaBuilderSourceName)
+annetaBuilderIncludeLoc = $(includeDir)/$(annetaBuilderInclude)
+annetaBuilderPrereq = $(annetaBuilderSourceLoc) $(annetaBuilderIncludeLoc)
+annetaBuilderObjectLoc = $(objectDir)/$(annetaBuilderObject)
+annetaBuilderTarget = $(annetaBuilderObjectLoc)
+
+codeGenContextSource = codeGenContext.cpp
+codeGenContextInclude = codeGenContext.h
+codeGenContextObject = codeGenContext.o
+codeGenContextSourceLoc = $(sourceDir)/$(codeGenContextSource)
+codeGenContextIncludeLoc = $(includeDir)/$(codeGenContextInclude)
+codeGenContextPrereq = $(codeGenContextSourceLoc) $(codeGenContextIncludeLoc)
+codeGenContextObjectLoc = $(objectDir)/$(codeGenContextObject)
+codeGenContextTarget = $(codeGenContextObjectLoc)
+
+includes = $(parserIncludeLoc) $(lexIncludeLoc) $(annetaBuilderIncludeLoc) $(codeGenContextInclude)
+objects = $(parserLexetObjectLoc) $(annetaBuilderObjectLoc) $(codeGenContextObject)
+
+annetaBuilderMain = annetaBuilderMain.cpp
+annetaBuilderMainBin = annetaBuilder.bin
+annetaBuilderMainLoc = $(mainDir)/$(annetaBuilderMain)
+annetaBuilderMainPrereq = $(includes) $(objects)
+annetaBuilderMainTargetLoc= $(binDir)/$(annetaBuilderMainBin)
+
+targets = $(parserTargets) $(lexerTargets) $(parserLexerTargets) $(lexerBinTargets) $(annetaBuilderTarget) $(codeGenContextTarget) $(annetaBuilderMainTargetLoc)
+
+
 
 all: $(targets)
 
@@ -72,4 +101,14 @@ $(lexerBinTargets): $(lexerBinPrereq)
 
 $(parserBinTargets): $(parserBinPrereq)
 	g++ -Wall -I$(includeDir) $(parserMainLoc) $(parserLexerObjectLoc) -o$(parserBinLoc)
+
+$(annetaBuilderTarget): $(annetaBuilderPrereq)
+	g++ -Wall -I$(includeDir) -c$(annetaBuilderSourceLoc) -o$(annetaBuilderObjectLoc)
+
+$(codeGenContextTarget): $(codeGenContextPrereq)
+	g++ -Wall -I$(includeDir) -c$(codeGenContextSourceLoc) -o$(codeGenContextObjectLoc
+
+$(annetaBuilderMainTargetLoc): $(annetaBuilderMainPrereq)
+	g++ -Wall -I$(includeDir) $(annetaBuilderMainLoc) $(objects) -o$(annetaBuilderMainTargetLoc)
+
 

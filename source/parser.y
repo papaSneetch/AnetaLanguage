@@ -36,12 +36,11 @@ char* string;
 %token ',' ';' '(' ')'
 %token <AstNode> intV boolV floatV stringV nameV
 
-%type <int_val> intV
-%type <bool_val> boolV
-%type <float_val> floatV
-%type <string> stringV
-%type <string> nameV
-
+%type <AstNode> prog stats stat asgOptions exp
+%type <AstNode> funcDecl varDecl arrayDecl funcCall
+%type <AstNode> condStat whileloop returnStat block
+%type <AstNode> condElseBlock type arrayDefine 
+%type <AstNode> call varCall arrayCall value
 
 %left ','
 %right aeq meq asg
@@ -85,7 +84,7 @@ $1 -> statements.push_back($2);
 std::cout << "Syntax Object: stats. " << std::endl;}
 	| stat {
 $$ = new AstBlock(); $$->statements.push_back($1);
-std::cout << "Created New Block. Syntax Objcet: stats. " << std::endl;
+std::cout << "Created New Block. Syntax Objcet: stats. " << std::endl;}
 
 stat:
 	  varDecl ';' {
@@ -276,66 +275,66 @@ std::cout << "Syntax Object: exps. " << std::endl;}
 
 exp:
 	| exp Or exp {
-$$ = new AstOr($1,$2);
+$$ = new AstOr($1,$3);
 std::cout << "Syntax Object: exp. " << std::endl;}
 	| exp Xor exp {
-$$ = new AstXor($1,$2);
+$$ = new AstXor($1,$3);
 std::cout << "Syntax Object: exp. " << std::endl;}
 	| exp And exp {
-$$ = new AstAnd($1,$2);
+$$ = new AstAnd($1,$3);
 std::cout << "Syntax Object: exp. " << std::endl;}
 	| exp leq exp {
-$$ = new Astleq($1,$2);
+$$ = new Astleq($1,$3);
 std::cout << "Syntax Object: exp. " << std::endl;}
 	| exp geq exp {
-$$ = new Astgeq($1,$2);
+$$ = new Astgeq($1,$3);
 std::cout << "Syntax Object: exp. " << std::endl;}
 	| exp lt exp {
-$$ = new Astlt($1,$2);
+$$ = new Astlt($1,$3);
 std::cout << "Syntax Object: exp. " << std::endl;}
 	| exp gt exp {
-$$ = new Astgt($1,$2);
+$$ = new Astgt($1,$3);
 std::cout << "Syntax Object: exp. " << std::endl;}
 	| exp eql exp {
 $$ = new Asteql($1,$2);
 std::cout << "Syntax Object: exp. " << std::endl;}
 	| exp neq exp {
-$$ = new Astneq($1,$2);
+$$ = new Astneq($1,$3);
 std::cout << "Syntax Object: exp. " << std::endl;}
 	| exp leftSh exp {
-$$ = new AstLeftSh($1,$2);
+$$ = new AstLeftSh($1,$3);
 std::cout << "Syntax Object: exp. " << std::endl;}
 	| exp rightSh exp {
-$$ = new AstRightSh($1,$2);
+$$ = new AstRightSh($1,$3);
 std::cout << "Syntax Object: exp. " << std::endl;}
 	| exp add exp {
-$$ = new AstAdd($1,$2);
+$$ = new AstAdd($1,$3);
 std::cout << "Syntax Object: exp. " << std::endl;}
 	| exp sub exp {
-$$ = new AstSub($1,$2);
+$$ = new AstSub($1,$3);
 std::cout << "Syntax Object: exp. " << std::endl;}
 	| exp mul exp {
-$$ = new AstMul($1,$2);
+$$ = new AstMul($1,$3);
 std::cout << "Syntax Object: exp. " << std::endl;}
 	| exp Div exp {
-$$ = new AstDiv($1,$2);
+$$ = new AstDiv($1,$3);
 std::cout << "Syntax Object: exp. " << std::endl;}
 	| exp mod exp {
-$$ = new AstMod($1,$2);
+$$ = new AstMod($1,$3);
 std::cout << "Syntax Object: exp. " << std::endl;}
 	| inc exp %prec preInc  {
 std::cout << "Syntax Object: exp. " << std::endl;}
 	| dec exp %prec preDec {std::cout << "Syntax Object: exps. " << std::endl;}
 	| exp inc %prec postInc {std::cout << "Syntax Object: exps. " << std::endl;}
 	| exp dec %prec postDec {std::cout << "Syntax Object: exps. " << std::endl;}
-	| asgOptions
+	| asgOptions{
 $$ = $1
 std::cout << "Syntax Object: exp. " << std::endl;}
 	| exp aeg exp {
-$$ = new AstAeg($1,$2);
+$$ = new AstAeg($1,$3);
 std::cout << "Syntax Object: exp. " << std::endl;}
 	| exp meg exp {
-$$ = new AstMeg($1,$2);
+$$ = new AstMeg($1,$3);
 std::cout << "Syntax Object: exp. " << std::endl;}
 	| call {std::cout << "Syntax Object: exp. " << std::endl;}
 	| value {printf ("Syntax Object: exp. " << std::endl;}
