@@ -44,6 +44,12 @@
 #if YYDEBUG
 extern int yydebug;
 #endif
+/* "%code requires" blocks.  */
+#line 17 "./source/parser.y"
+
+#include <annetaBuilder.h>
+
+#line 53 "./include/parser.tab.h"
 
 /* Token kinds.  */
 #ifndef YYTOKENTYPE
@@ -68,7 +74,7 @@ extern int yydebug;
     sub = 269,                     /* sub  */
     mul = 270,                     /* mul  */
     Div = 271,                     /* Div  */
-    pow = 272,                     /* pow  */
+    exponent = 272,                /* exponent  */
     Xor = 273,                     /* Xor  */
     mod = 274,                     /* mod  */
     inc = 275,                     /* inc  */
@@ -91,10 +97,11 @@ extern int yydebug;
     nameV = 292,                   /* nameV  */
     aeq = 293,                     /* aeq  */
     meq = 294,                     /* meq  */
-    postInc = 295,                 /* postInc  */
-    postDec = 296,                 /* postDec  */
-    preInc = 297,                  /* preInc  */
-    preDec = 298                   /* preDec  */
+    asgOptionsPrec = 295,          /* asgOptionsPrec  */
+    postInc = 296,                 /* postInc  */
+    postDec = 297,                 /* postDec  */
+    preInc = 298,                  /* preInc  */
+    preDec = 299                   /* preDec  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -103,14 +110,17 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 22 "./source/parser.y"
+#line 27 "./source/parser.y"
 
 int int_val;
 bool bool_val;
 float float_val;
 char* string;
+AstNode* node
+expressionList* expressions;
+variableList* args;
 
-#line 114 "./include/parser.tab.h"
+#line 124 "./include/parser.tab.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

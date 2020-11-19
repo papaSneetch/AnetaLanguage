@@ -3,7 +3,7 @@
 
 #include <iostream>
 #include "lexer.yy.h"
-#include "llvmHeaders.h"
+#include <codeGenContext.h>
 
 #define YYPARSE_PARAM yyscan_t scanner
 #define YYLEX_PARAM scanner
@@ -14,36 +14,56 @@ void yyerror (char const *s)
 }
 %}
 
+%code requires {
+#include <annetaBuilder.h>
+}
+
 /*Token Declarations */
 
 %require "3.7.3"
 %define api.pure
 
-%union{
+%union
+{
 int int_val;
 bool bool_val;
 float float_val;
 char* string;
+AstNode* node
+expressionList* expressions;
+variableList* args;
 }
 
-%token <AstNode> ifS elseS whileS returnS
-%token <AstNode> stringD intD floatD boolD
-%token <AstNode> leftSh rightSh add sub
-%token <AstNode> mul Div pow Xor mod inc dec
-%token <AstNode> eql leq geq lt gt neq
-%token <AstNode> aeg meg asg And Or
+%token ifS elseS whileS returnS
+%token stringD intD floatD boolD
+%token leftSh rightSh add sub
+%token mul Div exponent Xor mod inc dec
+%token eql leq geq lt gt neq
+%token aeg meg asg And Or
 %token '[' ']' '{' '}'
 %token ',' ';' '(' ')'
-%token <AstNode> intV boolV floatV stringV nameV
+%token intV boolV floatV stringV nameV
 
-%type <AstNode> prog stats stat asgOptions exp
-%type <AstNode> funcDecl varDecl arrayDecl funcCall
-%type <AstNode> condStat whileloop returnStat block
-%type <AstNode> condElseBlock type arrayDefine 
-%type <AstNode> call varCall arrayCall value
+%type <node> prog stats stat asgOptions exp
+%type <node> funcDecl varDecl arrayDecl funcCall
+%type <node> condStat whileloop returnStat block
+%type <node> condElseBlock type arrayDefine 
+%type <node> call varCall arrayCall value
+%type <node> varDefine funcDef arrayNames
+%type <node> varNames incDecOption
+
+%type <int_val> intV
+%type <bool_val> boolV
+%type <float_val> floatV
+%type <string> stringV
+%type <string> nameV
+
+%type <expressions> exps
+%type <args> argDecl
+
 
 %left ','
-%right aeq meq asg
+%right aeq meq asgOptionsPrec asg
 %left Or 
 %left Xor
 %left And
@@ -93,9 +113,6 @@ std::cout << "Syntax Object: stat. " << std::endl;}
 	| arrayDecl ';' {
 $$ = $1;
 std::cout << "Syntax Object: stat. " << std::endl;}
-	| funcCall ';' {
-$$ = $1;
-std::cout << "Syntax Object: stat. " << std::endl;}
 	| condStat {
 $$ = $1;
 std::cout << "Syntax Object: stat. " << std::endl;}
@@ -123,7 +140,7 @@ std::cout << "Syntax Object: ifStat. " << std::endl;
 
 condElseBlock:
 	  elseS condStat{
-$$ = new AstBlock(); $$->statements.push_back($1);
+$$ = new AstBlock(); $$->statements.push_back($2);
 std::cout << "Syntax Object: elseIfStat. " << std::endl;}
 	| elseS block {
 $$ = $2;
@@ -133,8 +150,8 @@ varDecl:
 	  varDefine  {
 $$ = $1;
 std::cout << "Syntax Object: varDecl. " << std::endl;}
-	| varDefine asg exps  {
-$$ = $1; $$->initializer=$3;
+	| varDefine asg '{' exps '}'  {
+$$ = $1; $$->initializer=$4;
 std::cout << "Syntax Object: varDecl. " << std::endl;}
 
 varDefine:
@@ -167,11 +184,11 @@ funcDecl:
 $$ = new AstFunctionDeclaration($1,$2,,$6);
 std::cout << "Syntax Object: funcDecl. " << std::endl;}
 	| type nameV '(' ')' block ';' {
-$$ = new AstFunctionDeclaration($1,$2,variableList(),$6);
+$$ = new AstFunctionDeclaration($1,$2,variableList(),$5);
 std::cout << "Syntax Object: funcDecl. " << std::endl;}
 
 funcDef:
-	| type nameV '(' argDecl ')' block {
+	  type nameV '(' argDecl ')' block {
 $$ = new AstFunctionDeclaration($1,$2,$4,$6);
 std::cout << "Syntax Object: funcDef. " << std::endl;}
 	| type nameV '(' ')' block {
@@ -195,13 +212,13 @@ arrayDecl:
       arrayDefine  {
 $$ = $1;
 std::cout << "Syntax Object: arrayDecl. " << std::endl;}
-	| arrayDefine asg exps  {
-$$ = $1; $1->initializer=$3;
+	| arrayDefine asg '{' exps '}'  {
+$$ = $1; $1->initializer=$4;
 std::cout << "Syntax Object: arrayDecl. " << std::endl;}
 
 arrayDefine:
 	  type arrayNames '[' intV ']' {
-$$ = new AstArrayDeclaration($2,$1,$3);
+$$ = new AstArrayDeclaration($2,$1,$4);
 std::cout << "Syntax Object: arrayDefine. " << std::endl;}
 
 arrayNames:
@@ -216,7 +233,7 @@ std::cout << "Syntax Object: listInit. " << std::endl;}
 
 arrayCall:
 	  nameV '[' intV ']' {
-$$ = new AstArrayCall(std::string($1,$2),
+$$ = new AstArrayCall(std::string($1,$3),
 std::cout << "Syntax Object: arrayCall. " << std::endl;}
 
 varCall:
@@ -242,7 +259,7 @@ std::cout << "Syntax Object: call. " << std::endl;}
 
 value:
 	  intV {
-$$ = new AstIntValue(std::stoi($1);
+$$ = new AstIntValue(std::stoi($1));
 std::cout << "Syntax Object: value. " << std::endl;
 }
 	| boolV {
@@ -274,7 +291,7 @@ $$ = new expressionList(); $$->push_back($1);
 std::cout << "Syntax Object: exps. " << std::endl;}
 
 exp:
-	| exp Or exp {
+	  exp Or exp {
 $$ = new AstOr($1,$3);
 std::cout << "Syntax Object: exp. " << std::endl;}
 	| exp Xor exp {
@@ -296,7 +313,7 @@ std::cout << "Syntax Object: exp. " << std::endl;}
 $$ = new Astgt($1,$3);
 std::cout << "Syntax Object: exp. " << std::endl;}
 	| exp eql exp {
-$$ = new Asteql($1,$2);
+$$ = new Asteql($1,$3);
 std::cout << "Syntax Object: exp. " << std::endl;}
 	| exp neq exp {
 $$ = new Astneq($1,$3);
@@ -322,20 +339,14 @@ std::cout << "Syntax Object: exp. " << std::endl;}
 	| exp mod exp {
 $$ = new AstMod($1,$3);
 std::cout << "Syntax Object: exp. " << std::endl;}
-	| inc exp %prec preInc  {
-std::cout << "Syntax Object: exp. " << std::endl;}
-	| dec exp %prec preDec {std::cout << "Syntax Object: exps. " << std::endl;}
-	| exp inc %prec postInc {std::cout << "Syntax Object: exps. " << std::endl;}
-	| exp dec %prec postDec {std::cout << "Syntax Object: exps. " << std::endl;}
-	| asgOptions{
+	| inc incDecOption {std::cout << "Syntax Object: exp. " << std::endl;} %prec preInc
+	| dec incDecOption {std::cout << "Syntax Object: exps. " << std::endl;} %prec preDec
+	| incDecOption inc {std::cout << "Syntax Object: exps. " << std::endl;} %prec postInc
+	| incDecOption dec {std::cout << "Syntax Object: exps. " << std::endl;} %prec postDec 
+	| asgOptions {
 $$ = $1
 std::cout << "Syntax Object: exp. " << std::endl;}
-	| exp aeg exp {
-$$ = new AstAeg($1,$3);
-std::cout << "Syntax Object: exp. " << std::endl;}
-	| exp meg exp {
-$$ = new AstMeg($1,$3);
-std::cout << "Syntax Object: exp. " << std::endl;}
+%prec asgOptionsPrec
 	| call {std::cout << "Syntax Object: exp. " << std::endl;}
 	| value {printf ("Syntax Object: exp. " << std::endl;}
 	| '(' exp ')'  {std::cout << "Syntax Object: exps. " << std::endl;}
@@ -350,14 +361,27 @@ $$ = new AstArrayAsg($1,$6,$3);
 std::cout << "Syntax Object: asgOptions." << std::endl;
 }
 
-	| nameV '[' intV ']' asg exps {
-$$ = new AstArrayListAsg($1,$6,$3);
+	| nameV '[' intV ']' asg '{' exps '}' {
+$$ = new AstArrayListAsg($1,$7,$3);
 std::cout << "Syntax Object: asgOptions." << std::endl;
 }
 
-	| nameV '[' ']' asg exps {
-$$ = new AstArrayListAsg($1,$5,AstIntValue(0));
+	| nameV '[' ']' asg '{' exps '}' {
+$$ = new AstArrayListAsg($1,$6,AstIntValue(0));
 std::cout << "Syntax Object: asgOptions." << std::endl;
+}
+
+incDecOption:
+	  call {
+$$ = $1;
+std::cout << "Syntax Object: incDecOption. " << std::endl;}
+
+	| value {
+$$ = $1;
+std::cout << "Syntax Object: incDecOption. " << std::endl;}
+	| '(' exp ')' {
+$$ = $2;
+std::cout << "Syntax Object: incDecOption. " << std::endl;
 }
 
 %%

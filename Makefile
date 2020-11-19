@@ -1,3 +1,6 @@
+CC = g++ -w -fmax-errors=5 -I$(includeDir)
+
+
 sourceDir = ./source
 binDir = ./bin
 includeDir = ./include
@@ -56,7 +59,7 @@ parserBinPrereq = $(parserLexerObjectLoc) $(parserIncludeLoc) $(parserMainLoc)
 annetaBuilderSource = annetaBuilder.cpp
 annetaBuilderInclude = annetaBuilder.h
 annetaBuilderObject = annetaBuilder.o
-annetaBuilderSourceLoc = $(sourceDir)/$(annetaBuilderSourceName)
+annetaBuilderSourceLoc = $(sourceDir)/$(annetaBuilderSource)
 annetaBuilderIncludeLoc = $(includeDir)/$(annetaBuilderInclude)
 annetaBuilderPrereq = $(annetaBuilderSourceLoc) $(annetaBuilderIncludeLoc)
 annetaBuilderObjectLoc = $(objectDir)/$(annetaBuilderObject)
@@ -82,33 +85,34 @@ annetaBuilderMainTargetLoc= $(binDir)/$(annetaBuilderMainBin)
 
 targets = $(parserTargets) $(lexerTargets) $(parserLexerTargets) $(lexerBinTargets) $(annetaBuilderTarget) $(codeGenContextTarget) $(annetaBuilderMainTargetLoc)
 
-
-
 all: $(targets)
 
+annetaBuilder: $(annetaBuilderTarget)
+
+codeGenContext: $(codeGenContextTarget)
+
 $(parserTargets): $(parserPrereq) 
-	bison --defines=$(parserIncludeLoc) $(bisonSourceLoc) -o$(parserLibLoc) 
+	bison --defines=$(parserIncludeLoc) -Wcounterexamples $(bisonSourceLoc) -o$(parserLibLoc) 
 
 $(lexerTargets): $(lexerPrereq) 
 	flex -o$(lexIncludeLoc) $(lexSourceLoc) 
 
 $(parserLexerTargets): $(parserLexerPrereq)
-	g++ -Wall -I$(includeDir) -L$(depsDir) -c $(parserLibLoc) -o$(parserLexerObjectLoc)
+	$(CC) -L$(depsDir) -c $(parserLibLoc) -o$(parserLexerObjectLoc)
 
 $(lexerBinTargets): $(lexerBinPrereq)
-	g++ -Wall -I$(includeDir) $(lexMainLoc) -o$(lexBinLoc)
-	$(lexTestLoc)
+	$(CC) $(lexMainLoc) -o$(lexBinLoc)
 
 $(parserBinTargets): $(parserBinPrereq)
-	g++ -Wall -I$(includeDir) $(parserMainLoc) $(parserLexerObjectLoc) -o$(parserBinLoc)
+	$(CC) $(parserMainLoc) $(parserLexerObjectLoc) -o$(parserBinLoc)
 
 $(annetaBuilderTarget): $(annetaBuilderPrereq)
-	g++ -Wall -I$(includeDir) -c$(annetaBuilderSourceLoc) -o$(annetaBuilderObjectLoc)
+	$(CC) -c $(annetaBuilderSourceLoc) -o$(annetaBuilderObjectLoc)
 
 $(codeGenContextTarget): $(codeGenContextPrereq)
-	g++ -Wall -I$(includeDir) -c$(codeGenContextSourceLoc) -o$(codeGenContextObjectLoc
+	$(CC) -c$(codeGenContextSourceLoc) -o$(codeGenContextObjectLoc
 
 $(annetaBuilderMainTargetLoc): $(annetaBuilderMainPrereq)
-	g++ -Wall -I$(includeDir) $(annetaBuilderMainLoc) $(objects) -o$(annetaBuilderMainTargetLoc)
+	$(CC) $(annetaBuilderMainLoc) $(objects) -o$(annetaBuilderMainTargetLoc)
 
 

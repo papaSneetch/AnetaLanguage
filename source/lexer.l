@@ -96,7 +96,7 @@ return Div;
 }
 
 "^^" {
-return pow;
+return exponent;
 }
 
 "^" {

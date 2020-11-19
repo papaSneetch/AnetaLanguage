@@ -951,7 +951,7 @@ case 21:
 YY_RULE_SETUP
 #line 98 "./source/lexer.l"
 {
-return pow;
+return exponent;
 }
 	YY_BREAK
 case 22:
