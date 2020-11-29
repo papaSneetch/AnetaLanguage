@@ -1,5 +1,5 @@
-CC = g++ -w -fmax-errors=5 -I$(includeDir)
-
+CC = clang++ -Wall -I $(includeDir)
+llvmLib = ../../Libaries/rootLibaries/llvm-11.0.0/lib
 
 sourceDir = ./source
 binDir = ./bin
@@ -10,6 +10,7 @@ dataDir = ./data
 mainDir = ./main
 depsDir = ./deps
 testDir = ./test
+confDir = ./conf
 testScriptsDir = $(testDir)/bashScripts
 
 lexSource = lexer.l
@@ -24,6 +25,9 @@ parserLib = parser.tab.c
 parserObject = parser.tab.o
 parserBin = parser.bin
 parserMain = parserMain.cpp
+
+llvmFlagsSource = llvmFlags.txt
+llvmFlagsSourceLoc = $(confDir)/$(llvmFlagsSource)
 
 bisonSourceLoc = $(sourceDir)/$(bisonSource)
 parserIncludeLoc = $(includeDir)/$(parserInclude)
@@ -51,10 +55,10 @@ parserLexerTargets = $(parserLexerObjectLoc)
 parserLexerPrereq = $(parserTargets) $(lexerTargets)
 
 lexerBinTargets = $(lexBinLoc)
-lexerBinPrereq = $(parserLexerObjectLoc) $(lexIncludeLoc) $(lexMainLoc)
+lexerBinPrereq = $(parserLexerObjectLoc) $(lexIncludeLoc) $(lexMainLoc) $(llvmFlagsSourceLoc)
 
 parserBinTargets = $(parserBinLoc)
-parserBinPrereq = $(parserLexerObjectLoc) $(parserIncludeLoc) $(parserMainLoc)
+parserBinPrereq = $(parserLexerObjectLoc) $(parserIncludeLoc) $(parserMainLoc) $(llvmFlagsSourceLoc)
 
 annetaBuilderSource = annetaBuilder.cpp
 annetaBuilderInclude = annetaBuilder.h
@@ -74,16 +78,20 @@ codeGenContextPrereq = $(codeGenContextSourceLoc) $(codeGenContextIncludeLoc)
 codeGenContextObjectLoc = $(objectDir)/$(codeGenContextObject)
 codeGenContextTarget = $(codeGenContextObjectLoc)
 
-includes = $(parserIncludeLoc) $(lexIncludeLoc) $(annetaBuilderIncludeLoc) $(codeGenContextInclude)
-objects = $(parserLexetObjectLoc) $(annetaBuilderObjectLoc) $(codeGenContextObject)
+includes = $(parserIncludeLoc) $(lexIncludeLoc) $(annetaBuilderIncludeLoc) $(codeGenContextIncludeLoc)
+objects = $(parserLexetObjectLoc) $(annetaBuilderObjectLoc) $(codeGenContextObjectLoc)
 
 annetaBuilderMain = annetaBuilderMain.cpp
+annetaBuilderMainObject = annetaBuilderMain.o
+annetaBuilderMainObjectLoc = $(objectDir)/$(annetaBuilderMainObject)
 annetaBuilderMainBin = annetaBuilder.bin
 annetaBuilderMainLoc = $(mainDir)/$(annetaBuilderMain)
-annetaBuilderMainPrereq = $(includes) $(objects)
+annetaBuilderMainPrereq = $(includes) $(objects) $(llvmFlagsSourceLoc)
 annetaBuilderMainTargetLoc= $(binDir)/$(annetaBuilderMainBin)
 
-targets = $(parserTargets) $(lexerTargets) $(parserLexerTargets) $(lexerBinTargets) $(annetaBuilderTarget) $(codeGenContextTarget) $(annetaBuilderMainTargetLoc)
+
+
+targets = $(codeGenContextTarget) $(annetaBuilderTarget) $(parserTargets) $(lexerTargets) $(parserLexerTargets) $(annetaBuilderMainTargetLoc) $(parserBinTargets) $(lexerBinTargets) 
 
 all: $(targets)
 
@@ -91,28 +99,30 @@ annetaBuilder: $(annetaBuilderTarget)
 
 codeGenContext: $(codeGenContextTarget)
 
+$(codeGenContextTarget): $(codeGenContextPrereq)
+	$(CC) -c $(codeGenContextSourceLoc) -o$(codeGenContextObjectLoc)
+
+$(annetaBuilderTarget): $(annetaBuilderPrereq)
+	$(CC) -c $(annetaBuilderSourceLoc) -o$(annetaBuilderObjectLoc)
+
 $(parserTargets): $(parserPrereq) 
-	bison --defines=$(parserIncludeLoc) -Wcounterexamples $(bisonSourceLoc) -o$(parserLibLoc) 
+	bison --defines=$(parserIncludeLoc) -Wcounterexamples -Wconflicts-sr -Wother  $(bisonSourceLoc) -o$(parserLibLoc) 
 
 $(lexerTargets): $(lexerPrereq) 
 	flex -o$(lexIncludeLoc) $(lexSourceLoc) 
 
 $(parserLexerTargets): $(parserLexerPrereq)
-	$(CC) -L$(depsDir) -c $(parserLibLoc) -o$(parserLexerObjectLoc)
-
-$(lexerBinTargets): $(lexerBinPrereq)
-	$(CC) $(lexMainLoc) -o$(lexBinLoc)
-
-$(parserBinTargets): $(parserBinPrereq)
-	$(CC) $(parserMainLoc) $(parserLexerObjectLoc) -o$(parserBinLoc)
-
-$(annetaBuilderTarget): $(annetaBuilderPrereq)
-	$(CC) -c $(annetaBuilderSourceLoc) -o$(annetaBuilderObjectLoc)
-
-$(codeGenContextTarget): $(codeGenContextPrereq)
-	$(CC) -c$(codeGenContextSourceLoc) -o$(codeGenContextObjectLoc
+	$(CC) -c $(parserLibLoc) -o$(parserLexerObjectLoc)
 
 $(annetaBuilderMainTargetLoc): $(annetaBuilderMainPrereq)
-	$(CC) $(annetaBuilderMainLoc) $(objects) -o$(annetaBuilderMainTargetLoc)
+	 $(CC) -c $(annetaBuilderMainLoc) -o $(annetaBuilderMainObjectLoc) 
+	 $(CC) -o $(annetaBuilderMainTargetLoc) $(annetaBuilderMainObjectLoc) $(parserLexerObjectLoc) $(codeGenContextObjectLoc) $(annetaBuilderObjectLoc) @$(llvmFlagsSourceLoc)
+
+$(parserBinTargets): $(parserBinPrereq)
+	 $(CC) $(parserMainLoc)  $(parserLexerObjectLoc) $(codeGenContextObjectLoc) $(annetaBuilderObjectLoc) -o$(parserBinLoc) @$(llvmFlagsSourceLoc)
+
+$(lexerBinTargets): $(lexerBinPrereq)
+	$(CC) $(lexMainLoc) -o$(lexBinLoc) @$(llvmFlagsSourceLoc)
+
 
 

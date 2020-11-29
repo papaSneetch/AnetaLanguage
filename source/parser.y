@@ -15,7 +15,7 @@ void yyerror (char const *s)
 %}
 
 %code requires {
-#include <annetaBuilder.h>
+#include "annetaBuilder.h"
 }
 
 /*Token Declarations */
@@ -29,14 +29,24 @@ int int_val;
 bool bool_val;
 float float_val;
 char* string;
-AstNode* node
+AstNode* node;
+AstStat* statement;
+AstExp* expression;
+AstConstant* constant;
+AstIntValue* intPtr;
+AstBlock* blockPtr;
+AstVariableDeclaration* varDecl;
+AstGlobalVariableDeclaration* globalVarDecl;
+AstArrayDeclaration* arrayDecl;
+AstName* name;
+AstType* type;
+statementList* statements;
 expressionList* expressions;
 variableList* args;
 }
 
 %token ifS elseS whileS returnS
-%token stringD intD floatD boolD
-%token leftSh rightSh add sub
+%token stringD intD floatD boolD %token leftSh rightSh add sub
 %token mul Div exponent Xor mod inc dec
 %token eql leq geq lt gt neq
 %token aeg meg asg And Or
@@ -44,13 +54,25 @@ variableList* args;
 %token ',' ';' '(' ')'
 %token intV boolV floatV stringV nameV
 
-%type <node> prog stats stat asgOptions exp
-%type <node> funcDecl varDecl arrayDecl funcCall
-%type <node> condStat whileloop returnStat block
-%type <node> condElseBlock type arrayDefine 
-%type <node> call varCall arrayCall value
-%type <node> varDefine funcDef arrayNames
-%type <node> varNames incDecOption
+%type <node> prog funcDecl 
+
+%type <statements> stats 
+%type <statement> stat condStat returnStat whileloop
+%type <expression> call varCall arrayCall funcCall
+%type <expression> incDecOption asgOptions exp arrayReferenceExp
+%type <constant> value 
+%type <intPtr> arrayReference
+
+%type <varDecl> varDecl
+%type<globalVarDecl> globalVarDecl
+
+%type <arrayDecl> arrayDefine arrayDecl
+
+%type <name> varNames arrayNames
+
+%type <type> type
+
+%type <blockPtr> block condElseBlock
 
 %type <int_val> intV
 %type <bool_val> boolV
@@ -59,8 +81,7 @@ variableList* args;
 %type <string> nameV
 
 %type <expressions> exps
-%type <args> argDecl
-
+%type <args> argDecl funcArgs
 
 %left ','
 %right aeq meq asgOptionsPrec asg
@@ -81,12 +102,12 @@ variableList* args;
 progs:
 	  prog
 {
-currentContext.codeObjects.push($1);
+currentContext.pushAstNode($1);
 std::cout << "Syntax Object: prog. " << std::endl;
 }
 	| progs prog
 {
-currentContext.codeObjects.push($2);
+currentContext.pushAstNode($2);
 std::cout << "Syntax Object: prog. " << std::endl;
 }
 
@@ -94,16 +115,16 @@ prog:
 	  funcDecl {
 $$ = $1; 
 std::cout << "Syntax Object: stat." << std::endl; }
-	| varDecl ';' {
-$$ = $1; $1->globalBool = true;
+	| globalVarDecl ';' {
+$$ = $1; 
 std::cout << "Syntax Object: stat. " << std::endl;}
 
 stats:
 	  stats stat {
-$1 -> statements.push_back($2);
+$$ = $1; $$->push_back(AstStatPtr($2));
 std::cout << "Syntax Object: stats. " << std::endl;}
 	| stat {
-$$ = new AstBlock(); $$->statements.push_back($1);
+$$ = new statementList(); $$->push_back(AstStatPtr($1));
 std::cout << "Created New Block. Syntax Objcet: stats. " << std::endl;}
 
 stat:
@@ -116,8 +137,8 @@ std::cout << "Syntax Object: stat. " << std::endl;}
 	| condStat {
 $$ = $1;
 std::cout << "Syntax Object: stat. " << std::endl;}
-	| exps ';' {
-$$ = $1;
+	| exp ';' {
+$$ = new AstExpStat($1);
 std::cout << "Syntax Object: stat. " << std::endl;}
 	| whileloop {
 $$ = $1;
@@ -140,25 +161,27 @@ std::cout << "Syntax Object: ifStat. " << std::endl;
 
 condElseBlock:
 	  elseS condStat{
-$$ = new AstBlock(); $$->statements.push_back($2);
+$$ = new AstBlock(new statementList); $$->statements->push_back(AstStatPtr($2));
 std::cout << "Syntax Object: elseIfStat. " << std::endl;}
 	| elseS block {
 $$ = $2;
-std::cout << "Syntax Object: elseIfStat. " << std::endl};
+std::cout << "Syntax Object: elseIfStat. " << std::endl;};
+
+globalVarDecl:
+		type varNames{
+$$ = new AstGlobalVariableDeclaration($2,$1);
+std::cout << "Syntax Object: varDecl. " << std::endl;}
+	  | type varNames asg value{
+$$ = new AstGlobalVariableDeclaration($2,$1,$4); 
+std::cout << "Syntax Object: varDecl. " << std::endl;}	 
 
 varDecl:
-	  varDefine  {
-$$ = $1;
-std::cout << "Syntax Object: varDecl. " << std::endl;}
-	| varDefine asg '{' exps '}'  {
-$$ = $1; $$->initializer=$4;
-std::cout << "Syntax Object: varDecl. " << std::endl;}
-
-varDefine:
-   	  type varNames {
-for (
+	  type varNames{
 $$ = new AstVariableDeclaration($2,$1);
-std::cout << "Syntax Object: varDefine. " << std::endl;}
+std::cout << "Syntax Object: varDecl. " << std::endl;}
+	| type varNames asg exp   {
+$$ = new AstVariableDeclaration($2,$1,$4); 
+std::cout << "Syntax Object: varDecl. " << std::endl;}
 
 varNames:
 	nameV {
@@ -180,32 +203,27 @@ $$ = new AstStringType();
 std::cout << "Syntax Object: type. " << std::endl;}
 
 funcDecl:
-	  type nameV '(' argDecl ')' block ';' {
-$$ = new AstFunctionDeclaration($1,$2,,$6);
-std::cout << "Syntax Object: funcDecl. " << std::endl;}
-	| type nameV '(' ')' block ';' {
-$$ = new AstFunctionDeclaration($1,$2,variableList(),$5);
+	  type varNames funcArgs block  {
+$$ = new AstFunctionDeclaration($1,$2,$4,$3);
 std::cout << "Syntax Object: funcDecl. " << std::endl;}
 
-funcDef:
-	  type nameV '(' argDecl ')' block {
-$$ = new AstFunctionDeclaration($1,$2,$4,$6);
-std::cout << "Syntax Object: funcDef. " << std::endl;}
-	| type nameV '(' ')' block {
-$$ = new AstFunctionDeclaration($1,$2,nullptr,$5);
-std::cout << "Syntax Object: funcDef. " << std::endl;}
+funcArgs:
+	  '(' argDecl ')' {
+$$ = $2;}
+	|  '(' ')' {
+$$ = new variableList();}
  
 block:
 	   '{' stats '}' {
-$$ = $2;
+$$ = new AstBlock($2);
 std::cout << "Syntax Object: block. " << std::endl;}
 
 argDecl:
-	  argDecl ',' type nameV {
-$1->push_back(AstVariableDeclaration($4,$3);
+	  argDecl ',' type varNames {
+$$ = $1; $$->push_back(AstVariableDeclaration($4,$3));
 std::cout << "Syntax Object: argDecl. " << std::endl;}
-	| type nameV {
-$$ = new variableList(); $$->push_back($2,$1);
+	| type varNames {
+$$ = new variableList(); $$->push_back(AstVariableDeclaration($2,$1));
 std::cout << "Syntax Object: argDecl. " << std::endl;}
 
 arrayDecl:
@@ -213,13 +231,21 @@ arrayDecl:
 $$ = $1;
 std::cout << "Syntax Object: arrayDecl. " << std::endl;}
 	| arrayDefine asg '{' exps '}'  {
-$$ = $1; $1->initializer=$4;
+$$ = $1; $$->initializer=expressionListPtr($4);
 std::cout << "Syntax Object: arrayDecl. " << std::endl;}
 
 arrayDefine:
-	  type arrayNames '[' intV ']' {
-$$ = new AstArrayDeclaration($2,$1,$4);
+	  type arrayNames arrayReference {
+$$ = new AstArrayDeclaration($2,$1,$3);
 std::cout << "Syntax Object: arrayDefine. " << std::endl;}
+
+arrayReference:
+	  '[' intV ']' {
+$$ = new AstIntValue($2);}
+
+arrayReferenceExp:
+	  '[' exp ']' {
+$$ = $2;}
 
 arrayNames:
 	nameV {
@@ -228,17 +254,17 @@ std::cout << "Syntax Object: arrayNames. " << std::endl;}
 
 funcCall:
 	  nameV '(' exps ')' {
-$$ = new AstFunctionCall($1,$3);
+$$ = new AstFunctionCall(new AstName($1),$3);
 std::cout << "Syntax Object: listInit. " << std::endl;}
 
 arrayCall:
-	  nameV '[' intV ']' {
-$$ = new AstArrayCall(std::string($1,$3),
+	  nameV arrayReferenceExp {
+$$ = new AstArrayCall(new AstName($1),$2);
 std::cout << "Syntax Object: arrayCall. " << std::endl;}
 
 varCall:
 	  nameV {
-$$ = AstVariableCall(std::string($1));
+$$ = new AstVariableCall(new AstName($1));
 std::cout << "Syntax Object: varCall. " << std::endl;}
 
 returnStat:
@@ -259,20 +285,19 @@ std::cout << "Syntax Object: call. " << std::endl;}
 
 value:
 	  intV {
-$$ = new AstIntValue(std::stoi($1));
+$$ = new AstIntValue($1);
 std::cout << "Syntax Object: value. " << std::endl;
 }
 	| boolV {
-$$ = new AstBoolValue($1 == "true");
-$$ = new AstBoolValue()
+$$ = new AstBoolValue($1);
 std::cout << "Syntax Object: value. " << std::endl;
 }
 	| floatV {
-$$ = new AstFloatValue(std::stof($1);
+$$ = new AstFloatValue($1);
 std::cout << "Syntax Object: value. " << std::endl;
 }
 	| stringV {
-$$ = new AstStringValue(std::string($1));
+$$ = new AstStringValue($1);
 std::cout << "Syntax Object: value. " << std::endl;
 
 }
@@ -284,10 +309,10 @@ std::cout << "Syntax Object: whileloop. " << std::endl;}
 
 exps:
       exps ',' exp {
-$1 -> push_back($3);
+$$ = $1; $$ -> push_back(AstExpPtr($3));
 std::cout << "Syntax Object: exps. " << std::endl;}
 	| exp {
-$$ = new expressionList(); $$->push_back($1);
+$$ = new expressionList(); $$->push_back(AstExpPtr($1));
 std::cout << "Syntax Object: exps. " << std::endl;}
 
 exp:
@@ -313,7 +338,7 @@ std::cout << "Syntax Object: exp. " << std::endl;}
 $$ = new Astgt($1,$3);
 std::cout << "Syntax Object: exp. " << std::endl;}
 	| exp eql exp {
-$$ = new Asteql($1,$3);
+$$ = new AstEql($1,$3);
 std::cout << "Syntax Object: exp. " << std::endl;}
 	| exp neq exp {
 $$ = new Astneq($1,$3);
@@ -344,30 +369,30 @@ std::cout << "Syntax Object: exp. " << std::endl;}
 	| incDecOption inc {std::cout << "Syntax Object: exps. " << std::endl;} %prec postInc
 	| incDecOption dec {std::cout << "Syntax Object: exps. " << std::endl;} %prec postDec 
 	| asgOptions {
-$$ = $1
+$$ = $1;
 std::cout << "Syntax Object: exp. " << std::endl;}
 %prec asgOptionsPrec
 	| call {std::cout << "Syntax Object: exp. " << std::endl;}
-	| value {printf ("Syntax Object: exp. " << std::endl;}
+	| value {std::cout << "Syntax Object: exp. " << std::endl;}
 	| '(' exp ')'  {std::cout << "Syntax Object: exps. " << std::endl;}
 
 asgOptions:
 	  nameV asg exp {
-$$ = new AstVariableAsg($1,$3);
+$$ = new AstVariableAsg(new AstName($1),$3);
 std::cout << "Syntax Object: asgOptions." << std::endl;
 }
-	| nameV '[' intV ']' asg exp {
-$$ = new AstArrayAsg($1,$6,$3);
+	| nameV arrayReferenceExp asg exp {
+$$ = new AstArrayAsg(new AstName($1),$4,$2);
 std::cout << "Syntax Object: asgOptions." << std::endl;
 }
 
-	| nameV '[' intV ']' asg '{' exps '}' {
-$$ = new AstArrayListAsg($1,$7,$3);
+	| nameV arrayReferenceExp asg '{' exps '}' {
+$$ = new AstArrayListAsg(new AstName($1),$5,$2);
 std::cout << "Syntax Object: asgOptions." << std::endl;
 }
 
 	| nameV '[' ']' asg '{' exps '}' {
-$$ = new AstArrayListAsg($1,$6,AstIntValue(0));
+$$ = new AstArrayListAsg(new AstName($1),$6,new AstIntValue(0));
 std::cout << "Syntax Object: asgOptions." << std::endl;
 }
 

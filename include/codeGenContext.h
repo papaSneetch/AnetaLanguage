@@ -1,5 +1,5 @@
-#ifndef codeGenContext
-#define codeGenContext
+#ifndef codegencontext
+#define codegencontext
 
 #include "llvmHeaders.h"
 
@@ -13,35 +13,43 @@
 class AstNode;
 class AstBlock;
 
+typedef std::shared_ptr<AstBlock> AstBlockPtr;
+typedef std::shared_ptr<AstNode> AstNodePtr;
+
 class genContext
 {
 private:
-std::vector<AstBlock*> blockList;
+std::vector<AstBlockPtr> blockList;
+std::queue<AstNodePtr> codeObjects;
 
 public:
-std::queue<AstNode*> codeObjects;
 
-llvm::LLVMContext IRContext;
-llvm::IRBuilder<> Builder;
+llvm::LLVMContext& IRContext;
+llvm::IRBuilder<>& Builder;
 std::unique_ptr<llvm::Module> CurModule;
 
 int initContext();
 
-int pushBlock(AstBlock* block); 
-int popBlock(AstBlock* block);
+int pushBlock(AstBlockPtr block); 
+int popBlock(AstBlockPtr block);
 
 int pushVariable(std::string name, llvm::AllocaInst* varPointer);
 
+int pushAstNode(AstNode* node);
+int pushAstNode(AstNodePtr node);
+
 llvm::AllocaInst* varLookUp (std::string name);
-llvm::CallInst* functionLookUp (std::string name);
+llvm::Function* functionLookUp (std::string name);
+
+int codeGen();
 
 int printCode();
 
-int genCode();
+genContext(llvm::LLVMContext& context, llvm::IRBuilder<>& builder ):IRContext(context),Builder(builder){}
 
-genContext();
+AstBlockPtr backBlock();
+}; 
 
-AstBlock* backBlock();
-} currentContext;
+extern genContext currentContext;
 
 #endif

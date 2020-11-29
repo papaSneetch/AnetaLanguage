@@ -12,7 +12,7 @@ int main(int argc, char *argv[])
 		union YYSTYPE *yylvalPtr = &yylval;
 		while (true)
 		{
-		    register int yylexResult = yylex(yylvalPtr);
+		    int yylexResult = yylex(yylvalPtr);
 			std::cout << yylexResult << std::endl;
 			if (yylexResult == 0)
 			{

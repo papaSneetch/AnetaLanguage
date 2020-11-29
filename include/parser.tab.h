@@ -47,7 +47,7 @@ extern int yydebug;
 /* "%code requires" blocks.  */
 #line 17 "./source/parser.y"
 
-#include <annetaBuilder.h>
+#include "annetaBuilder.h"
 
 #line 53 "./include/parser.tab.h"
 
@@ -116,11 +116,22 @@ int int_val;
 bool bool_val;
 float float_val;
 char* string;
-AstNode* node
+AstNode* node;
+AstStat* statement;
+AstExp* expression;
+AstConstant* constant;
+AstIntValue* intPtr;
+AstBlock* blockPtr;
+AstVariableDeclaration* varDecl;
+AstGlobalVariableDeclaration* globalVarDecl;
+AstArrayDeclaration* arrayDecl;
+AstName* name;
+AstType* type;
+statementList* statements;
 expressionList* expressions;
 variableList* args;
 
-#line 124 "./include/parser.tab.h"
+#line 135 "./include/parser.tab.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

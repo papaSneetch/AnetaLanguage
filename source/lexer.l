@@ -2,7 +2,6 @@
 /* C/C++ code to be copied */
 #include <stdio.h>
 #include "parser.tab.h"
-
 %}
 
 %option noyywrap
@@ -198,6 +197,5 @@ return nameV;
 yylval -> string = yytext;
 return stringV;
 }
-
 
 %%
