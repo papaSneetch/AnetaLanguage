@@ -1,4 +1,4 @@
-CC = clang++ -Wall -I $(includeDir)
+CC = clang++ -Wall -I $(includeDir) -g
 llvmLib = ../../Libaries/rootLibaries/llvm-11.0.0/lib
 
 sourceDir = ./source

@@ -383,7 +383,9 @@ return nullptr;
 llvm::Value* AstVariableDeclaration::codeGen(genContext& context)
 {
 llvm::Type* varType = variableType->typeOf(context);
-llvm::Value* alloca = context.Builder.CreateAlloca(varType,nullptr,variableName->name);
+//llvm::AllocaInst* alloca = new llvm::AllocaInst(varType,0,variableName->name,context.Builder.GetInsertBlock());
+llvm::AllocaInst* alloca = context.Builder.CreateAlloca(varType,0,variableName->name);
+context.varPush(variableName->name,alloca);
 if (initializer)
 {
 context.Builder.CreateStore(alloca,initializer->codeGen(context));
@@ -447,7 +449,8 @@ argTypes.push_back(it->variableType->typeOf(context));
 }
 llvm::FunctionType *ft = llvm::FunctionType::get(returnType->typeOf(context),argTypes,false);
 llvm::Function* func = llvm::Function::Create(ft,llvm::Function::ExternalLinkage,functionName->name,context.CurModule.get());
-context.pushBlock(block);
+llvm::BasicBlock *BB = llvm::BasicBlock::Create(context.IRContext,"functionBlock",func);
+context.Builder.SetInsertPoint(BB);
 for (it = arguments->begin(); it!= arguments->end(); it++)
 {
 it->codeGen(context);
@@ -467,17 +470,25 @@ llvm::Value* AstName::codeGen(genContext& context)
 return nullptr;
 }
 
+AstBlock::~AstBlock()
+{
+for (std::map<std::string,llvm::AllocaInst*>::iterator it = variableMap.begin(); it != variableMap.end(); it++)
+{
+delete it->second;
+}
+}
+
 llvm::Value* AstBlock::codeGen(genContext& context)
 {
 context.pushBlock(std::shared_ptr<AstBlock>(this));
-statementList::iterator it;
 llvm::Value* genResult;
+statementList::iterator it;
 for (it = statements->begin();it != statements->end(); it++)
 {
 genResult = (*it)->codeGen(context);
 }
-return genResult;
 context.popBlock(std::shared_ptr<AstBlock>(this));
+return genResult;
 }
 
 llvm::Value* AstExpStat::codeGen(genContext& context)

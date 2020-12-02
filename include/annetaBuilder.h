@@ -81,6 +81,7 @@ llvm::Value* codeGen(genContext& context);
 
 class AstBlock: public AstNode {
 public:
+~AstBlock();
 statementListPtr statements;
 std::map<std::string,llvm::AllocaInst*> variableMap;
 AstBlock() {};

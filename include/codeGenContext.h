@@ -38,6 +38,7 @@ int pushVariable(std::string name, llvm::AllocaInst* varPointer);
 int pushAstNode(AstNode* node);
 int pushAstNode(AstNodePtr node);
 
+int varPush(std::string name, llvm::AllocaInst* alloca);
 llvm::AllocaInst* varLookUp (std::string name);
 llvm::Function* functionLookUp (std::string name);
 

@@ -1,0 +1,130 @@
+Lexer Test Input Crash Data:
+
+* thread #1, name = 'lexer.bin', stop reason = signal SIGSEGV: invalid address (fault address: 0x0)
+    frame #0: 0x00007ffff7a7c005 libc.so.6`_IO_fread + 37
+0x7ffff7a7c005 <+37>: movl   (%rcx), %edx
+    0x7ffff7a7c007 <+39>: movq   %rdi, %r14
+    0x7ffff7a7c00a <+42>: movq   %rsi, %rbp
+    0x7ffff7a7c00d <+45>: movq   %rcx, %rbx
+
+AnnetaBuilder Test Input Crash Data:
+
+* thread #1, name = 'lexer.bin', stop reason = signal SIGSEGV: invalid address (fault address: 0x0)
+    frame #0: 0x00007ffff7a7c005 libc.so.6`_IO_fread + 37
+0x7ffff7a7c005 <+37>: movl   (%rcx), %edx
+    0x7ffff7a7c007 <+39>: movq   %rdi, %r14
+    0x7ffff7a7c00a <+42>: movq   %rsi, %rbp
+    0x7ffff7a7c00d <+45>: movq   %rcx, %rbx
+
+
+TestCode:
+int main()
+{
+int inc = 0;
+}
+
+
+Code Result:
+annetaBuilder Matching Input Test: Syntax Object: type. 
+ Syntax Object: varNames. 
+
+
+Syntax Object: type. 
+  Syntax Object: varNames. 
+ Syntax Object: value. 
+Syntax Object: exp. 
+Syntax Object: varDecl. 
+Syntax Object: stat. 
+Created New Block. Syntax Objcet: stats. 
+
+Syntax Object: block. 
+Syntax Object: funcDecl. 
+Syntax Object: stat.
+Syntax Object: prog. 
+
+
+./annetaBuilderTest.sh: line 5:  5637 Segmentation fault      (core dumped) ../../bin/annetaBuilder.bin $inputFile
+
+The prgram crashes durring the conversion to progs. Progs doesn't have any memory allocation so this is also where the information is deleted. Progs has no type.
+
+The pushAstNode seems to have consistent logic. Need to check progs implementation in bison.
+
+The parser frees memory one line 2158 and line 1189 in parser.tab.c.
+
+The bug is in the parser function. It happens before memory is loaded.
+
+Line 1319 pushes the AstNode. Testing line. Error occurs before then.
+
+The funcDecl is on line 1338. Testing breakpoint on line.
+
+  * frame #0: 0x00007ffff7a7c005 libc.so.6`_IO_fread + 37
+    frame #1: 0x0000000000408552 annetaBuilder.bin`yy_get_next_buffer() at lexer.yy.h:1360:3
+    frame #2: 0x0000000000407b70 annetaBuilder.bin`yylex(yylval_param=0x00007fffffffde70) at lexer.yy.h:1200:17
+    frame #3: 0x000000000040973f annetaBuilder.bin`yyparse() at parser.tab.c:1230:16
+    frame #4: 0x000000000040746d annetaBuilder.bin`main(argc=2, argv=0x00007fffffffdfa8) at annetaBuilderMain.cpp:18:2
+    frame #5: 0x00007ffff7a1d0b3 libc.so.6`__libc_start_main + 243
+    frame #6: 0x000000000040733e annetaBuilder.bin`_start + 46 
+
+After investigation we were having the wrong type of argument into lldb.
+
+New error is.
+
+* thread #1, name = 'annetaBuilder.b', stop reason = signal SIGSEGV: invalid address (fault address: 0x38)
+    frame #0: 0x0000000000447672 annetaBuilder.bin`llvm::BasicBlock::getParent(this=0x0000000000000000) const at BasicBlock.h:107:46
+   104    }
+   105 
+   106    /// Return the enclosing method, or null if none.
+-> 107    const Function *getParent() const { return Parent; }
+   108          Function *getParent()       { return Parent; }
+   109 
+   110    /// Return the module owning the function this basic block belongs to, or
+
+Pass functions:
+* thread #1, name = 'annetaBuilder.b', stop reason = signal SIGSEGV: invalid address (fault address: 0x38)
+  * frame #0: 0x0000000000447672 annetaBuilder.bin`llvm::BasicBlock::getParent(this=0x0000000000000000) const at BasicBlock.h:107:46
+    frame #1: 0x0000000000493f8a annetaBuilder.bin`llvm::BasicBlock::getModule(this=0x0000000000000000) const at BasicBlock.cpp:147:19
+    frame #2: 0x0000000000424955 annetaBuilder.bin`llvm::BasicBlock::getModule(this=0x0000000000000000) at BasicBlock.h:117:68
+    frame #3: 0x00000000004202bc annetaBuilder.bin`llvm::IRBuilderBase::CreateAlloca(this=0x0000000000b61a40, Ty=0x0000000000b786f0, ArraySize=0x0000000000000000, Name=0x00007fffffffdc68) at IRBuilder.h:1598:32
+    frame #4: 0x000000000041d597 annetaBuilder.bin`AstVariableDeclaration::codeGen(this=0x0000000000b80bd0, context=0x0000000000b61aa0) at annetaBuilder.cpp:386:39
+    frame #5: 0x000000000041e246 annetaBuilder.bin`AstBlock::codeGen(this=0x0000000000b80cd0, context=0x0000000000b61aa0) at annetaBuilder.cpp:477:20
+    frame #6: 0x000000000041e062 annetaBuilder.bin`AstFunctionDeclaration::codeGen(this=0x0000000000b80d40, context=0x0000000000b61aa0) at annetaBuilder.cpp:455:8
+    frame #7: 0x000000000041600c annetaBuilder.bin`genContext::codeGen(this=0x0000000000b61aa0) at codeGenContext.cpp:65:24
+    frame #8: 0x000000000040747f annetaBuilder.bin`main(argc=2, argv=0x00007fffffffdfb8) at annetaBuilderMain.cpp:19:17
+    frame #9: 0x00007ffff7a1d0b3 libc.so.6`__libc_start_main + 243
+    frame #10: 0x000000000040733e annetaBuilder.bin`_start + 46
+
+The bug is on line 477 of annetaBuilder.cpp.
+
+The bug was caused by a lack of insert point. Added insert for functions.
+
+New Bug:
+* thread #1, name = 'annetaBuilder.b', stop reason = signal SIGSEGV: invalid address (fault address: 0x170)
+    frame #0: 0x00000000004e7f32 annetaBuilder.bin`llvm::SmallVectorTemplateCommon<llvm::LayoutAlignElem, void>::begin(this=0x0000000000000170) at SmallVector.h:152:45
+   149    using Base::size;
+   150 
+   151    // forward iterator creation methods.
+-> 152    iterator begin() { return (iterator)this->BeginX; }
+   153    const_iterator begin() const { return (const_iterator)this->BeginX; }
+   154    iterator end() { return begin() + size(); }
+   155    const_iterator end() const { return begin() + size(); }
+(lldb) bt
+* thread #1, name = 'annetaBuilder.b', stop reason = signal SIGSEGV: invalid address (fault address: 0x170)
+  * frame #0: 0x00000000004e7f32 annetaBuilder.bin`llvm::SmallVectorTemplateCommon<llvm::LayoutAlignElem, void>::begin(this=0x0000000000000170) at SmallVector.h:152:45
+    frame #1: 0x00000000004e7363 annetaBuilder.bin`llvm::SmallVectorTemplateCommon<llvm::LayoutAlignElem, void>::end(this=0x0000000000000170) at SmallVector.h:154:35
+    frame #2: 0x00000000004e7343 annetaBuilder.bin`decltype(__cont=0x0000000000000170)) std::end<llvm::SmallVector<llvm::LayoutAlignElem, 16u> >(llvm::SmallVector<llvm::LayoutAlignElem, 16u>&) at range_access.h:69:25
+    frame #3: 0x00000000004e6bee annetaBuilder.bin`decltype(container=0x0000000000000170) llvm::adl_detail::adl_end<llvm::SmallVector<llvm::LayoutAlignElem, 16u>&>(llvm::SmallVector<llvm::LayoutAlignElem, 16u>&) at STLExtras.h:235:13
+    frame #4: 0x00000000004e6c14 annetaBuilder.bin`decltype(container=0x0000000000000170) llvm::adl_end<llvm::SmallVector<llvm::LayoutAlignElem, 16u>&>(llvm::SmallVector<llvm::LayoutAlignElem, 16u>&) at STLExtras.h:255:29
+    frame #5: 0x00000000004e40f7 annetaBuilder.bin`llvm::partition_point<llvm::SmallVector<llvm::LayoutAlignElem, 16>&, llvm::DataLayout::findAlignmentLowerBound(llvm::AlignTypeEnum, uint32_t)::<lambda(const llvm::LayoutAlignElem&)> >(Range=0x0000000000000170, P=<lambda(const llvm::LayoutAlignElem&)> @ 0x00007fffffffd9d0)>) at STLExtras.h:1633:30
+    frame #6: 0x00000000004e417b annetaBuilder.bin`llvm::DataLayout::findAlignmentLowerBound(this=0x0000000000000130, AlignType=INTEGER_ALIGN, BitWidth=32) at DataLayout.cpp:485:25
+    frame #7: 0x00000000004e63b8 annetaBuilder.bin`llvm::DataLayout::findAlignmentLowerBound(this=0x0000000000000130, AlignType=INTEGER_ALIGN, BitWidth=32) const at DataLayout.h:150:67
+    frame #8: 0x00000000004e450e annetaBuilder.bin`llvm::DataLayout::getAlignmentInfo(this=0x0000000000000130, AlignType=INTEGER_ALIGN, BitWidth=32, ABIInfo=false, Ty=0x0000000000b786f0) const at DataLayout.cpp:547:59
+    frame #9: 0x00000000004e5089 annetaBuilder.bin`llvm::DataLayout::getAlignment(this=0x0000000000000130, Ty=0x0000000000b786f0, abi_or_pref=false) const at DataLayout.cpp:762:42
+    frame #10: 0x00000000004e51ea annetaBuilder.bin`llvm::DataLayout::getPrefTypeAlign(this=0x0000000000000130, Ty=0x0000000000b786f0) const at DataLayout.cpp:786:32
+    frame #11: 0x0000000000420325 annetaBuilder.bin`llvm::IRBuilderBase::CreateAlloca(this=0x0000000000b61a40, Ty=0x0000000000b786f0, ArraySize=0x0000000000000000, Name=0x00007fffffffdc38) at IRBuilder.h:1599:28
+    frame #12: 0x000000000041d597 annetaBuilder.bin`AstVariableDeclaration::codeGen(this=0x0000000000b80bd0, context=0x0000000000b61aa0) at annetaBuilder.cpp:386:39
+    frame #13: 0x000000000041e249 annetaBuilder.bin`AstBlock::codeGen(this=0x0000000000b80cd0, context=0x0000000000b61aa0) at annetaBuilder.cpp:478:20
+    frame #14: 0x000000000041e06d annetaBuilder.bin`AstFunctionDeclaration::codeGen(this=0x0000000000b80d40, context=0x0000000000b61aa0) at annetaBuilder.cpp:456:8
+    frame #15: 0x000000000041600c annetaBuilder.bin`genContext::codeGen(this=0x0000000000b61aa0) at codeGenContext.cpp:65:24
+    frame #16: 0x000000000040747f annetaBuilder.bin`main(argc=2, argv=0x00007fffffffdfb8) at annetaBuilderMain.cpp:19:17
+    frame #17: 0x00007ffff7a1d0b3 libc.so.6`__libc_start_main + 243
+    frame #18: 0x000000000040733e annetaBuilder.bin`_start + 46

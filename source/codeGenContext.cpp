@@ -31,6 +31,12 @@ codeObjects.push(node);
 return 0;
 }
 
+int genContext::varPush(std::string name, llvm::AllocaInst* alloca)
+{
+blockList.back()->variableMap.insert(std::make_pair(name,alloca));
+return 0;
+}
+
 llvm::AllocaInst* genContext::varLookUp (std::string name)
 {
 for (std::vector<AstBlockPtr>::reverse_iterator it = blockList.rbegin(); it != blockList.rend(); ++it)
