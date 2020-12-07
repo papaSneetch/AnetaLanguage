@@ -16,6 +16,7 @@ if (argc >= 3)
 	}	
 
 	yyparse();
+	currentContext.initContext();
 	currentContext.codeGen();
 	currentContext.printCode();
 	return 0;

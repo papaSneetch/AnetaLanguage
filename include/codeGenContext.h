@@ -13,8 +13,8 @@
 class AstNode;
 class AstBlock;
 
-typedef std::shared_ptr<AstBlock> AstBlockPtr;
-typedef std::shared_ptr<AstNode> AstNodePtr;
+typedef std::unique_ptr<AstBlock> AstBlockPtr;
+typedef std::unique_ptr<AstNode> AstNodePtr;
 
 class genContext
 {
@@ -30,13 +30,14 @@ std::unique_ptr<llvm::Module> CurModule;
 
 int initContext();
 
-int pushBlock(AstBlockPtr block); 
-int popBlock(AstBlockPtr block);
+int pushBlock(AstBlockPtr& block); 
+int pushBlock(AstBlock* blockPtr);
+int popBlock();
 
 int pushVariable(std::string name, llvm::AllocaInst* varPointer);
 
 int pushAstNode(AstNode* node);
-int pushAstNode(AstNodePtr node);
+int pushAstNode(AstNodePtr& node);
 
 int varPush(std::string name, llvm::AllocaInst* alloca);
 llvm::AllocaInst* varLookUp (std::string name);
@@ -48,7 +49,7 @@ int printCode();
 
 genContext(llvm::LLVMContext& context, llvm::IRBuilder<>& builder ):IRContext(context),Builder(builder){}
 
-AstBlockPtr backBlock();
+AstBlockPtr& backBlock();
 }; 
 
 extern genContext currentContext;

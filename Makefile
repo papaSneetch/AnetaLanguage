@@ -21,7 +21,7 @@ lexTestScript = lexerTest.sh
 
 bisonSource = parser.y
 parserInclude = parser.tab.h
-parserLib = parser.tab.c
+parserLib = parser.tab.cpp
 parserObject = parser.tab.o
 parserBin = parser.bin
 parserMain = parserMain.cpp

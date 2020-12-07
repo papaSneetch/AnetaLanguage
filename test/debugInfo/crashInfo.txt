@@ -128,3 +128,15 @@ New Bug:
     frame #16: 0x000000000040747f annetaBuilder.bin`main(argc=2, argv=0x00007fffffffdfb8) at annetaBuilderMain.cpp:19:17
     frame #17: 0x00007ffff7a1d0b3 libc.so.6`__libc_start_main + 243
     frame #18: 0x000000000040733e annetaBuilder.bin`_start + 46
+
+How BeginX is initialized in SmallVector.
+The value is casted to a iterator.
+It's likely BeginX isn't allocated.
+
+SmallVectorBase(void *FirstEl, size_t TotalCapacity)
+ 58       : BeginX(FirstEl), Capacity(TotalCapacity) {}
+
+SmallVectorTemplateCommon must have failed to allocate BeginX or vector must of changed to invalid location.
+
+Error occurs somewhere between frame 1 and 6.
+

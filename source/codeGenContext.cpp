@@ -1,15 +1,27 @@
+#include <iostream>
 #include "codeGenContext.h"
 #include "annetaBuilder.h"
 
-int genContext::pushBlock(AstBlockPtr block)
-{
-blockList.push_back(block);
+int genContext::initContext() {
+CurModule = std::make_unique<llvm::Module>("Module", IRContext); 
 return 0;
 }
 
-int genContext::popBlock(AstBlockPtr block)
+int genContext::pushBlock(AstBlockPtr& block)
 {
-blockList.pop_back();
+blockList.push_back(std::move(block));
+return 0;
+}
+
+int genContext::pushBlock(AstBlock* blockPtr)
+{
+blockList.push_back(AstBlockPtr(blockPtr));
+return 0;
+}
+
+int genContext::popBlock()
+{
+blockList.erase(blockList.end() - 1);
 return 0;
 }
 
@@ -25,9 +37,9 @@ codeObjects.push(AstNodePtr(node));
 return 0;
 }
 
-int genContext::pushAstNode(AstNodePtr node)
+int genContext::pushAstNode(AstNodePtr& node)
 {
-codeObjects.push(node);
+codeObjects.push(std::move(node));
 return 0;
 }
 
@@ -74,7 +86,7 @@ codeObjects.pop();
 return 0;
 }
 
-AstBlockPtr genContext::backBlock()
+AstBlockPtr& genContext::backBlock()
 {
 return blockList.back();
 }

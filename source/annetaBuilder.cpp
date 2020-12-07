@@ -3,7 +3,7 @@
 #include <iostream>
 #include <stdlib.h>
 
-llvm::Type* AstIntType::typeOf(genContext& context)
+llvm::IntegerType* AstIntType::typeOf(genContext& context)
 {
 return llvm::Type::getInt32Ty(context.IRContext);
 } 
@@ -14,12 +14,12 @@ llvm::Type* AstStringType::typeOf(genContext& context)
 }
 
 
-llvm::Type* AstBoolType::typeOf(genContext& context)
+llvm::Type* AstFloatType::typeOf(genContext& context)
 {
 return llvm::Type::getFloatTy(context.IRContext);
 }
 
-llvm::Type* AstFloatType::typeOf(genContext& context)
+llvm::IntegerType* AstBoolType::typeOf(genContext& context)
 {
 return llvm::Type::getInt1Ty(context.IRContext);
 }
@@ -57,12 +57,27 @@ context.Builder.SetInsertPoint(endLoop);
 return 0;
 }
 
-AstBinOp::AstBinOp(AstExpPtr lhs, AstExpPtr rhs):
-lhs(lhs), rhs(rhs)
+AstBinOp::AstBinOp(AstExp* lhsPtr,AstExp* rhsPtr)
+{
+lhs.reset(lhsPtr);
+rhs.reset(rhsPtr);
+if (typeid(lhs->type) == typeid(rhs->type))
+{
+type = std::move(lhs->type);
+}
+else
+{
+std::cout << "Type Mismatch" << std::endl;
+exit(1);
+}
+}
+
+AstBinOp::AstBinOp(AstExpPtr& lhs,AstExpPtr& rhs):
+lhs(std::move(lhs)), rhs(std::move(rhs))
 {
 if (typeid(lhs->type) == typeid(rhs->type))
 {
-type = lhs->type;
+type = std::move(lhs->type);
 }
 else
 {
@@ -91,11 +106,11 @@ llvm::Value* AstEql::codeGen(genContext& context)
 llvm::Value* lhsValue = lhs->codeGen(context);
 llvm::Value* rhsValue = rhs->codeGen(context);
 
-if (typeid(type) == typeid(intType))
+if (typeid(type) == typeid(AstIntType))
 {
 return context.Builder.CreateICmpEQ(lhsValue,rhsValue,"icmp_eq");
 }
-else if (typeid(type) == typeid(floatType))
+else if (typeid(type) == typeid(AstFloatType))
 {
 return context.Builder.CreateFCmpOEQ(lhsValue,rhsValue,"fAddTmp");
 }
@@ -111,11 +126,11 @@ llvm::Value* Astneq::codeGen(genContext& context)
 llvm::Value* lhsValue = lhs->codeGen(context);
 llvm::Value* rhsValue = rhs->codeGen(context);
 
-if (typeid(type) == typeid(intType))
+if (typeid(type) == typeid(AstIntType))
 {
 return context.Builder.CreateICmpNE(lhsValue,rhsValue,"icmp_ne");
 }
-else if (typeid(type) == typeid(floatType))
+else if (typeid(type) == typeid(AstFloatType))
 {
 return context.Builder.CreateFCmpONE(lhsValue,rhsValue,"fAddTmp");
 }
@@ -138,7 +153,7 @@ return context.Builder.CreateLShr(lhs->codeGen(context),rhs->codeGen(context),"L
 
 llvm::Value* AstVariableAsg::codeGen(genContext& context)
 {
-return context.Builder.CreateStore(context.varLookUp(variableName->name),rhs->codeGen(context));
+return context.Builder.CreateStore(rhs->codeGen(context),context.varLookUp(variableName->name));
 }
 
 llvm::Value* AstArrayAsg::codeGen(genContext& context)
@@ -170,11 +185,11 @@ llvm::Value* Astleq::codeGen(genContext& context)
 llvm::Value* lhsValue = lhs->codeGen(context);
 llvm::Value* rhsValue = rhs->codeGen(context);
 
-if (typeid(type) == typeid(intType))
+if (typeid(type) == typeid(AstIntType))
 {
 return context.Builder.CreateICmpSLE(lhsValue,rhsValue,"icmp_ule");
 }
-else if (typeid(type) == typeid(floatType))
+else if (typeid(type) == typeid(AstFloatType))
 {
 return context.Builder.CreateFCmpOLE(lhsValue,rhsValue,"fAddTmp");
 }
@@ -190,11 +205,11 @@ llvm::Value* Astgeq::codeGen(genContext& context)
 llvm::Value* lhsValue = lhs->codeGen(context);
 llvm::Value* rhsValue = rhs->codeGen(context);
 
-if (typeid(type) == typeid(intType))
+if (typeid(type) == typeid(AstIntType))
 {
 return context.Builder.CreateICmpSGE(lhsValue,rhsValue,"icmp_uge");
 }
-else if (typeid(type) == typeid(floatType))
+else if (typeid(type) == typeid(AstFloatType))
 {
 return context.Builder.CreateFCmpOGE(lhsValue,rhsValue,"fAddTmp");
 }
@@ -210,11 +225,11 @@ llvm::Value* Astlt::codeGen(genContext& context)
 llvm::Value* lhsValue = lhs->codeGen(context);
 llvm::Value* rhsValue = rhs->codeGen(context);
 
-if (typeid(type) == typeid(intType))
+if (typeid(type) == typeid(AstIntType))
 {
 return context.Builder.CreateICmpSLT(lhsValue,rhsValue,"icmp_ult");
 }
-else if (typeid(type) == typeid(floatType))
+else if (typeid(type) == typeid(AstFloatType))
 {
 return context.Builder.CreateFCmpOLT(lhsValue,rhsValue,"fAddTmp");
 }
@@ -229,11 +244,11 @@ llvm::Value* Astgt::codeGen(genContext& context)
 {
 llvm::Value* lhsValue = lhs->codeGen(context);
 llvm::Value* rhsValue = rhs->codeGen(context);
-if (typeid(type) == typeid(intType))
+if (typeid(type) == typeid(AstIntType))
 {
 return context.Builder.CreateICmpSGT(lhsValue,rhsValue,"icmp_ugt");
 }
-else if (typeid(type) == typeid(floatType))
+else if (typeid(type) == typeid(AstFloatType))
 {
 return context.Builder.CreateFCmpOGT(lhsValue,rhsValue,"fAddTmp");
 }
@@ -249,11 +264,11 @@ llvm::Value* AstAdd::codeGen(genContext& context)
 llvm::Value* lhsValue = lhs->codeGen(context);
 llvm::Value* rhsValue = rhs->codeGen(context);;
 
-if (typeid(type) == typeid(intType))
+if (typeid(type) == typeid(AstIntType))
 {
 return context.Builder.CreateAdd(lhsValue,rhsValue,"addTmp");
 }
-else if (typeid(type) == typeid(floatType))
+else if (typeid(type) == typeid(AstFloatType))
 {
 return context.Builder.CreateFAdd(lhsValue,rhsValue,"fAddTmp");
 }
@@ -269,11 +284,11 @@ llvm::Value* AstSub::codeGen(genContext& context)
 llvm::Value* lhsValue = lhs->codeGen(context);
 llvm::Value* rhsValue = rhs->codeGen(context);
 
-if (typeid(type) == typeid(intType))
+if (typeid(type) == typeid(AstIntType))
 {
 return context.Builder.CreateSub(lhsValue,rhsValue,"subTmp");
 }
-else if (typeid(type) == typeid(floatType))
+else if (typeid(type) == typeid(AstFloatType))
 {
 return context.Builder.CreateFSub(lhsValue,rhsValue,"fSubTmp");
 }
@@ -289,11 +304,11 @@ llvm::Value* AstMul::codeGen(genContext& context)
 llvm::Value* lhsValue = lhs->codeGen(context);
 llvm::Value* rhsValue = rhs->codeGen(context);
 
-if (typeid(type) == typeid(intType))
+if (typeid(type) == typeid(AstIntType))
 {
 return context.Builder.CreateMul(lhsValue,rhsValue,"mulTmp");
 }
-else if (typeid(type) == typeid(floatType))
+else if (typeid(type) == typeid(AstFloatType))
 {
 return context.Builder.CreateFMul(lhsValue,rhsValue,"CreateFMul");
 }
@@ -309,11 +324,11 @@ llvm::Value* AstDiv::codeGen(genContext& context)
 llvm::Value* lhsValue = lhs->codeGen(context);
 llvm::Value* rhsValue = rhs->codeGen(context);
 
-if (typeid(type) == typeid(intType))
+if (typeid(type) == typeid(AstIntType))
 {
 return context.Builder.CreateSDiv(lhsValue,rhsValue,"uDivTmp");
 }
-else if (typeid(type) == typeid(floatType))
+else if (typeid(type) == typeid(AstFloatType))
 {
 return context.Builder.CreateFDiv(lhsValue,rhsValue,"fDivTmp");
 }
@@ -329,11 +344,11 @@ llvm::Value* AstMod::codeGen(genContext& context)
 llvm::Value* lhsValue = lhs->codeGen(context);
 llvm::Value* rhsValue = rhs->codeGen(context);
 
-if (typeid(type) == typeid(intType))
+if (typeid(type) == typeid(AstIntType))
 {
 return context.Builder.CreateSRem(lhsValue,rhsValue,"uRemTmp");
 }
-else if (typeid(type) == typeid(floatType))
+else if (typeid(type) == typeid(AstFloatType))
 {
 return context.Builder.CreateFRem(lhsValue,rhsValue,"fRemTmp");
 }
@@ -383,12 +398,11 @@ return nullptr;
 llvm::Value* AstVariableDeclaration::codeGen(genContext& context)
 {
 llvm::Type* varType = variableType->typeOf(context);
-//llvm::AllocaInst* alloca = new llvm::AllocaInst(varType,0,variableName->name,context.Builder.GetInsertBlock());
-llvm::AllocaInst* alloca = context.Builder.CreateAlloca(varType,0,variableName->name);
+llvm::AllocaInst* alloca = context.Builder.CreateAlloca(varType,nullptr,variableName->name);
 context.varPush(variableName->name,alloca);
 if (initializer)
 {
-context.Builder.CreateStore(alloca,initializer->codeGen(context));
+context.Builder.CreateStore(initializer->codeGen(context),alloca);
 }
 return alloca;
 }
@@ -449,14 +463,14 @@ argTypes.push_back(it->variableType->typeOf(context));
 }
 llvm::FunctionType *ft = llvm::FunctionType::get(returnType->typeOf(context),argTypes,false);
 llvm::Function* func = llvm::Function::Create(ft,llvm::Function::ExternalLinkage,functionName->name,context.CurModule.get());
-llvm::BasicBlock *BB = llvm::BasicBlock::Create(context.IRContext,"functionBlock",func);
+llvm::BasicBlock *BB = llvm::BasicBlock::Create(context.IRContext,"entry",func);
 context.Builder.SetInsertPoint(BB);
 for (it = arguments->begin(); it!= arguments->end(); it++)
 {
 it->codeGen(context);
 }
 block->codeGen(context);
-context.popBlock(block);
+context.popBlock();
 return func;
 }
 
@@ -470,24 +484,16 @@ llvm::Value* AstName::codeGen(genContext& context)
 return nullptr;
 }
 
-AstBlock::~AstBlock()
-{
-for (std::map<std::string,llvm::AllocaInst*>::iterator it = variableMap.begin(); it != variableMap.end(); it++)
-{
-delete it->second;
-}
-}
-
 llvm::Value* AstBlock::codeGen(genContext& context)
 {
-context.pushBlock(std::shared_ptr<AstBlock>(this));
+context.pushBlock(this);
 llvm::Value* genResult;
 statementList::iterator it;
 for (it = statements->begin();it != statements->end(); it++)
 {
 genResult = (*it)->codeGen(context);
 }
-context.popBlock(std::shared_ptr<AstBlock>(this));
+context.popBlock();
 return genResult;
 }
 
@@ -496,7 +502,3 @@ llvm::Value* AstExpStat::codeGen(genContext& context)
 return expression->codeGen(context);
 }
 
-AstIntType intType;
-AstStringType stringType;
-AstBoolType boolType;
-AstFloatType floatType;
