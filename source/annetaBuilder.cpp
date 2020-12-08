@@ -10,7 +10,7 @@ return llvm::Type::getInt32Ty(context.IRContext);
 
 llvm::Type* AstStringType::typeOf(genContext& context)
 {
-	return nullptr;
+return nullptr;
 }
 
 
@@ -395,11 +395,11 @@ llvm::GlobalVariable globalVar ((*context.CurModule),variableType->typeOf(contex
 return nullptr;
 }
 
-llvm::Value* AstVariableDeclaration::codeGen(genContext& context)
+llvm::AllocaInst* AstVariableDeclaration::codeGen(genContext& context)
 {
 llvm::Type* varType = variableType->typeOf(context);
 llvm::AllocaInst* alloca = context.Builder.CreateAlloca(varType,nullptr,variableName->name);
-context.varPush(variableName->name,alloca);
+context.pushVariable(variableName->name,alloca);
 if (initializer)
 {
 context.Builder.CreateStore(initializer->codeGen(context),alloca);
@@ -465,11 +465,14 @@ llvm::FunctionType *ft = llvm::FunctionType::get(returnType->typeOf(context),arg
 llvm::Function* func = llvm::Function::Create(ft,llvm::Function::ExternalLinkage,functionName->name,context.CurModule.get());
 llvm::BasicBlock *BB = llvm::BasicBlock::Create(context.IRContext,"entry",func);
 context.Builder.SetInsertPoint(BB);
+context.pushBlock(block);
 for (it = arguments->begin(); it!= arguments->end(); it++)
 {
-it->codeGen(context);
+std::string name = ((*it).variableName)->name;
+llvm::AllocaInst* alloca = it->codeGen(context);
+context.pushVariable(name,alloca);
 }
-block->codeGen(context);
+context.backBlock()->codeGenInFunction(context);
 context.popBlock();
 return func;
 }
@@ -494,6 +497,17 @@ for (it = statements->begin();it != statements->end(); it++)
 genResult = (*it)->codeGen(context);
 }
 context.popBlock();
+return genResult;
+}
+
+llvm::Value* AstBlock::codeGenInFunction(genContext& context)
+{
+llvm::Value* genResult;
+statementList::iterator it;
+for (it = statements->begin();it != statements->end(); it++)
+{
+genResult = (*it)->codeGen(context);
+}
 return genResult;
 }
 

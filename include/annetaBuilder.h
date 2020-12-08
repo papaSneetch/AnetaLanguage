@@ -86,34 +86,38 @@ class AstBlock: public AstNode {
 public:
 statementListPtr statements;
 std::map<std::string,llvm::AllocaInst*> variableMap;
-AstBlock() {};
 AstBlock(statementListPtr& statements): statements(std::move(statements)){}
 AstBlock(statementList* statements): statements(statementListPtr(statements)){}
 llvm::Value* codeGen(genContext& context);
+llvm::Value* codeGenInFunction(genContext& context);
 };
 
 class AstIntType: public AstType
 {
 public:
 llvm::IntegerType* typeOf(genContext& context);
+AstIntType(){};
 };
 
 class AstStringType: public AstType
 {
 public:
 llvm::Type* typeOf(genContext& context);
+AstStringType(){};
 };
 
 class AstBoolType: public AstType
 {
 public:
 llvm::IntegerType* typeOf(genContext& context);
+AstBoolType(){};
 };
 
 class AstFloatType: public AstType
 {
 public:
 llvm::Type* typeOf(genContext& context);
+AstFloatType(){};
 };
 
 class AstConstant: public AstExp
@@ -145,7 +149,7 @@ class AstBoolValue: public AstConstant
 {
 public:
 bool value;
-AstBoolValue( bool value):AstConstant(new AstBoolType()),value(value){}
+AstBoolValue(bool value):AstConstant(new AstBoolType()),value(value){}
 llvm::Constant* codeGen(genContext& context);
 };
 
@@ -153,7 +157,7 @@ class AstFloatValue: public AstConstant
 {
 public:
 float value;
-AstFloatValue( float value):AstConstant(new AstFloatType()),value(value){}
+AstFloatValue(float value):AstConstant(new AstFloatType()),value(value){}
 llvm::Constant* codeGen(genContext& context);
 };
  
@@ -440,7 +444,7 @@ variableType.reset(variableTypeTmp);
 initializer.reset(initializerTmp);
 }
 
-llvm::Value* codeGen(genContext& context);
+llvm::AllocaInst* codeGen(genContext& context);
 };
 
 class AstGlobalVariableDeclaration : public AstStat

@@ -15,13 +15,14 @@ return 0;
 
 int genContext::pushBlock(AstBlock* blockPtr)
 {
-blockList.push_back(AstBlockPtr(blockPtr));
+blockList.emplace_back(blockPtr);
 return 0;
 }
 
 int genContext::popBlock()
 {
-blockList.erase(blockList.end() - 1);
+blockList.back().reset();
+blockList.pop_back();
 return 0;
 }
 
@@ -40,12 +41,6 @@ return 0;
 int genContext::pushAstNode(AstNodePtr& node)
 {
 codeObjects.push(std::move(node));
-return 0;
-}
-
-int genContext::varPush(std::string name, llvm::AllocaInst* alloca)
-{
-blockList.back()->variableMap.insert(std::make_pair(name,alloca));
 return 0;
 }
 
