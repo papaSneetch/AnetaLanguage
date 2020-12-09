@@ -78,7 +78,7 @@ class AstCall : public AstExp
 class AstName: public AstNode {
 public:
 std::string name;
-AstName(const std::string& name):name(name){}
+AstName(const std::string& nameTmp):name(nameTmp) {}
 llvm::Value* codeGen(genContext& context);
 };
 
@@ -179,7 +179,10 @@ public:
 AstBlockPtr whileBlock;
 AstExpPtr testCondition;
 AstWhileLoop( AstBlockPtr& whileBlock, AstExpPtr& testCondition):whileBlock(std::move(whileBlock)),testCondition(std::move(testCondition)){}
-AstWhileLoop( AstBlock* whileBlock, AstExp* testCondition):whileBlock(whileBlock),testCondition(testCondition){}
+AstWhileLoop( AstBlock* whileBlockTmp, AstExp* testConditionTmp){
+whileBlock.reset(whileBlockTmp);
+testCondition.reset(testConditionTmp);
+}
 llvm::Value* codeGen(genContext& context);
 };
 
@@ -475,7 +478,7 @@ AstTypePtr variableType;
 AstIntValuePtr arraySize;
 expressionListPtr initializer; 
 AstArrayDeclaration( AstNamePtr& variableName, AstTypePtr& variableType,  AstIntValuePtr& arraySize): variableName(std::move(variableName)), variableType(std::move(variableType)), arraySize(std::move(arraySize)) {}
-AstArrayDeclaration( AstName* variableNameTmp, AstType* variableTypeTmp, AstIntValue* arraySizeTmp) {
+AstArrayDeclaration(AstName* variableNameTmp, AstType* variableTypeTmp, AstIntValue* arraySizeTmp) {
 variableName.reset(variableNameTmp);
 variableType.reset(variableTypeTmp);
 arraySize.reset(arraySizeTmp);

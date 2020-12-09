@@ -158,20 +158,22 @@ return context.Builder.CreateStore(rhs->codeGen(context),context.varLookUp(varia
 
 llvm::Value* AstArrayAsg::codeGen(genContext& context)
 {
-llvm::Value* indexPtr = context.Builder.CreateGEP(context.varLookUp(variableName->name),index->codeGen(context),"getElementPtr");
+llvm::Value* zero = llvm::ConstantInt::get(context.IRContext, llvm::APInt(64, 0));
+llvm::Value* indexPtr = context.Builder.CreateGEP(context.varLookUp(variableName->name),{zero,index->codeGen(context)},"getElementPtr");
 context.Builder.CreateStore(rhs->codeGen(context),indexPtr,false);
 return indexPtr;
 }
 
 llvm::Value* AstArrayListAsg::codeGen(genContext& context)
 {
+llvm::Value* zero = llvm::ConstantInt::get(context.IRContext, llvm::APInt(64, 0)); 
 llvm::AllocaInst* arrayLocation = context.varLookUp(variableName->name);
 llvm::Value* curIndex = index->codeGen(context);
 llvm::Value* arraySize = AstIntValue(arrayLocation->getType()->getArrayNumElements()).codeGen(context);
 llvm::Value* increment = AstIntValue(1).codeGen(context);
 for (expressionList::iterator it = arrayValues->begin(); it != arrayValues->end(); it++)
 {
-llvm::Value* indexPtr = context.Builder.CreateGEP(arrayLocation,curIndex,"getElementPtr");
+llvm::Value* indexPtr = context.Builder.CreateGEP(arrayLocation,{zero, curIndex},"getElementPtr");
 context.Builder.CreateStore((*it)->codeGen(context),indexPtr);
 curIndex = context.Builder.CreateAdd(curIndex,increment);
 curIndex = context.Builder.CreateMul(curIndex,context.Builder.CreateICmpSLE(curIndex,arraySize));
@@ -410,21 +412,21 @@ return alloca;
 llvm::Value* AstArrayDeclaration::codeGen(genContext& context)
 {
 llvm::Type* arrayType = llvm::ArrayType::get(variableType->typeOf(context),arraySize->value);
-llvm::Value* arrayLocation = context.Builder.CreateAlloca(arrayType,nullptr,variableName->name);
+llvm::Value* arrayLocation = context.Builder.CreateAlloca(arrayType,arraySize->codeGen(context),variableName->name);
 
 if (initializer)
 {
 expressionList::iterator it;
-int curIndex = 0;
+unsigned int curIndex = 0;
+unsigned int arraySizeMod = arraySize->value + 1;
+llvm::Value* zero = llvm::ConstantInt::get(context.IRContext, llvm::APInt(64, 0));
 for (it = initializer->begin(); it != initializer->end(); it++)
 {
-context.Builder.CreateInsertValue(arrayLocation,(*it)->codeGen(context),curIndex,variableName->name);
-curIndex++;
-if (curIndex > arraySize->value)
-{
-curIndex = 0;
-}
-
+llvm::Value* offset = llvm::ConstantInt::get(context.IRContext,llvm::APInt(32,curIndex));
+llvm::Value* pointer = context.Builder.CreateGEP(arrayLocation,{zero,offset},"getElementPtr");
+context.Builder.CreateStore((*it)->codeGen(context),pointer);
+//context.Builder.CreateInsertValue(arrayLocation,(*it)->codeGen(context),curIndex,"insertInArray");
+curIndex = (curIndex + 1) % arraySizeMod;
 }
 }
 

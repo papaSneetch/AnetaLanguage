@@ -1,6 +1,7 @@
 %{
 /* C/C++ code to be copied */
 #include <stdio.h>
+#include <iostream>
 #include "parser.tab.h"
 %}
 
@@ -189,12 +190,12 @@ return floatV;
 }
 
 [a-zA-Z][a-zA-Z0-9_]* {
-yylval -> string = yytext;
+yylval -> string = strdup(yytext);
 return nameV;
 }
 
 \"[^\n"]+\"  {
-yylval -> string = yytext;
+yylval -> string = strdup(yytext);
 return stringV;
 }
 
