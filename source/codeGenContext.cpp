@@ -26,9 +26,9 @@ blockList.pop_back();
 return 0;
 }
 
-int genContext::pushVariable(std::string name, llvm::AllocaInst* varPointer)
+int genContext::pushVariable(std::string name, llvm::AllocaInst* varPointer,const AstType* type)
 {
-blockList.back()->variableMap.insert(std::make_pair(name,varPointer));
+blockList.back()->variableMap.insert(std::make_pair(name,variableInformation{varPointer,type}));
 return 0;
 }
 
@@ -44,11 +44,11 @@ codeObjects.push(std::move(node));
 return 0;
 }
 
-llvm::AllocaInst* genContext::varLookUp (std::string name)
+variableInformation genContext::varLookUp (std::string name)
 {
 for (std::vector<AstBlockPtr>::reverse_iterator it = blockList.rbegin(); it != blockList.rend(); ++it)
 {
-std::map<std::string,llvm::AllocaInst*>::iterator mapIt = (*it) -> variableMap.find(name);
+std::map<std::string,variableInformation>::iterator mapIt = (*it) -> variableMap.find(name);
 if (mapIt != ((*it) -> variableMap.end()))
 {
 return mapIt->second;

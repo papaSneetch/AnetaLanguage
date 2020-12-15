@@ -3,15 +3,5 @@ int main()
 int inc = 0;
 float pi[2] = { 3.14, 3.1415 };
 bool tf = true;            
-while (inc++ <= 5)         
-{
-inc + inc + 6 - 1 * 1 / 1 ^ 3 % 100;
-if (pi[1] >= 4.0 | tf != !false) 
-{
-inc--;
-}
-}
-inc = inc << 2;
-inc = inc >> 2;
-return cow;
+inc = inc + 1;
 }

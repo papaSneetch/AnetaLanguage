@@ -12,6 +12,8 @@
 
 class AstNode;
 class AstBlock;
+class AstType;
+struct variableInformation;
 
 typedef std::unique_ptr<AstBlock> AstBlockPtr;
 typedef std::unique_ptr<AstNode> AstNodePtr;
@@ -34,12 +36,12 @@ int pushBlock(AstBlockPtr& block);
 int pushBlock(AstBlock* blockPtr);
 int popBlock();
 
-int pushVariable(std::string name, llvm::AllocaInst* varPointer);
+int pushVariable(std::string name, llvm::AllocaInst* varPointer,const AstType* type);
 
 int pushAstNode(AstNode* node);
 int pushAstNode(AstNodePtr& node);
 
-llvm::AllocaInst* varLookUp (std::string name);
+variableInformation varLookUp (std::string name);
 llvm::Function* functionLookUp (std::string name);
 
 int codeGen();

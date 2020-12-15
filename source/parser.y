@@ -39,7 +39,7 @@ AstVariableDeclaration* varDecl;
 AstGlobalVariableDeclaration* globalVarDecl;
 AstArrayDeclaration* arrayDecl;
 AstName* name;
-AstType* type;
+const AstType* type;
 statementList* statements;
 expressionList* expressions;
 variableList* args;
@@ -190,16 +190,16 @@ std::cout << "Syntax Object: varNames. " << std::endl;}
 
 type:
 	  intD {
-$$ = new AstIntType();
+$$ = &intType;
 std::cout << "Syntax Object: type. " << std::endl;}
 	| floatD {
-$$ = new AstFloatType();
+$$ = &floatType;
 std::cout << "Syntax Object: type. " << std::endl;}
 	| boolD {
-$$ = new AstBoolType();
+$$ = &boolType;
 std::cout << "Syntax Object: type. " << std::endl;}
 	| stringD {
-$$ = new AstStringType();
+$$ = &stringType;
 std::cout << "Syntax Object: type. " << std::endl;}
 
 funcDecl:
@@ -384,9 +384,15 @@ std::cout << "Syntax Object: exps. " << std::endl;} %prec postDec
 $$ = $1;
 std::cout << "Syntax Object: exp. " << std::endl;}
 %prec asgOptionsPrec
-	| call {std::cout << "Syntax Object: exp. " << std::endl;}
-	| value {std::cout << "Syntax Object: exp. " << std::endl;}
-	| '(' exp ')'  {std::cout << "Syntax Object: exps. " << std::endl;}
+	| call {
+$$ = $1;
+std::cout << "Syntax Object: exp. " << std::endl;}
+	| value {
+$$ = $1;
+std::cout << "Syntax Object: exp. " << std::endl;}
+	| '(' exp ')'  {
+$$ = $2;
+std::cout << "Syntax Object: exps. " << std::endl;}
 
 asgOptions:
 	  nameV asg exp {
