@@ -516,13 +516,13 @@ return arrayLocation;
 
 llvm::Value* AstFunctionCall::codeGen(genContext& context)
 {
-llvm::Function* function = context.CurModule->getFunction(functionName->name);
+functionInformation functionPtr = context.functionLookUp(functionName->name);
 std::vector <llvm::Value*> argsV;
 for (expressionList::iterator it = args->begin(); it != args->end(); it++)
 {
 argsV.push_back((*it)->codeGen(context));
 }
-return context.Builder.CreateCall(function,argsV,"functionCall",nullptr);
+return context.Builder.CreateCall(functionPtr.function,argsV,"functionCall",nullptr);
 }
 
 llvm::Value* AstVariableCall::codeGen(genContext& context)
@@ -546,9 +546,11 @@ return context.Builder.CreateLoad(indexPtr,variableName->name);
 llvm::Value* AstFunctionDeclaration::codeGen(genContext& context)
 {
 std::vector<llvm::Type*> argTypes;
+std::vector<const AstType*> types;
 variableList::iterator it;
 for (it = arguments->begin(); it != arguments->end(); it++)
 {
+types.push_back(it->variableType);
 argTypes.push_back(it->variableType->typeOf(context));
 }
 llvm::FunctionType *ft = llvm::FunctionType::get(returnType->typeOf(context),argTypes,false);
@@ -564,6 +566,7 @@ context.pushVariable(name,alloca,returnType);
 }
 context.backBlock()->codeGenInFunction(context);
 context.popBlock();
+context.pushFunction(functionName->name,func,types,returnType);
 return func;
 }
 

@@ -32,6 +32,42 @@ blockList.back()->variableMap.insert(std::make_pair(name,variableInformation{var
 return 0;
 }
 
+int genContext::pushFunction(std::string name,llvm::Function* function,std::vector<const AstType*> types,const AstType* returnType)
+{
+functionMap.insert(std::make_pair(name,functionInformation{function,types,returnType}));
+return 0;
+}
+
+int genContext::pushGlobalVariable(std::string name,llvm::GlobalVariable* var,const AstType* type)
+{
+globalVariableMap.insert(std::make_pair(name,globalVariableInformation{var,type}));
+return 0;
+}
+
+functionInformation genContext::functionLookUp(std::string name)
+{
+std::map<std::string,functionInformation>::iterator mapIt = functionMap.find(name);
+if (mapIt != functionMap.end())
+{
+return (mapIt->second);
+}
+std::cout << "Couldn't find function: ";
+std::cout << name << std::endl;
+exit(1);
+}
+
+globalVariableInformation genContext::globalVariableLookUp (std::string name)
+{
+std::map<std::string,globalVariableInformation>::iterator mapIt = globalVariableMap.find(name);
+if (mapIt != globalVariableMap.end())
+{
+return (mapIt->second);
+}
+std::cout << "Couldn't find global variable: ";
+std::cout << name << std::endl;
+exit(1);
+}
+
 int genContext::pushAstNode(AstNode* node)
 {
 codeObjects.push(AstNodePtr(node));
@@ -57,11 +93,6 @@ return mapIt->second;
 std::cout << "Couldn't find variable: ";
 std::cout << name << std::endl;
 exit(1);
-}
-
-llvm::Function* genContext::functionLookUp (std::string name)
-{
-return CurModule->getFunction(name);
 }
 
 

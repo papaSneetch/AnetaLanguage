@@ -42,6 +42,9 @@ typedef std::unique_ptr<expressionList> expressionListPtr;
 typedef std::unique_ptr<variableList> variableListPtr;
 
 struct variableInformation;
+struct functionInformation;
+struct globalVariableInformation;
+
 
 class AstNode
 {
@@ -537,5 +540,17 @@ index.reset(indexTmp);
 llvm::Value* codeGen(genContext& context);
 };
 
+struct functionInformation
+{
+llvm::Function* function;
+std::vector<const AstType*> argumentTypes;
+const AstType* returnType;
+};
+
+struct globalVariableInformation
+{
+llvm::GlobalVariable* globalVariablePtr;
+const AstType* type;
+};
 
 #endif 

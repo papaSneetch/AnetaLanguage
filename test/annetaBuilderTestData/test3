@@ -1,0 +1,14 @@
+bool lessThanPi(float k)
+{
+return (k <= 3.1415)
+}
+
+int main()
+{
+int i = 0;
+if (lessThanPi(3.15) & true)
+{
+i = 1;
+}
+return 1;
+}
