@@ -1,14 +1,21 @@
 #ifndef codegencontext
 #define codegencontext
 
-#include "llvmHeaders.h"
-
 #include <iostream>
 #include <string>
 #include <map>
 #include <vector>
 #include <queue>
 #include <utility>  
+
+#include <llvm/IR/LLVMContext.h>
+#include <llvm/IR/Module.h>
+#include <llvm/IR/IRBuilder.h>
+
+#include "llvm/Target/TargetMachine.h"
+#include "llvm/Support/TargetSelect.h"
+
+#include "llvm/IR/LegacyPassManager.h"
 
 class AstNode;
 class AstBlock;
@@ -24,42 +31,55 @@ typedef std::unique_ptr<AstNode> AstNodePtr;
 class genContext
 {
 private:
+std::queue<AstNodePtr> codeObjects;
 std::vector<AstBlockPtr> blockList;
 std::map <std::string,functionInformation> functionMap;
 std::map <std::string,globalVariableInformation> globalVariableMap;
-std::queue<AstNodePtr> codeObjects;
+const llvm::Target* target;
+llvm::TargetMachine* targetMachine;
+llvm::legacy::PassManager pass;
 
 public:
-
-llvm::LLVMContext& IRContext;
-llvm::IRBuilder<>& Builder;
+std::unique_ptr<llvm::LLVMContext> IRContext;
+std::unique_ptr<llvm::IRBuilder<>> Builder;
 std::unique_ptr<llvm::Module> CurModule;
 
-int initContext();
+void initContext();
+void createStart();
 
-int pushBlock(AstBlockPtr& block); 
-int pushBlock(AstBlock* blockPtr);
-int popBlock();
+void pushBlock(AstBlockPtr& block); 
+void pushBlock(AstBlock* blockPtr);
+void popBlock();
 
-int pushVariable(std::string name, llvm::AllocaInst* varPointer,const AstType* type);
+void pushVariable(std::string name, llvm::AllocaInst* varPointer,const AstType* type);
 
-int pushFunction(std::string name,llvm::Function* function,std::vector<const AstType*> types,const AstType* returnType); 
+void pushFunction(std::string name,llvm::Function* function,std::vector<const AstType*> types,const AstType* returnType); 
 
-int pushGlobalVariable(std::string name,llvm::GlobalVariable* var,const AstType* type);
+void pushGlobalVariable(std::string name,llvm::GlobalVariable* var,const AstType* type);
+
+void initializeTarget(const std::string& triple, std::string& errorString,llvm::StringRef CPU);
+
+void initializeTargetList();
+
+void initializeNativeTargetList();
+
+void setStartingFunction(const std::string functionName);
 
 functionInformation functionLookUp(std::string name);
 globalVariableInformation globalVariableLookUp(std::string name);
 
-int pushAstNode(AstNode* node);
-int pushAstNode(AstNodePtr& node);
+void pushAstNode(AstNode* node);
+void pushAstNode(AstNodePtr& node);
+AstNode* popAndGetAstNode();
 
 variableInformation varLookUp (std::string name);
 
-int codeGen();
+void codeGen();
 
-int printCode();
-
-genContext(llvm::LLVMContext& context, llvm::IRBuilder<>& builder ):IRContext(context),Builder(builder){}
+void printBitCode(std::string outputFileName);
+void printObjectCode(std::string outputFileName);
+void printExeCode(std::string outputFileName);
+void printLLVMCode(std::string outputFileName);
 
 AstBlockPtr& backBlock();
 }; 

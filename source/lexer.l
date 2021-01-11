@@ -152,7 +152,7 @@ return meg;
 return asg;
 }
 
-"&&" {
+"&" {
 return And;
 }
 

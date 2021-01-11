@@ -86,7 +86,7 @@ annetaBuilderMainObject = annetaBuilderMain.o
 annetaBuilderMainObjectLoc = $(objectDir)/$(annetaBuilderMainObject)
 annetaBuilderMainBin = annetaBuilder.bin
 annetaBuilderMainLoc = $(mainDir)/$(annetaBuilderMain)
-annetaBuilderMainPrereq = $(includes) $(objects) $(llvmFlagsSourceLoc)
+annetaBuilderMainPrereq = $(includes) $(objects) $(llvmFlagsSourceLoc) $(annetaBuilderMainLoc)
 annetaBuilderMainTargetLoc= $(binDir)/$(annetaBuilderMainBin)
 
 

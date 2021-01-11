@@ -1,7 +1,6 @@
 #ifndef annetaBuilder
 #define annetaBuilder
 
-#include "llvmHeaders.h"
 #include "codeGenContext.h"
 
 #include <vector>
@@ -10,6 +9,7 @@
 #include <string>
 #include <memory>
 
+class AstNode;
 class AstType;
 class AstExp;
 class AstVariableDeclaration;
@@ -89,7 +89,7 @@ AstName(const std::string& nameTmp):name(nameTmp) {}
 llvm::Value* codeGen(genContext& context);
 };
 
-class AstBlock: public AstNode {
+class AstBlock: public AstStat {
 public:
 statementListPtr statements;
 std::map<std::string,variableInformation> variableMap;
@@ -122,7 +122,6 @@ class AstFloatType: public AstType
 public:
 llvm::Type* typeOf(genContext& context) const;
 };
-
 
 extern const AstIntType intType;
 extern const AstFloatType floatType;
@@ -177,8 +176,24 @@ AstBlockPtr ifBlock;
 AstBlockPtr elseBlock;
 AstExpPtr testCondition;
 AstIfElseStat( AstBlockPtr& ifBlock, AstExpPtr& testCondition, AstBlockPtr& elseBlock):ifBlock(std::move(ifBlock)),elseBlock(std::move(elseBlock)),testCondition(std::move(testCondition)){}
-AstIfElseStat( AstBlockPtr& ifBlock, AstExpPtr& testCondition):ifBlock(std::move(ifBlock)),testCondition(std::move(testCondition)){}
-AstIfElseStat( AstBlock* ifBlock, AstExp* testCondition, AstBlock* elseBlock = nullptr):ifBlock(ifBlock),elseBlock(elseBlock),testCondition(testCondition){}
+AstIfElseStat( AstBlock* ifBlockTmp, AstExp* testConditionTmp, AstBlock* elseBlockTmp = nullptr) {
+ifBlock.reset(ifBlockTmp);
+elseBlock.reset(elseBlockTmp);
+testCondition.reset(testConditionTmp);
+}
+llvm::Value* codeGen(genContext& context);
+};
+
+class AstIfStat: public AstStat
+{
+public:
+AstBlockPtr ifBlock;
+AstExpPtr testCondition;
+AstIfStat( AstBlockPtr& ifBlock, AstExpPtr& testCondition):ifBlock(std::move(ifBlock)),testCondition(std::move(testCondition)){}
+AstIfStat( AstBlock* ifBlockTmp, AstExp* testConditionTmp) {
+ifBlock.reset(ifBlockTmp);
+testCondition.reset(testConditionTmp);
+}
 llvm::Value* codeGen(genContext& context);
 };
 
@@ -461,15 +476,15 @@ llvm::AllocaInst* codeGen(genContext& context);
 class AstGlobalVariableDeclaration : public AstStat
 {
 public:
-AstNamePtr variableName;
-const AstType* variableType;
+const AstType* variableType; 
+AstNamePtr variableName; //The variableName can't be first or a bug in the the llvm::GlobalVariable will overwrite the queue pointer to the variable crashing the program.
 AstConstantPtr initializer;
-AstGlobalVariableDeclaration( AstNamePtr& variableName, const AstType& variableType): variableName(std::move(variableName)), variableType(&variableType) {}
-AstGlobalVariableDeclaration( AstName* variableNameTmp, const AstType* variableTypeTmp):variableType(variableTypeTmp) {
+AstGlobalVariableDeclaration(const AstType& variableType,AstNamePtr& variableName): variableType(&variableType),variableName(std::move(variableName)){}
+AstGlobalVariableDeclaration(const AstType* variableTypeTmp, AstName* variableNameTmp):variableType(variableTypeTmp) {
 variableName.reset(variableNameTmp);
 }
-AstGlobalVariableDeclaration( AstNamePtr& variableName, const AstType& variableType, AstConstantPtr& initializer): variableName(std::move(variableName)), variableType(&variableType),initializer(std::move(initializer)) {}
-AstGlobalVariableDeclaration( AstName* variableNameTmp, const AstType* variableTypeTmp,AstConstant* initializerTmp):variableType(variableTypeTmp) {
+AstGlobalVariableDeclaration(const AstType& variableType, AstNamePtr& variableName, AstConstantPtr& initializer): variableType(&variableType),variableName(std::move(variableName)),initializer(std::move(initializer)) {}
+AstGlobalVariableDeclaration(const AstType* variableTypeTmp, AstName* variableNameTmp, AstConstant* initializerTmp):variableType(variableTypeTmp) {
 variableName.reset(variableNameTmp);
 initializer.reset(initializerTmp);
 }
@@ -549,7 +564,7 @@ const AstType* returnType;
 
 struct globalVariableInformation
 {
-llvm::GlobalVariable* globalVariablePtr;
+llvm::GlobalVariable* alloca;
 const AstType* type;
 };
 

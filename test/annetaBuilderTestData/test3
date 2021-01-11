@@ -1,6 +1,7 @@
-bool lessThanPi(float k)
+float pi = 3.14;
+bool lessThanPi(float ki)
 {
-return (k <= 3.1415)
+return (ki <= pi);
 }
 
 int main()
@@ -10,5 +11,5 @@ if (lessThanPi(3.15) & true)
 {
 i = 1;
 }
-return 1;
+return i;
 }
