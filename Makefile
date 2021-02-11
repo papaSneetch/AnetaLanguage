@@ -1,4 +1,4 @@
-CC = clang++ -Wall -I $(includeDir)
+CC = clang++ -Wall -I $(includeDir) -g
 llvmLib = ../../Libaries/rootLibaries/llvm-11.0.0/lib
 
 sourceDir = ./source
@@ -21,7 +21,7 @@ lexTestScript = lexerTest.sh
 
 bisonSource = parser.y
 parserInclude = parser.tab.h
-parserLib = parser.tab.c
+parserLib = parser.tab.cpp
 parserObject = parser.tab.o
 parserBin = parser.bin
 parserMain = parserMain.cpp
@@ -86,7 +86,7 @@ annetaBuilderMainObject = annetaBuilderMain.o
 annetaBuilderMainObjectLoc = $(objectDir)/$(annetaBuilderMainObject)
 annetaBuilderMainBin = annetaBuilder.bin
 annetaBuilderMainLoc = $(mainDir)/$(annetaBuilderMain)
-annetaBuilderMainPrereq = $(includes) $(objects) $(llvmFlagsSourceLoc)
+annetaBuilderMainPrereq = $(includes) $(objects) $(llvmFlagsSourceLoc) $(annetaBuilderMainLoc)
 annetaBuilderMainTargetLoc= $(binDir)/$(annetaBuilderMainBin)
 
 

@@ -1,0 +1,15 @@
+frame #0: 0x000000000049a34c annetaBuilder.bin`llvm::Use::removeFromList(this=0x00007fffffffdda8) at Use.h:108:6
+   105    }
+   106                                                                                                                                                             
+   107    void removeFromList() {
+-> 108      *Prev = Next;
+   109      if (Next)
+   110        Next->Prev = Prev;
+   111    }  
+
+llvm causes problems for queues when the name variable is the first variable in an object. *Prev = Next overwrites the first element pointer in a queue so it points to the wrong element.
+
+Example Code:
+codeObjects.front() -> codeGen(*this);
+codeObjects.front().reset();
+codeObjects.pop();

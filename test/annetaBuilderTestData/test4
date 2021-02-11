@@ -1,0 +1,9 @@
+int main()
+{
+bool loop = true;
+while (loop)
+{
+loop = false;
+}
+return 0;
+}

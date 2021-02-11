@@ -1,0 +1,8 @@
+int main()
+{                          
+int inc = 0;
+float pi[2] = { 3.14, 3.1415 };
+bool tf = true;            
+inc = inc + 1;
+return 0;
+}

@@ -1,14 +1,16 @@
 #ifndef annetaBuilder
 #define annetaBuilder
 
-#include "llvmHeaders.h"
 #include "codeGenContext.h"
 
 #include <vector>
+#include <utility>
 #include <map>
 #include <string>
 #include <memory>
 
+class AstNode;
+class AstType;
 class AstExp;
 class AstVariableDeclaration;
 class AstGlobalVariableDeclaration;
@@ -19,26 +21,29 @@ class AstName;
 class AstConstant;
 class AstIntValue;
 
-typedef std::shared_ptr<AstNode> AstNodePtr;
-typedef std::shared_ptr<AstStat> AstStatPtr;
-typedef std::shared_ptr<AstType> AstTypePtr;
-typedef std::shared_ptr<AstExp> AstExpPtr;
-typedef std::shared_ptr<AstBlock> AstBlockPtr;
-typedef std::shared_ptr<AstName> AstNamePtr;
-typedef std::shared_ptr<AstConstant> AstConstantPtr;
-typedef std::shared_ptr<AstIntValue> AstIntValuePtr;
-typedef std::shared_ptr<AstVariableDeclaration> AstVariableDeclarationPtr;
-typedef std::shared_ptr<AstGlobalVariableDeclaration> AstGlobalVariableDeclarationPtr;
-typedef std::shared_ptr<AstArrayDeclaration> AstArrayDeclarationPtr;
-
+typedef std::unique_ptr<AstNode> AstNodePtr;
+typedef std::unique_ptr<AstStat> AstStatPtr;
+typedef std::unique_ptr<AstType> AstTypePtr;
+typedef std::unique_ptr<AstExp> AstExpPtr;
+typedef std::unique_ptr<AstBlock> AstBlockPtr;
+typedef std::unique_ptr<AstName> AstNamePtr;
+typedef std::unique_ptr<AstConstant> AstConstantPtr;
+typedef std::unique_ptr<AstIntValue> AstIntValuePtr;
+typedef std::unique_ptr<AstVariableDeclaration> AstVariableDeclarationPtr;
+typedef std::unique_ptr<AstGlobalVariableDeclaration> AstGlobalVariableDeclarationPtr;
+typedef std::unique_ptr<AstArrayDeclaration> AstArrayDeclarationPtr;
 
 typedef std::vector<AstExpPtr> expressionList;
 typedef std::vector<AstVariableDeclaration> variableList;
 typedef std::vector<AstStatPtr> statementList; 
 
-typedef std::shared_ptr<statementList> statementListPtr;
-typedef std::shared_ptr<expressionList> expressionListPtr;
-typedef std::shared_ptr<variableList> variableListPtr;
+typedef std::unique_ptr<statementList> statementListPtr;
+typedef std::unique_ptr<expressionList> expressionListPtr;
+typedef std::unique_ptr<variableList> variableListPtr;
+
+struct variableInformation;
+struct functionInformation;
+struct globalVariableInformation;
 
 
 class AstNode
@@ -50,8 +55,13 @@ virtual llvm::Value* codeGen(genContext& context) = 0;
 
 class AstType {
 public:
-virtual ~AstType() = default;
-virtual llvm::Type* typeOf(genContext& context) {return nullptr;}
+virtual llvm::Type* typeOf(genContext& context) const = 0;
+};
+
+struct variableInformation
+{
+llvm::AllocaInst* alloca;
+const AstType* type;
 };
 
 class AstStat: public AstNode {
@@ -61,9 +71,9 @@ virtual ~AstStat() = default;
 
 class AstExp: public AstNode {
 public:
-AstTypePtr type;
-AstExp(AstTypePtr type):type(type){}
-AstExp(AstType* type):type(AstTypePtr(type)){}
+const AstType* type;
+AstExp(const AstType& type):type(&type){}
+AstExp(const AstType* typeTmp):type(typeTmp){}
 AstExp() = default;
 virtual llvm::Value* codeGen(genContext& context) {return nullptr;}
 };
@@ -75,54 +85,55 @@ class AstCall : public AstExp
 class AstName: public AstNode {
 public:
 std::string name;
-AstName(std::string name):name(name){}
+AstName(const std::string& nameTmp):name(nameTmp) {}
 llvm::Value* codeGen(genContext& context);
 };
 
-class AstBlock: public AstNode {
+class AstBlock: public AstStat {
 public:
 statementListPtr statements;
-std::map<std::string,llvm::AllocaInst*> variableMap;
-AstBlock() {};
-AstBlock(statementListPtr statements = std::make_shared<statementList>()): statements(statements){}
+std::map<std::string,variableInformation> variableMap;
+AstBlock(statementListPtr& statements): statements(std::move(statements)){}
 AstBlock(statementList* statements): statements(statementListPtr(statements)){}
 llvm::Value* codeGen(genContext& context);
+llvm::Value* codeGenInFunction(genContext& context);
 };
 
 class AstIntType: public AstType
 {
 public:
-llvm::Type* typeOf(genContext& context);
+llvm::IntegerType* typeOf(genContext& context) const;
 };
-extern AstIntType intType;
 
 class AstStringType: public AstType
 {
 public:
-llvm::Type* typeOf(genContext& context);
+llvm::Type* typeOf(genContext& context) const;
 };
-extern AstStringType stringType;
 
 class AstBoolType: public AstType
 {
 public:
-llvm::Type* typeOf(genContext& context);
+llvm::IntegerType* typeOf(genContext& context) const;
 };
-extern AstBoolType boolType;
 
 class AstFloatType: public AstType
 {
 public:
-llvm::Type* typeOf(genContext& context);
+llvm::Type* typeOf(genContext& context) const;
 };
-extern AstFloatType floatType;
+
+extern const AstIntType intType;
+extern const AstFloatType floatType;
+extern const AstBoolType boolType;
+extern const AstStringType stringType;
 
 class AstConstant: public AstExp
 {
 public:
 virtual ~AstConstant() = default;
-AstConstant(AstTypePtr type):AstExp(type){}
-AstConstant(AstType* type):AstExp(AstTypePtr(type)){}
+AstConstant(const AstType& type):AstExp(type){}
+AstConstant(const AstType* type):AstExp(type){}
 virtual llvm::Constant* codeGen(genContext& context) = 0;
 };
 
@@ -130,7 +141,7 @@ class AstIntValue: public AstConstant
 {
 public:
 int value;
-AstIntValue(int value):AstConstant(std::make_shared<AstType>(intType)),value(value){}
+AstIntValue(int value):AstConstant(intType),value(value){}
 llvm::Constant* codeGen(genContext& context);
 };
 
@@ -138,7 +149,7 @@ class AstStringValue: public AstConstant
 {
 public:
 std::string value;
-AstStringValue(std::string value):AstConstant(std::make_shared<AstType>(stringType)),value(value){}
+AstStringValue(std::string value):AstConstant(stringType),value(value){}
 llvm::Constant* codeGen(genContext& context);
 };
 
@@ -146,7 +157,7 @@ class AstBoolValue: public AstConstant
 {
 public:
 bool value;
-AstBoolValue(bool value):AstConstant(std::make_shared<AstType>(boolType)),value(value){}
+AstBoolValue(bool value):AstConstant(boolType),value(value){}
 llvm::Constant* codeGen(genContext& context);
 };
 
@@ -154,7 +165,7 @@ class AstFloatValue: public AstConstant
 {
 public:
 float value;
-AstFloatValue(float value):AstConstant(std::make_shared<AstType>(floatType)),value(value){}
+AstFloatValue(float value):AstConstant(floatType),value(value){}
 llvm::Constant* codeGen(genContext& context);
 };
  
@@ -164,8 +175,25 @@ public:
 AstBlockPtr ifBlock;
 AstBlockPtr elseBlock;
 AstExpPtr testCondition;
-AstIfElseStat(AstBlockPtr ifBlock, AstExpPtr testCondition,AstBlockPtr elseBlock = AstBlockPtr(nullptr)):ifBlock(ifBlock),elseBlock(elseBlock),testCondition(testCondition){}
-AstIfElseStat(AstBlock* ifBlock, AstExp* testCondition,AstBlock* elseBlock = nullptr):ifBlock(AstBlockPtr(ifBlock)),elseBlock(AstBlockPtr(elseBlock)),testCondition(AstExpPtr(testCondition)){}
+AstIfElseStat( AstBlockPtr& ifBlock, AstExpPtr& testCondition, AstBlockPtr& elseBlock):ifBlock(std::move(ifBlock)),elseBlock(std::move(elseBlock)),testCondition(std::move(testCondition)){}
+AstIfElseStat( AstBlock* ifBlockTmp, AstExp* testConditionTmp, AstBlock* elseBlockTmp = nullptr) {
+ifBlock.reset(ifBlockTmp);
+elseBlock.reset(elseBlockTmp);
+testCondition.reset(testConditionTmp);
+}
+llvm::Value* codeGen(genContext& context);
+};
+
+class AstIfStat: public AstStat
+{
+public:
+AstBlockPtr ifBlock;
+AstExpPtr testCondition;
+AstIfStat( AstBlockPtr& ifBlock, AstExpPtr& testCondition):ifBlock(std::move(ifBlock)),testCondition(std::move(testCondition)){}
+AstIfStat( AstBlock* ifBlockTmp, AstExp* testConditionTmp) {
+ifBlock.reset(ifBlockTmp);
+testCondition.reset(testConditionTmp);
+}
 llvm::Value* codeGen(genContext& context);
 };
 
@@ -174,34 +202,40 @@ class AstWhileLoop: public AstStat
 public:
 AstBlockPtr whileBlock;
 AstExpPtr testCondition;
-AstWhileLoop(AstBlockPtr whileBlock,AstExpPtr testCondition):whileBlock(whileBlock),testCondition(testCondition){}
-AstWhileLoop(AstBlock* whileBlock,AstExp* testCondition):whileBlock(AstBlockPtr(whileBlock)),testCondition(AstExpPtr(testCondition)){}
+AstWhileLoop( AstBlockPtr& whileBlock, AstExpPtr& testCondition):whileBlock(std::move(whileBlock)),testCondition(std::move(testCondition)){}
+AstWhileLoop( AstBlock* whileBlockTmp, AstExp* testConditionTmp){
+whileBlock.reset(whileBlockTmp);
+testCondition.reset(testConditionTmp);
+}
 llvm::Value* codeGen(genContext& context);
 };
 
 class AstBinOp: public AstExp
 {
+protected:
+int updateType();
 public:
 virtual ~AstBinOp() = default;
 AstExpPtr lhs;
 AstExpPtr rhs;
-AstBinOp(AstExpPtr lhs, AstExpPtr rhs);
+AstBinOp(AstExp* lhsPtr, AstExp* rhsPtr);
+AstBinOp(AstExpPtr& lhs, AstExpPtr& rhs);
 virtual llvm::Value* codeGen(genContext& context) = 0;
 };
 
 class AstOr: public AstBinOp
 {
 public:
-AstOr(AstExpPtr lhs, AstExpPtr rhs):AstBinOp(lhs,rhs){} 
-AstOr(AstExp* lhs, AstExp* rhs):AstBinOp(AstExpPtr(lhs),AstExpPtr(rhs)){} 
+AstOr(AstExpPtr& lhs, AstExpPtr& rhs):AstBinOp(lhs,rhs){} 
+AstOr(AstExp* lhs, AstExp* rhs):AstBinOp(lhs,rhs){} 
 llvm::Value* codeGen(genContext& context);
 };
 
 class AstXor: public AstBinOp
 {
 public:
-AstXor(AstExpPtr lhs, AstExpPtr rhs):AstBinOp(lhs,rhs){}
-AstXor(AstExp* lhs, AstExp* rhs):AstBinOp(AstExpPtr(lhs),AstExpPtr(rhs)){} 
+AstXor( AstExpPtr& lhs, AstExpPtr& rhs):AstBinOp(lhs,rhs){}
+AstXor( AstExp* lhs, AstExp* rhs):AstBinOp(lhs,rhs){} 
 
 llvm::Value* codeGen(genContext& context);
 };
@@ -209,128 +243,132 @@ llvm::Value* codeGen(genContext& context);
 class AstAnd: public AstBinOp
 {
 public:
-AstAnd (AstExpPtr lhs, AstExpPtr rhs):AstBinOp(lhs,rhs){}
-AstAnd(AstExp* lhs, AstExp* rhs):AstBinOp(AstExpPtr(lhs),AstExpPtr(rhs)){}
+AstAnd ( AstExpPtr& lhs, AstExpPtr& rhs):AstBinOp(lhs,rhs){}
+AstAnd( AstExp* lhs, AstExp* rhs):AstBinOp(lhs,rhs){}
 llvm::Value* codeGen(genContext& context);
 };
 
 class AstEql: public AstBinOp
 {
 public:
-AstEql (AstExpPtr lhs, AstExpPtr rhs):AstBinOp(lhs,rhs){}
-AstEql(AstExp* lhs, AstExp* rhs):AstBinOp(AstExpPtr(lhs),AstExpPtr(rhs)){}
+AstEql ( AstExpPtr& lhs, AstExpPtr& rhs):AstBinOp(lhs,rhs){}
+AstEql( AstExp* lhs, AstExp* rhs):AstBinOp(lhs,rhs){}
 llvm::Value* codeGen(genContext& context);
 };
 
 class Astleq: public AstBinOp
 {
 public:
-Astleq (AstExpPtr lhs, AstExpPtr rhs):AstBinOp(lhs,rhs){}
-Astleq(AstExp* lhs, AstExp* rhs):AstBinOp(AstExpPtr(lhs),AstExpPtr(rhs)){}
+Astleq ( AstExpPtr& lhs, AstExpPtr& rhs):AstBinOp(lhs,rhs){}
+Astleq( AstExp* lhs, AstExp* rhs):AstBinOp(lhs,rhs){}
 llvm::Value* codeGen(genContext& context);
 };
 
 class Astgeq: public AstBinOp
 {
 public:
-Astgeq(AstExpPtr lhs, AstExpPtr rhs):AstBinOp(lhs,rhs){}
-Astgeq(AstExp* lhs, AstExp* rhs):AstBinOp(AstExpPtr(lhs),AstExpPtr(rhs)){}
+Astgeq( AstExpPtr& lhs, AstExpPtr& rhs):AstBinOp(lhs,rhs){}
+Astgeq( AstExp* lhs, AstExp* rhs):AstBinOp(lhs,rhs){}
 llvm::Value* codeGen(genContext& context);
 };
 
 class Astlt: public AstBinOp
 {
 public:
-Astlt(AstExpPtr lhs, AstExpPtr rhs):AstBinOp(lhs,rhs){}
-Astlt(AstExp* lhs, AstExp* rhs):AstBinOp(AstExpPtr(lhs),AstExpPtr(rhs)){}
+Astlt( AstExpPtr& lhs,  AstExpPtr& rhs):AstBinOp(lhs,rhs){}
+Astlt( AstExp* lhs, AstExp* rhs):AstBinOp(lhs,rhs){}
 llvm::Value* codeGen(genContext& context);
 };
 
 class Astgt: public AstBinOp
 {
 public:
-Astgt(AstExpPtr lhs, AstExpPtr rhs):AstBinOp(lhs,rhs){}
-Astgt(AstExp* lhs, AstExp* rhs):AstBinOp(AstExpPtr(lhs),AstExpPtr(rhs)){}
+Astgt( AstExpPtr& lhs, AstExpPtr& rhs):AstBinOp(lhs,rhs){}
+Astgt( AstExp* lhs, AstExp* rhs):AstBinOp(lhs,rhs){}
 llvm::Value* codeGen(genContext& context);
 };
 
 class Astneq: public AstBinOp
 {
 public:
-Astneq(AstExpPtr lhs, AstExpPtr rhs):AstBinOp(lhs,rhs){}
-Astneq(AstExp* lhs, AstExp* rhs):AstBinOp(AstExpPtr(lhs),AstExpPtr(rhs)){}
+Astneq( AstExpPtr& lhs,  AstExpPtr& rhs):AstBinOp(lhs,rhs){}
+Astneq( AstExp* lhs, AstExp* rhs):AstBinOp(lhs,rhs){}
 llvm::Value* codeGen(genContext& context);
 };
 
 class AstLeftSh: public AstBinOp
 {
 public:
-AstLeftSh(AstExpPtr lhs, AstExpPtr rhs):AstBinOp(lhs,rhs){}
-AstLeftSh(AstExp* lhs, AstExp* rhs):AstBinOp(AstExpPtr(lhs),AstExpPtr(rhs)){}
+AstLeftSh( AstExpPtr& lhs, AstExpPtr& rhs):AstBinOp(lhs,rhs){}
+AstLeftSh( AstExp* lhs, AstExp* rhs):AstBinOp(lhs,rhs){}
 llvm::Value* codeGen(genContext& context);
 };
 
 class AstRightSh: public AstBinOp
 {
 public:
-AstRightSh(AstExpPtr lhs, AstExpPtr rhs):AstBinOp(lhs,rhs){}
-AstRightSh(AstExp* lhs, AstExp* rhs):AstBinOp(AstExpPtr(lhs),AstExpPtr(rhs)){}
+AstRightSh( AstExpPtr& lhs, AstExpPtr& rhs):AstBinOp(lhs,rhs){}
+AstRightSh( AstExp* lhs, AstExp* rhs):AstBinOp(lhs,rhs){}
 llvm::Value* codeGen(genContext& context);
 };
 
 class AstAdd: public AstBinOp
 {
 public:
-AstAdd(AstExpPtr lhs, AstExpPtr rhs):AstBinOp(lhs,rhs){}
-AstAdd(AstExp* lhs, AstExp* rhs):AstBinOp(AstExpPtr(lhs),AstExpPtr(rhs)){}
+AstAdd( AstExpPtr& lhs, AstExpPtr& rhs):AstBinOp(lhs,rhs){}
+AstAdd( AstExp* lhs, AstExp* rhs):AstBinOp(lhs,rhs){}
 llvm::Value* codeGen(genContext& context);
 };
 
 class AstSub: public AstBinOp
 {
 public:
-AstSub(AstExpPtr lhs, AstExpPtr rhs):AstBinOp(lhs,rhs){}
-AstSub(AstExp* lhs, AstExp* rhs):AstBinOp(AstExpPtr(lhs),AstExpPtr(rhs)){}
+AstSub( AstExpPtr& lhs, AstExpPtr& rhs):AstBinOp(lhs,rhs){}
+AstSub( AstExp* lhs, AstExp* rhs):AstBinOp(lhs,rhs){}
 llvm::Value* codeGen(genContext& context);
 };
 
 class AstMul: public AstBinOp
 {
 public:
-AstMul(AstExpPtr lhs, AstExpPtr rhs):AstBinOp(lhs,rhs){}
-AstMul(AstExp* lhs, AstExp* rhs):AstBinOp(AstExpPtr(lhs),AstExpPtr(rhs)){}
+AstMul( AstExpPtr& lhs, AstExpPtr& rhs):AstBinOp(lhs,rhs){}
+AstMul( AstExp* lhs, AstExp* rhs):AstBinOp(lhs,rhs){}
 llvm::Value* codeGen(genContext& context);
 };
 
 class AstDiv: public AstBinOp
 {
 public:
-AstDiv(AstExpPtr lhs, AstExpPtr rhs):AstBinOp(lhs,rhs){}
-AstDiv(AstExp* lhs, AstExp* rhs):AstBinOp(AstExpPtr(lhs),AstExpPtr(rhs)){}
+AstDiv( AstExpPtr& lhs, AstExpPtr& rhs):AstBinOp(lhs,rhs){}
+AstDiv( AstExp* lhs, AstExp* rhs):AstBinOp(lhs,rhs){}
 llvm::Value* codeGen(genContext& context);
 };
 
 class AstMod: public AstBinOp
 {
 public:
-AstMod(AstExpPtr lhs, AstExpPtr rhs):AstBinOp(lhs,rhs){}
-AstMod(AstExp* lhs, AstExp* rhs):AstBinOp(AstExpPtr(lhs),AstExpPtr(rhs)){}
+AstMod( AstExpPtr& lhs, AstExpPtr& rhs):AstBinOp(lhs,rhs){}
+AstMod( AstExp* lhs, AstExp* rhs):AstBinOp(lhs,rhs){}
 llvm::Value* codeGen(genContext& context);
 };
 
 class AstAsg: public AstExp
 {
 public:
+AstNamePtr variableName;
+expressionListPtr rhs;
+AstAsg(AstNamePtr& variableNameTmp, AstExpPtr& rhsTmp);
+AstAsg(AstName* variableNameTmp, AstExp* rhsTmp);
+AstAsg(AstNamePtr& variableNameTmp, expressionListPtr& arrayValuesTmp);
+AstAsg(AstName* variableNameTmp, expressionList* arrayValuesTmp);
 virtual llvm::Value* codeGen(genContext& context) = 0;
 };
 
 class AstVariableAsg: public AstAsg
 {
 public:
-AstNamePtr variableName;
-AstExpPtr rhs;
-AstVariableAsg(AstNamePtr variableName, AstExpPtr rhs):variableName(variableName),rhs(rhs){}
-AstVariableAsg(AstName* variableName, AstExp* rhs):variableName(AstNamePtr(variableName)),rhs(AstExpPtr(rhs)){}
+AstVariableAsg(AstNamePtr& variableName, AstExpPtr& rhs):AstAsg(variableName,rhs){}
+AstVariableAsg( AstName* variableName, AstExp* rhs):AstAsg(variableName,rhs){}
 llvm::Value* codeGen(genContext& context);
 };
 
@@ -340,8 +378,11 @@ public:
 AstNamePtr variableName;
 AstExpPtr rhs;
 AstExpPtr index;
-AstArrayAsg(AstNamePtr variableName, AstExpPtr rhs, AstExpPtr index):variableName(variableName),rhs(rhs),index(index){}
-AstArrayAsg(AstName* variableName, AstExp* rhs, AstExp* index):variableName(AstNamePtr(variableName)),rhs(AstExpPtr(rhs)),index(AstExpPtr(index)){}
+AstArrayAsg(AstNamePtr& variableName, AstExpPtr& rhs, AstExpPtr& index):AstAsg(variableName,rhs),index(std::move(index)){}
+AstArrayAsg(AstName* variableNameTmp, AstExp* rhsTmp, AstExp* indexTmp):AstAsg(variableNameTmp,rhsTmp)
+{
+index.reset(indexTmp);
+}
 llvm::Value* codeGen(genContext& context);
 };
 
@@ -351,25 +392,29 @@ public:
 expressionListPtr arrayValues;
 AstNamePtr variableName;
 AstExpPtr index;
-AstArrayListAsg(AstNamePtr name,expressionListPtr arrayValues,AstExpPtr index = std::make_shared<AstExp>(AstIntValue(0))):arrayValues(arrayValues),variableName(name),index(index){}
-AstArrayListAsg(AstName* name,expressionList* arrayValues,AstExp* index = new AstIntValue(0)):arrayValues(expressionListPtr(arrayValues)),variableName(AstNamePtr(name)),index(AstExpPtr(index)){}
+AstArrayListAsg(AstNamePtr& name, expressionListPtr& arrayValues, AstExpPtr& index):AstAsg(name,arrayValues),index(std::move(index)){}
+AstArrayListAsg(AstNamePtr& name, expressionListPtr& arrayValues):AstAsg(name,arrayValues){
+index.reset(new AstIntValue(0));
+}
+AstArrayListAsg(AstName* nameTmp, expressionList* arrayValuesTmp,AstExp* indexTmp = new AstIntValue(0)):AstAsg(nameTmp,arrayValuesTmp) {
+index.reset(indexTmp);
+}
 llvm::Value* codeGen(genContext& context);
 };
 
 class AstAeg: public AstBinOp
 {
 public:
-AstAeg(AstExpPtr lhs, AstExpPtr rhs):AstBinOp(lhs,rhs){}
-AstAeg(AstExp* lhs, AstExp* rhs):AstBinOp(AstExpPtr(lhs),AstExpPtr(rhs)){}
-
+AstAeg( AstExpPtr& lhs, AstExpPtr& rhs):AstBinOp(lhs,rhs){}
+AstAeg( AstExp* lhs, AstExp* rhs):AstBinOp(lhs,rhs){}
 llvm::Value* codeGen(genContext& context);
 };
 
 class AstMeg: public AstBinOp
 {
 public:
-AstMeg (AstExpPtr lhs, AstExpPtr rhs):AstBinOp(lhs,rhs){}
-AstMeg(AstExp* lhs, AstExp* rhs):AstBinOp(AstExpPtr(lhs),AstExpPtr(rhs)){}
+AstMeg ( AstExpPtr& lhs, AstExpPtr& rhs):AstBinOp(lhs,rhs){}
+AstMeg( AstExp* lhs, AstExp* rhs):AstBinOp(lhs,rhs){}
 llvm::Value* codeGen(genContext& context);
 };
 
@@ -377,7 +422,8 @@ class AstUnaryOp: public AstExp
 {
 public:
 AstExpPtr expNode;
-AstUnaryOp(AstExpPtr expNodePtr):AstExp(expNodePtr->type),expNode(expNodePtr){}
+AstUnaryOp(AstExpPtr& expNodePtr):AstExp(expNodePtr->type),expNode(std::move(expNodePtr)){}
+AstUnaryOp(AstExp* expNodePtr):AstExp(expNodePtr->type) {expNode.reset(expNodePtr);} 
 virtual llvm::Value* codeGen(genContext& context);
 };
 
@@ -385,11 +431,15 @@ class AstFunctionDeclaration : public AstStat //Note: The function declaration n
 {
 public:
 variableListPtr arguments;
-AstTypePtr returnType;
+const AstType* returnType;
 AstNamePtr functionName;
 AstBlockPtr block;
-AstFunctionDeclaration(AstTypePtr returnType, AstNamePtr functionName, AstBlockPtr block, variableListPtr arguments = variableListPtr(nullptr)): arguments(arguments),returnType(returnType), functionName(functionName),block(block){}
-AstFunctionDeclaration(AstType* returnType, AstName* functionName, AstBlock* block, variableList* arguments = nullptr): arguments(variableListPtr(arguments)),returnType(AstTypePtr(returnType)), functionName(AstNamePtr(functionName)),block(AstBlockPtr(block)){}
+AstFunctionDeclaration(const AstType& returnType, AstNamePtr& functionName, AstBlockPtr& block, variableListPtr& arguments): arguments(std::move(arguments)),returnType(&returnType), functionName(std::move(functionName)),block(std::move(block)){}
+AstFunctionDeclaration(const AstType* returnTypeTmp, AstName* functionNameTmp, AstBlock* blockTmp, variableList* argumentsTmp):returnType(returnTypeTmp) {
+arguments.reset(argumentsTmp);
+functionName.reset(functionNameTmp);
+block.reset(blockTmp);
+}
 llvm::Value* codeGen(genContext& context);
 };
 
@@ -397,8 +447,10 @@ class AstReturnStat: public AstStat
 {
 public:
 AstExpPtr returnValue;
-AstReturnStat(AstExpPtr returnValue):returnValue(returnValue){}
-AstReturnStat(AstExp* returnValue):returnValue(AstExpPtr(returnValue)){}
+AstReturnStat(AstExpPtr& returnValue):returnValue(std::move(returnValue)){}
+AstReturnStat( AstExp* returnValueTmp) {
+returnValue.reset(returnValueTmp);
+}
 llvm::Value* codeGen(genContext& context);
 };
 
@@ -406,26 +458,36 @@ class AstVariableDeclaration : public AstStat
 {
 public:
 AstNamePtr variableName;
-AstTypePtr variableType;
-AstExpPtr initializer = nullptr;
-AstVariableDeclaration(AstNamePtr variableName, AstTypePtr variableType): variableName(variableName), variableType(variableType) {}
-AstVariableDeclaration(AstNamePtr variableName, AstTypePtr variableType,AstExpPtr initializer): variableName(variableName), variableType(variableType),initializer(initializer) {}
-AstVariableDeclaration(AstName* variableName, AstType* variableType): variableName(AstNamePtr(variableName)), variableType(AstTypePtr(variableType)) {}
-AstVariableDeclaration(AstName* variableName, AstType* variableType,AstExp* initializer): variableName(AstNamePtr(variableName)), variableType(AstTypePtr(variableType)),initializer(AstExpPtr(initializer)) {}
+const AstType* variableType;
+AstExpPtr initializer; 
+AstVariableDeclaration( AstNamePtr& variableName,const AstType& variableType): variableName(std::move(variableName)), variableType(&variableType) {}
+AstVariableDeclaration( AstNamePtr& variableName,const AstType& variableType, AstExpPtr& initializer):variableName(std::move(variableName)),variableType(&variableType),initializer(std::move(initializer))  {}
+AstVariableDeclaration( AstName* variableNameTmp,const AstType* variableTypeTmp):variableType(variableTypeTmp) { 
+variableName.reset(variableNameTmp);
+} 
+AstVariableDeclaration( AstName* variableNameTmp,const AstType* variableTypeTmp, AstExp* initializerTmp):variableType(variableTypeTmp) {
+variableName.reset(variableNameTmp);
+initializer.reset(initializerTmp);
+}
 
-llvm::Value* codeGen(genContext& context);
+llvm::AllocaInst* codeGen(genContext& context);
 };
 
 class AstGlobalVariableDeclaration : public AstStat
 {
 public:
-AstNamePtr variableName;
-AstTypePtr variableType;
-AstConstantPtr initializer = nullptr;
-AstGlobalVariableDeclaration(AstNamePtr variableName, AstTypePtr variableType): variableName(variableName), variableType(variableType) {}
-AstGlobalVariableDeclaration(AstName* variableName, AstType* variableType): variableName(AstNamePtr(variableName)), variableType(AstTypePtr(variableType)) {}
-AstGlobalVariableDeclaration(AstNamePtr variableName, AstTypePtr variableType,AstConstantPtr initializer): variableName(variableName), variableType(variableType),initializer(initializer) {}
-AstGlobalVariableDeclaration(AstName* variableName, AstType* variableType,AstConstant* initializer): variableName(AstNamePtr(variableName)), variableType(AstTypePtr(variableType)),initializer(AstConstantPtr(initializer)) {}
+const AstType* variableType; 
+AstNamePtr variableName; //The variableName can't be first or a bug in the the llvm::GlobalVariable will overwrite the queue pointer to the variable crashing the program.
+AstConstantPtr initializer;
+AstGlobalVariableDeclaration(const AstType& variableType,AstNamePtr& variableName): variableType(&variableType),variableName(std::move(variableName)){}
+AstGlobalVariableDeclaration(const AstType* variableTypeTmp, AstName* variableNameTmp):variableType(variableTypeTmp) {
+variableName.reset(variableNameTmp);
+}
+AstGlobalVariableDeclaration(const AstType& variableType, AstNamePtr& variableName, AstConstantPtr& initializer): variableType(&variableType),variableName(std::move(variableName)),initializer(std::move(initializer)) {}
+AstGlobalVariableDeclaration(const AstType* variableTypeTmp, AstName* variableNameTmp, AstConstant* initializerTmp):variableType(variableTypeTmp) {
+variableName.reset(variableNameTmp);
+initializer.reset(initializerTmp);
+}
 llvm::Value* codeGen(genContext& context);
 };
 
@@ -433,11 +495,14 @@ class AstArrayDeclaration : public AstStat
 {
 public:
 AstNamePtr variableName;
-AstTypePtr variableType;
+const AstType* variableType;
 AstIntValuePtr arraySize;
-expressionListPtr initializer = expressionListPtr(nullptr);
-AstArrayDeclaration(AstNamePtr variableName, AstTypePtr variableType, AstIntValuePtr arraySize): variableName(variableName), variableType(variableType), arraySize(arraySize) {}
-AstArrayDeclaration(AstName* variableName, AstType* variableType, AstIntValue* arraySize): variableName(AstNamePtr(variableName)), variableType(AstTypePtr(variableType)), arraySize(AstIntValuePtr(arraySize)) {}
+expressionListPtr initializer; 
+AstArrayDeclaration( AstNamePtr& variableName,const AstType& variableType,  AstIntValuePtr& arraySize): variableName(std::move(variableName)), variableType(&variableType), arraySize(std::move(arraySize)) {}
+AstArrayDeclaration(AstName* variableNameTmp, const AstType* variableTypeTmp, AstIntValue* arraySizeTmp):variableType(variableTypeTmp) {
+variableName.reset(variableNameTmp);
+arraySize.reset(arraySizeTmp);
+}
 llvm::Value* codeGen(genContext& context);
 };
 
@@ -445,8 +510,10 @@ class AstExpStat: public AstStat
 {
 public:
 AstExpPtr expression;
-AstExpStat(AstExpPtr expression):expression(expression){}
-AstExpStat(AstExp* expression):expression(AstExpPtr(expression)){}
+AstExpStat(AstExpPtr& expression):expression(std::move(expression)){}
+AstExpStat(AstExp* expressionTmp) {
+expression.reset(expressionTmp);
+}
 llvm::Value* codeGen(genContext& context);
 };
 
@@ -455,8 +522,11 @@ class AstFunctionCall: public AstCall
 public:
 AstNamePtr functionName;
 expressionListPtr args;
-AstFunctionCall(AstNamePtr functionName, expressionListPtr args): functionName(functionName),args(args) {}
-AstFunctionCall(AstName* functionName, expressionList* args): functionName(AstNamePtr(functionName)),args(expressionListPtr(args)) {}
+AstFunctionCall( AstNamePtr& functionName, expressionListPtr& args): functionName(std::move(functionName)),args(std::move(args)) {}
+AstFunctionCall( AstName* functionNameTmp, expressionList* argsTmp) {
+functionName.reset(functionNameTmp);
+args.reset(argsTmp);
+}
 llvm::Value* codeGen(genContext& context);
 };
 
@@ -464,8 +534,10 @@ class AstVariableCall: public AstCall
 {
 public:
 AstNamePtr variableName;
-AstVariableCall(AstNamePtr variableName):variableName(variableName) {}
-AstVariableCall(AstName* variableName):variableName(AstNamePtr(variableName)) {}
+AstVariableCall( AstNamePtr& variableNameTmp):variableName(std::move(variableNameTmp)) {}
+AstVariableCall( AstName* variableNameTmp) {
+variableName.reset(variableNameTmp);
+}
 llvm::Value* codeGen(genContext& context);
 };
 
@@ -474,9 +546,26 @@ class AstArrayCall : public AstCall
 public:
 AstNamePtr variableName;
 AstExpPtr index;
-AstArrayCall(AstNamePtr variableName,AstExpPtr index):variableName(variableName), index(index) {}
-AstArrayCall(AstName* variableName,AstExp* index):variableName(AstNamePtr(variableName)), index(AstExpPtr(index)) {}
+llvm::AllocaInst* alloca;
+AstArrayCall( AstNamePtr& variableName, AstExpPtr& index):variableName(std::move(variableName)), index(std::move(index)) {}
+AstArrayCall( AstName* variableNameTmp, AstExp* indexTmp) {
+variableName.reset(variableNameTmp);
+index.reset(indexTmp);
+}
 llvm::Value* codeGen(genContext& context);
+};
+
+struct functionInformation
+{
+llvm::Function* function;
+std::vector<const AstType*> argumentTypes;
+const AstType* returnType;
+};
+
+struct globalVariableInformation
+{
+llvm::GlobalVariable* alloca;
+const AstType* type;
 };
 
 #endif 

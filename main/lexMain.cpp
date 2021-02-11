@@ -13,7 +13,7 @@ int main(int argc, char *argv[])
 		while (true)
 		{
 		    int yylexResult = yylex(yylvalPtr);
-			std::cout << yylexResult << std::endl;
+			std::cerr << yylexResult << std::endl;
 			if (yylexResult == 0)
 			{
 				break;	

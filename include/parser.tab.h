@@ -126,7 +126,7 @@ AstVariableDeclaration* varDecl;
 AstGlobalVariableDeclaration* globalVarDecl;
 AstArrayDeclaration* arrayDecl;
 AstName* name;
-AstType* type;
+const AstType* type;
 statementList* statements;
 expressionList* expressions;
 variableList* args;
