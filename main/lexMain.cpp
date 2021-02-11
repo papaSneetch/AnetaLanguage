@@ -1,9 +1,6 @@
-#include <iostream>
-extern "C"
-{
 #include <stdio.h>
+#include <iostream>
 #include "lexer.yy.h"
-}
 
 int main(int argc, char *argv[])
 {
@@ -15,7 +12,7 @@ int main(int argc, char *argv[])
 		union YYSTYPE *yylvalPtr = &yylval;
 		while (true)
 		{
-		    register int yylexResult = yylex(yylvalPtr);
+		    int yylexResult = yylex(yylvalPtr);
 			std::cout << yylexResult << std::endl;
 			if (yylexResult == 0)
 			{

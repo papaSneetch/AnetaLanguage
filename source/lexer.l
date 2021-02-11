@@ -2,7 +2,6 @@
 /* C/C++ code to be copied */
 #include <stdio.h>
 #include "parser.tab.h"
-
 %}
 
 %option noyywrap
@@ -96,7 +95,7 @@ return Div;
 }
 
 "^^" {
-return pow;
+return exponent;
 }
 
 "^" {
@@ -190,12 +189,13 @@ return floatV;
 }
 
 [a-zA-Z][a-zA-Z0-9_]* {
+yylval -> string = yytext;
 return nameV;
 }
 
 \"[^\n"]+\"  {
+yylval -> string = yytext;
 return stringV;
 }
-
 
 %%

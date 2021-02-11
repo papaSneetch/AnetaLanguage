@@ -1,7 +1,4 @@
-extern "C"
-{
 #include "parser.tab.h"
-}
 
 int main()
 {
