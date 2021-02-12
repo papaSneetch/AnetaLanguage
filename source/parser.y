@@ -46,13 +46,15 @@ variableList* args;
 }
 
 %token ifS elseS whileS returnS
-%token stringD intD floatD boolD %token leftSh rightSh add sub
-%token mul Div exponent Xor mod inc dec
+%token stringD intD floatD boolD charD
+%token leftSh rightSh add sub
+%token ast Div exponent Xor mod inc dec
 %token eql leq geq lt gt neq
-%token aeg meg asg And Or
+%token aeg meg asg amp Or
 %token '[' ']' '{' '}'
 %token ',' ';' '(' ')'
 %token intV boolV floatV stringV nameV
+%token astChain
 
 %type <node> prog funcDecl 
 
@@ -74,10 +76,10 @@ variableList* args;
 
 %type <blockPtr> block condElseBlock
 
-%type <int_val> intV
+%type <int_val> intV astChain
 %type <bool_val> boolV
 %type <float_val> floatV
-%type <string> stringV
+%type <string> stringV stringVTerm
 %type <string> nameV
 
 %type <expressions> exps
@@ -87,12 +89,12 @@ variableList* args;
 %right aeq meq asgOptionsPrec asg
 %left Or 
 %left Xor
-%left And
+%left amp
 %left eql neq
 %left leq geq lt gt
 %left leftSh rightSh
 %left add sub
-%left mul Div mod
+%left ast Div mod
 %left postInc postDec
 %right preInc preDec
 
@@ -191,7 +193,7 @@ varNames:
 $$ = new AstName(std::string($1));
 std::cerr << "Syntax Object: varNames. " << std::endl;}
 
-type:
+baseType:
 	  intD {
 $$ = &intType;
 std::cerr << "Syntax Object: type. " << std::endl;}
@@ -204,6 +206,28 @@ std::cerr << "Syntax Object: type. " << std::endl;}
 	| stringD {
 $$ = &stringType;
 std::cerr << "Syntax Object: type. " << std::endl;}
+	| charD {
+$$ = &charType;
+std::cerr << "Syntax Object: type. " << std::endl;}
+    
+type:
+	baseType {
+	$$ = $1;
+}
+	| baseType astChain {
+$$=$1->getPointerType($2);
+std::cerr << "Syntax Object: type. " << std::endl;}
+}
+
+astChain:
+	  ast
+{
+$$ = 1;
+}
+	| astChain ast
+{
+$$ = astChain++;
+}
 
 funcDecl:
 	  type varNames funcArgs block  {
@@ -325,7 +349,7 @@ std::cerr << "Syntax Object: exp. " << std::endl;}
 	| exp Xor exp {
 $$ = new AstXor($1,$3);
 std::cerr << "Syntax Object: exp. " << std::endl;}
-	| exp And exp {
+	| exp amp exp {
 $$ = new AstAnd($1,$3);
 std::cerr << "Syntax Object: exp. " << std::endl;}
 	| exp leq exp {
@@ -358,7 +382,7 @@ std::cerr << "Syntax Object: exp. " << std::endl;}
 	| exp sub exp {
 $$ = new AstSub($1,$3);
 std::cerr << "Syntax Object: exp. " << std::endl;}
-	| exp mul exp {
+	| exp ast exp {
 $$ = new AstMul($1,$3);
 std::cerr << "Syntax Object: exp. " << std::endl;}
 	| exp Div exp {
@@ -375,6 +399,12 @@ std::cerr << "Syntax Object: exp. " << std::endl;} %prec preInc
 AstIntValue* one = new AstIntValue(1);
 $$ = new AstSub($2,one);
 std::cerr << "Syntax Object: exps. " << std::endl;} %prec preDec
+    | deref {
+$$ = $1;
+std::cerr << "Syntax Object: exps. " << std::endl;}
+	| address {
+$$ = $1;
+std::cerr << "Syntax Object: exps. " << std::endl;}
 	| incDecOption inc {
 AstIntValue* one = new AstIntValue(1);
 $$ = new AstAdd($1,one);
@@ -386,7 +416,7 @@ std::cerr << "Syntax Object: exps. " << std::endl;} %prec postDec
 	| asgOptions {
 $$ = $1;
 std::cerr << "Syntax Object: exp. " << std::endl;}
-%prec asgOptionsPrec
+%prec asgOptionsPrec	
 	| call {
 $$ = $1;
 std::cerr << "Syntax Object: exp. " << std::endl;}
@@ -406,7 +436,6 @@ std::cerr << "Syntax Object: asgOptions." << std::endl;
 $$ = new AstArrayAsg(new AstName($1),$4,$2);
 std::cerr << "Syntax Object: asgOptions." << std::endl;
 }
-
 	| nameV arrayReferenceExp asg '{' exps '}' {
 $$ = new AstArrayListAsg(new AstName($1),$5,$2);
 std::cerr << "Syntax Object: asgOptions." << std::endl;
@@ -428,6 +457,26 @@ std::cerr << "Syntax Object: incDecOption. " << std::endl;}
 	| '(' exp ')' {
 $$ = $2;
 std::cerr << "Syntax Object: incDecOption. " << std::endl;
+}
+
+deref:
+	  ast varCall {
+$$ = new AstDeref($2);
+std::cerr << "Syntax Object: Dereference. " << std::endl;
+}
+	| ast arrayCall {
+$$ = new AstDeref($2);
+std::cerr << "Syntax Object: Dereference. " << std::endl;
+}
+
+address:
+	  amp varCall {
+$$ = new AstAddress($2);
+std::cerr << "Syntax Object: Address. " << std::endl;
+}
+	| amp arrayCall {
+$$ = new AstAddress($2);
+std::cerr << "Syntax Object: Address. " << std::endl;
 }
 
 %%

@@ -53,11 +53,6 @@ virtual ~AstNode() = default;
 virtual llvm::Value* codeGen(genContext& context) = 0;
 };
 
-class AstType {
-public:
-virtual llvm::Type* typeOf(genContext& context) const = 0;
-};
-
 struct variableInformation
 {
 llvm::AllocaInst* alloca;
@@ -98,35 +93,6 @@ AstBlock(statementList* statements): statements(statementListPtr(statements)){}
 llvm::Value* codeGen(genContext& context);
 llvm::Value* codeGenInFunction(genContext& context);
 };
-
-class AstIntType: public AstType
-{
-public:
-llvm::IntegerType* typeOf(genContext& context) const;
-};
-
-class AstStringType: public AstType
-{
-public:
-llvm::Type* typeOf(genContext& context) const;
-};
-
-class AstBoolType: public AstType
-{
-public:
-llvm::IntegerType* typeOf(genContext& context) const;
-};
-
-class AstFloatType: public AstType
-{
-public:
-llvm::Type* typeOf(genContext& context) const;
-};
-
-extern const AstIntType intType;
-extern const AstFloatType floatType;
-extern const AstBoolType boolType;
-extern const AstStringType stringType;
 
 class AstConstant: public AstExp
 {
@@ -426,6 +392,20 @@ AstUnaryOp(AstExpPtr& expNodePtr):AstExp(expNodePtr->type),expNode(std::move(exp
 AstUnaryOp(AstExp* expNodePtr):AstExp(expNodePtr->type) {expNode.reset(expNodePtr);} 
 virtual llvm::Value* codeGen(genContext& context);
 };
+
+class AstDeref: public AstUnaryOp
+{
+AstDeref(AstExpPtr& expNodePtr):AstUnaryOp(expNodePtr){}
+AstDeref(AstExp* expNodePtr):AstUnaryOp(expNodePtr){}
+llvm::Value* codeGen(genContext& context)
+}
+
+class AstAddress: public AstUnaryOp
+{
+AstAddress(AstExpPtr& expNodePtr):AstUnaryOp(expNodePtr){}
+AstAddress(AstExp* expNodePtr):AstUnaryOp(expNodePtr){}
+llvm::Value* codeGen(genContext& context)
+}
 
 class AstFunctionDeclaration : public AstStat //Note: The function declaration needs to ensure the vector memory contigentcy remains. Functions can only be defined once. May need to investigate std::move.
 {

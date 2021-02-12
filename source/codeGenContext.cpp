@@ -5,6 +5,7 @@
 #include <iostream>
 #include "codeGenContext.h"
 #include "annetaBuilder.h"
+#include "annetaTypes.h"
 
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Bitcode/BitcodeWriter.h"
@@ -16,6 +17,16 @@ void genContext::initContext() {
 IRContext = std::make_unique<llvm::LLVMContext>(); 
 CurModule = std::make_unique<llvm::Module>("Module",*IRContext); 
 Builder = std::make_unique<llvm::IRBuilder<>>(*IRContext); 
+initPrimativeTypes();
+}
+
+void genContext::initPrimativeTypes()
+{
+types.createTypeElement("int",&intType);
+types.createTypeElement("float",&floatType);
+types.createTypeElement("bool",&boolType);
+types.createTypeElement("string",&stringType);
+types.createTypeElement("char",&charType);
 }
 
 void genContext::createStart()
@@ -151,7 +162,7 @@ return;
 }
 pass.run(*CurModule);
 TmpOStream.flush();
-std::string systemCommand = "ld.lld --entry=main ";
+std::string systemCommand = "clang ";//"lld --entry=main ";
 systemCommand += tmpFileName;
 systemCommand += " -o ";
 systemCommand += outputFileName;
@@ -167,7 +178,6 @@ void genContext::printLLVMCode(std::string outputFileName)
 std::error_code errorCode;
 llvm::raw_fd_ostream OStream(outputFileName,errorCode);
 CurModule->print(OStream,nullptr);
-
 }
 
 void genContext::initializeTarget(const std::string& triple,std::string& errorString,llvm::StringRef CPU)

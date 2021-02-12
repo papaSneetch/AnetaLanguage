@@ -1,4 +1,5 @@
 #include "annetaBuilder.h"
+#include "annetaTypes.h"
 
 #include <llvm/IR/Value.h>
 #include <llvm/ADT/APFloat.h>
@@ -17,26 +18,6 @@
 #include <vector>
 #include <iostream>
 #include <stdlib.h>
-
-llvm::IntegerType* AstIntType::typeOf(genContext& context) const
-{
-return llvm::Type::getInt32Ty(*(context.IRContext));
-} 
-
-llvm::Type* AstStringType::typeOf(genContext& context) const
-{
-return nullptr;
-}
-
-llvm::Type* AstFloatType::typeOf(genContext& context) const
-{
-return llvm::Type::getFloatTy(*(context.IRContext));
-}
-
-llvm::IntegerType* AstBoolType::typeOf(genContext& context) const
-{
-return llvm::Type::getInt1Ty(*(context.IRContext));
-}
 
 llvm::Value* AstIfElseStat::codeGen(genContext& context)
 {
@@ -536,7 +517,26 @@ return llvm::ConstantFP::get(*(context.IRContext),llvm::APFloat(value));
 
 llvm::Constant* AstStringValue::codeGen(genContext& context)
 {
-return nullptr;
+llvm::Type* arrayType = llvm::ArrayType::get(variableType->typeOf(context),value.size());
+llvm::AllocaInst* arrayLocation = context.Builder->CreateAlloca(arrayType,llvm::ConstantInt::get(*(context.IRContext),llvm::APInt(32,value.size())),variableName->name);
+context.pushVariable(variableName->name,arrayLocation,variableType);
+if (initializer)
+{
+expressionList::iterator it;
+unsigned int curIndex = 0;
+unsigned int arraySizeMod = arraySize->value + 1;
+llvm::Value* zero = llvm::ConstantInt::get(*(context.IRContext), llvm::APInt(64, 0));
+for (it = initializer->begin(); it != initializer->end(); it++)
+{
+llvm::Value* offset = llvm::ConstantInt::get(*(context.IRContext),llvm::APInt(32,curIndex));
+llvm::Value* pointer = context.Builder->CreateGEP(arrayLocation,{zero,offset},"getElementPtr");
+context.Builder->CreateStore((*it)->codeGen(context),pointer);
+//context.Builder->CreateInsertValue(arrayLocation,(*it)->codeGen(context),curIndex,"insertInArray");
+curIndex = (curIndex + 1) % arraySizeMod;
+}
+}
+
+return arrayLocation;
 }
 
 llvm::Constant* AstBoolValue::codeGen(genContext& context)
@@ -713,6 +713,7 @@ return expression->codeGen(context);
 
 const AstIntType intType;
 const AstStringType stringType;
+const AstCharType stringType;
 const AstBoolType boolType;
 const AstFloatType floatType;
 

@@ -20,6 +20,7 @@
 class AstNode;
 class AstBlock;
 class AstType;
+class typeTable
 struct variableInformation;
 struct functionInformation;
 struct functionInformation;
@@ -44,7 +45,10 @@ std::unique_ptr<llvm::LLVMContext> IRContext;
 std::unique_ptr<llvm::IRBuilder<>> Builder;
 std::unique_ptr<llvm::Module> CurModule;
 
+typeTable types;
+
 void initContext();
+void initPrimativeTypes();
 void createStart();
 
 void pushBlock(AstBlockPtr& block); 

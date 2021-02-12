@@ -46,6 +46,10 @@ bool {
 return boolD;
 }
 
+char {
+return charD
+}
+
 "[" {
 return '[';
 }
@@ -88,7 +92,7 @@ return sub;
 }
 
 "*" {
-return mul;
+return ast;
 }
 
 "/" {
@@ -153,7 +157,7 @@ return asg;
 }
 
 "&" {
-return And;
+return amp;
 }
 
 "|" {
@@ -195,6 +199,11 @@ return nameV;
 }
 
 \"[^\n"]+\"  {
+yylval -> string = strdup(yytext);
+return stringVTerm;
+}
+
+\'[^\n"]+\'  {
 yylval -> string = strdup(yytext);
 return stringV;
 }
