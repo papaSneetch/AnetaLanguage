@@ -8,7 +8,7 @@ llvm::Type* AstStringType::typeOf(genContext& context) const
 return llvm::Type::getInt8Ty(*context.IRContext)->getPointerTo();
 }
 
-llvm::Type* AstStringType::typeOf(genContext& context) const
+llvm::Type* AstCharType::typeOf(genContext& context) const
 {
 return llvm::Type::getInt8Ty(*context.IRContext);
 }
@@ -23,6 +23,11 @@ llvm::IntegerType* AstBoolType::typeOf(genContext& context) const
 return llvm::Type::getInt1Ty(*(context.IRContext));
 }
 
+
+llvm::Type* AstPointerType::typeOf(genContext& context)
+{
+return referType->typeOf(context)->getPointerTo();
+}
 
 void typeTable::createTypeElement(std::string typeName,AstType* baseType)
 {

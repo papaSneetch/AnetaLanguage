@@ -393,17 +393,22 @@ AstUnaryOp(AstExp* expNodePtr):AstExp(expNodePtr->type) {expNode.reset(expNodePt
 virtual llvm::Value* codeGen(genContext& context);
 };
 
-class AstDeref: public AstUnaryOp
+class AstDeref: public AstExp
 {
-AstDeref(AstExpPtr& expNodePtr):AstUnaryOp(expNodePtr){}
-AstDeref(AstExp* expNodePtr):AstUnaryOp(expNodePtr){}
-llvm::Value* codeGen(genContext& context)
+public:
+AstExpPtr expNode;
+AstDeref(AstExpPtr& expNodePtr):expNode(std::move(expNodePtr)),AstExp(dynamic_cast<AstPointerType*>expNodePtr->type->referType){
+if (type==nullptr)
+{
+std::cerr << "Error: can't dereference a non pointer."<<std::endl;
+exit(1);
 }
-
-class AstAddress: public AstUnaryOp
-{
-AstAddress(AstExpPtr& expNodePtr):AstUnaryOp(expNodePtr){}
-AstAddress(AstExp* expNodePtr):AstUnaryOp(expNodePtr){}
+}
+AstDeref(AstExp* expNodePtr):AstExp(dynamic_cast<AstPointerType*>expNodePtr->type->referType){
+expNode.reset(expNodePtr);
+std::cerr << "Error: can't dereference a non pointer."<<std::endl;
+exit(1);
+}
 llvm::Value* codeGen(genContext& context)
 }
 

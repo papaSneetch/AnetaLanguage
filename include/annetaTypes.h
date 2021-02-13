@@ -7,36 +7,41 @@
 
 class AstType {
 public:
-virtual llvm::Type* typeOf(genContext& context) const = 0;
+virtual llvm::Type* typeOf(genContext& context) = 0;
 };
 
 class AstIntType: public AstType
 {
 public:
+const std::string name= "int";
 llvm::IntegerType* typeOf(genContext& context) const;
 };
 
 class AstStringType: public AstType
 {
 public:
+const std::string name= "string";
 llvm::Type* typeOf(genContext& context) const;
 };
 
 class AstCharType: public AstType
 {
 public:
+const std::string name= "char";
 llvm::Type* typeOf(genContext& context) const;
 };
 
 class AstBoolType: public AstType
 {
 public:
+const std::string name= "bool";
 llvm::IntegerType* typeOf(genContext& context) const;
 };
 
 class AstFloatType: public AstType
 {
 public:
+const std::string name= "float";
 llvm::Type* typeOf(genContext& context) const;
 };
 
@@ -45,6 +50,7 @@ class AstPointerType: public AstType
 private:
 AstType* referType;
 public:
+const std::string name= "pointer";
 AstPointerType(AstType* baseType):baseType(baseType){}
 llvm::Type* typeOf(genContext& context) const;
 }

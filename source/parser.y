@@ -215,7 +215,7 @@ type:
 	$$ = $1;
 }
 	| baseType astChain {
-$$=$1->getPointerType($2);
+$$=currentContext.types.getExpandTypes($1->name,$2);
 std::cerr << "Syntax Object: type. " << std::endl;}
 }
 
@@ -402,9 +402,6 @@ std::cerr << "Syntax Object: exps. " << std::endl;} %prec preDec
     | deref {
 $$ = $1;
 std::cerr << "Syntax Object: exps. " << std::endl;}
-	| address {
-$$ = $1;
-std::cerr << "Syntax Object: exps. " << std::endl;}
 	| incDecOption inc {
 AstIntValue* one = new AstIntValue(1);
 $$ = new AstAdd($1,one);
@@ -467,16 +464,6 @@ std::cerr << "Syntax Object: Dereference. " << std::endl;
 	| ast arrayCall {
 $$ = new AstDeref($2);
 std::cerr << "Syntax Object: Dereference. " << std::endl;
-}
-
-address:
-	  amp varCall {
-$$ = new AstAddress($2);
-std::cerr << "Syntax Object: Address. " << std::endl;
-}
-	| amp arrayCall {
-$$ = new AstAddress($2);
-std::cerr << "Syntax Object: Address. " << std::endl;
 }
 
 %%

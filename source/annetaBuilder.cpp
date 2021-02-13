@@ -644,6 +644,12 @@ llvm::Value* indexPtr = context.Builder->CreateGEP(alloca,{zero,index->codeGen(c
 return context.Builder->CreateLoad(indexPtr,variableName->name);
 }
 
+
+llvm::Value* AstDeref::codeGen(genContext& context)
+{
+return context.Builder->CreateLoad(type->typeOf(context),expNode->codeGen(context));
+}
+
 llvm::Value* AstFunctionDeclaration::codeGen(genContext& context)
 {
 std::vector<llvm::Type*> argTypes;

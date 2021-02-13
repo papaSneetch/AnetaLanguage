@@ -22,11 +22,11 @@ initPrimativeTypes();
 
 void genContext::initPrimativeTypes()
 {
-types.createTypeElement("int",&intType);
-types.createTypeElement("float",&floatType);
-types.createTypeElement("bool",&boolType);
-types.createTypeElement("string",&stringType);
-types.createTypeElement("char",&charType);
+types.createTypeElement(intType.name,&intType);
+types.createTypeElement(floatType.name,&floatType);
+types.createTypeElement(boolType.name,&boolType);
+types.createTypeElement(stringType.name,&stringType);
+types.createTypeElement(charType.name,&charType);
 }
 
 void genContext::createStart()
