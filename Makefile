@@ -78,6 +78,15 @@ codeGenContextPrereq = $(codeGenContextSourceLoc) $(codeGenContextIncludeLoc)
 codeGenContextObjectLoc = $(objectDir)/$(codeGenContextObject)
 codeGenContextTarget = $(codeGenContextObjectLoc)
 
+annetaTypesSource = annetaTypes.cpp
+annetaTypesInclude = annetaTypes.h
+annetaTypesObject = annetaTypes.o
+annetaTypesSourceLoc =  $(sourceDir)/$(annetaTypesSource)
+annetaTypesIncludeLoc = $(includeDir)/$(annetaTypesInclude)
+annetaTypesPrereq = $(annetaTypesSourceLoc) $(annetaTypesIncludeLoc)
+annetaTypesObjectLoc = $(objectDir)
+annetaTypesTarget = $(annetaTypesObjectLoc)
+
 includes = $(parserIncludeLoc) $(lexIncludeLoc) $(annetaBuilderIncludeLoc) $(codeGenContextIncludeLoc)
 objects = $(parserLexetObjectLoc) $(annetaBuilderObjectLoc) $(codeGenContextObjectLoc)
 
@@ -88,8 +97,6 @@ annetaBuilderMainBin = annetaBuilder.bin
 annetaBuilderMainLoc = $(mainDir)/$(annetaBuilderMain)
 annetaBuilderMainPrereq = $(includes) $(objects) $(llvmFlagsSourceLoc) $(annetaBuilderMainLoc)
 annetaBuilderMainTargetLoc= $(binDir)/$(annetaBuilderMainBin)
-
-
 
 targets = $(codeGenContextTarget) $(annetaBuilderTarget) $(parserTargets) $(lexerTargets) $(parserLexerTargets) $(annetaBuilderMainTargetLoc) $(parserBinTargets) $(lexerBinTargets) 
 
@@ -114,12 +121,15 @@ $(lexerTargets): $(lexerPrereq)
 $(parserLexerTargets): $(parserLexerPrereq)
 	$(CC) -c $(parserLibLoc) -o$(parserLexerObjectLoc)
 
+$(annetaTypesTarget): $(annetaTypesPrereq)
+	$(CC) -c $(annetaTypesLibLoc) -o$(annetaTypesObjectLoc)
+
 $(annetaBuilderMainTargetLoc): $(annetaBuilderMainPrereq)
 	 $(CC) -c $(annetaBuilderMainLoc) -o $(annetaBuilderMainObjectLoc) 
-	 $(CC) -o $(annetaBuilderMainTargetLoc) $(annetaBuilderMainObjectLoc) $(parserLexerObjectLoc) $(codeGenContextObjectLoc) $(annetaBuilderObjectLoc) @$(llvmFlagsSourceLoc)
+	 $(CC) -o $(annetaBuilderMainTargetLoc) $(annetaBuilderMainObjectLoc) $(parserLexerObjectLoc) $(codeGenContextObjectLoc) $(annetaBuilderObjectLoc) $(annetaBuilderObjectLoc) @$(llvmFlagsSourceLoc)
 
 $(parserBinTargets): $(parserBinPrereq)
-	 $(CC) $(parserMainLoc)  $(parserLexerObjectLoc) $(codeGenContextObjectLoc) $(annetaBuilderObjectLoc) -o$(parserBinLoc) @$(llvmFlagsSourceLoc)
+	 $(CC) $(parserMainLoc)  $(parserLexerObjectLoc) $(codeGenContextObjectLoc) $(annetaBuilderObjectLoc) $(annetaBuilderObjectLoc) -o$(parserBinLoc) @$(llvmFlagsSourceLoc)
 
 $(lexerBinTargets): $(lexerBinPrereq)
 	$(CC) $(lexMainLoc) -o$(lexBinLoc) @$(llvmFlagsSourceLoc)

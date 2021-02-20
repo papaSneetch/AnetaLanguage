@@ -510,6 +510,31 @@ llvm::Constant* AstIntValue::codeGen(genContext& context)
 return llvm::ConstantInt::get(*(context.IRContext),llvm::APInt(32,value));
 }
 
+llvm::Constant* AstCharValue::codeGen(genContext& context)
+{
+return llvm::ConstantInt::get(*(context.IRContext),llvm::APInt(8,value));
+}
+
+AstStringValue::AstStringValue(char* string,unsigned int size):AstConstant(stringType)
+{
+for (int i = 0; i <= size; i++)
+{
+value.push_back(string[i]);
+}
+}
+
+llvm::Constant* AstStringValue::codeGen(genContext& context)
+{
+std::vector<llvm::ConstantInt*> stringValues;
+for (std::vector<char>::iterator it = value.begin(); it != value.end(); ++it)
+{
+stringValues.push_back(llvm::ConstantInt::get(*(context.IRContext),llvm::APInt(8,*it))
+);
+}
+llvm::ArrayType* = llvm::ArrayType::get(llvm::Type::getInt8Ty(*(context.IRContext)))
+return llvm::ConstantArray::get(ArrayType,stringValues);
+}
+
 llvm::Constant* AstFloatValue::codeGen(genContext& context)
 {
 return llvm::ConstantFP::get(*(context.IRContext),llvm::APFloat(value));
@@ -608,6 +633,35 @@ for (expressionList::iterator it = args->begin(); it != args->end(); it++)
 argsV.push_back((*it)->codeGen(context));
 }
 return context.Builder->CreateCall(functionValue.function,argsV,"functionCall",nullptr);
+}
+
+
+llvm::Value* AstVariableAddress::codeGen(genContext& context)
+{
+variableInformation var = context.varLookUp(variableName->name);
+if (var.alloca)
+{
+	return var.alloca;
+}
+else
+{
+globalVariableInformation globalVar = context.globalVariableLookUp(variableName->name);
+if (globalVar.alloca)
+{
+	return var.alloca;
+}
+else
+{
+std::cerr << "Couldn't find variable: " << variableName->name << std::endl;
+exit(1);
+}
+}
+}
+
+
+llvm::Value* AstArrayAddress::codeGen(genContext& context)
+{
+return context.varLookUp(variableName->name).alloca
 }
 
 llvm::Value* AstVariableCall::codeGen(genContext& context)

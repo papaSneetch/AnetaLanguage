@@ -2,6 +2,7 @@
 #define annetaBuilder
 
 #include "codeGenContext.h"
+#include "annetaTypes.h"
 
 #include <vector>
 #include <utility>
@@ -111,11 +112,20 @@ AstIntValue(int value):AstConstant(intType),value(value){}
 llvm::Constant* codeGen(genContext& context);
 };
 
+
+class AstCharValue: public AstConstant
+{
+public:
+char value;
+AstCharValue(char value):AstConstant(charType),value(value){}
+llvm::Constant* codeGen(genContext& context);
+};
+
 class AstStringValue: public AstConstant
 {
 public:
-std::string value;
-AstStringValue(std::string value):AstConstant(stringType),value(value){}
+std::vector<char> value;
+AstStringValue(char* string,unsigned int size);
 llvm::Constant* codeGen(genContext& context);
 };
 
@@ -397,20 +407,20 @@ class AstDeref: public AstExp
 {
 public:
 AstExpPtr expNode;
-AstDeref(AstExpPtr& expNodePtr):expNode(std::move(expNodePtr)),AstExp(dynamic_cast<AstPointerType*>expNodePtr->type->referType){
+AstDeref(AstExpPtr& expNodePtr):AstExp(dynamic_cast<const AstPointerType*>(expNodePtr->type)->referType),expNode(std::move(expNodePtr)){
 if (type==nullptr)
 {
 std::cerr << "Error: can't dereference a non pointer."<<std::endl;
 exit(1);
 }
 }
-AstDeref(AstExp* expNodePtr):AstExp(dynamic_cast<AstPointerType*>expNodePtr->type->referType){
+AstDeref(AstExp* expNodePtr):AstExp(dynamic_cast<const AstPointerType*>(expNodePtr->type)->referType){
 expNode.reset(expNodePtr);
 std::cerr << "Error: can't dereference a non pointer."<<std::endl;
 exit(1);
 }
-llvm::Value* codeGen(genContext& context)
-}
+llvm::Value* codeGen(genContext& context);
+};
 
 class AstFunctionDeclaration : public AstStat //Note: The function declaration needs to ensure the vector memory contigentcy remains. Functions can only be defined once. May need to investigate std::move.
 {
@@ -511,6 +521,31 @@ AstFunctionCall( AstNamePtr& functionName, expressionListPtr& args): functionNam
 AstFunctionCall( AstName* functionNameTmp, expressionList* argsTmp) {
 functionName.reset(functionNameTmp);
 args.reset(argsTmp);
+}
+llvm::Value* codeGen(genContext& context);
+};
+
+class AstVariableAddress: public AstCall
+{
+AstNamePtr variableName;
+AstVariableAddress(AstNamePtr& variableNameTmp):variableName(std::move(variableNameTmp)) {}
+AstVariableAddress( AstName* variableNameTmp) {
+variableName.reset(variableNameTmp);
+}
+llvm::Value* codeGen(genContext& context);
+};
+
+
+class AstArrayAddress : public AstCall
+{
+public:
+AstNamePtr variableName;
+AstExpPtr index;
+llvm::AllocaInst* alloca;
+AstArrayAddress( AstNamePtr& variableName, AstExpPtr& index):variableName(std::move(variableName)), index(std::move(index)) {}
+AstArrayAddress( AstName* variableNameTmp, AstExp* indexTmp) {
+variableName.reset(variableNameTmp);
+index.reset(indexTmp);
 }
 llvm::Value* codeGen(genContext& context);
 };

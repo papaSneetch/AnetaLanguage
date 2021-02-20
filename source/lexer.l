@@ -200,7 +200,7 @@ return nameV;
 
 \"[^\n"]+\"  {
 yylval -> string = strdup(yytext);
-return stringVTerm;
+return stringV;
 }
 
 \'[^\n"]+\'  {

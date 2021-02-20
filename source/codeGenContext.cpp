@@ -18,6 +18,14 @@ IRContext = std::make_unique<llvm::LLVMContext>();
 CurModule = std::make_unique<llvm::Module>("Module",*IRContext); 
 Builder = std::make_unique<llvm::IRBuilder<>>(*IRContext); 
 initPrimativeTypes();
+initLibaryFunctions();
+}
+
+void genContext::initLibaryFunctions() {
+llvm::FunctionType *ft = llvm::FunctionType::get(llvm::IntegerType::getInt32Ty(*IRContext),llvm::Type::getInt8Ty(*IRContext)->getPointerTo(),false);
+llvm::Function* func = llvm::Function::Create(ft,llvm::Function::ExternalLinkage,"print",CurModule.get());
+pushFunction("print",func,std::vector<const AstType*>{&stringType},&intType);
+std::cerr << "Generated: " << "print." << std::endl;
 }
 
 void genContext::initPrimativeTypes()
@@ -135,7 +143,14 @@ llvm::WriteBitcodeToFile(*CurModule,OStream);
 
 void genContext::printObjectCode(std::string outputFileName)
 {
-std::error_code errorCode;
+char tmpFileName[] = "/tmp/llvmTemp.XXXXXX";
+int tmpFileDescriptor;
+if ((tmpFileDescriptor = mkstemp(tmpFileName))==-1) {
+std::cerr << "Cannot create tmp file:" << tmpFileName << std::endl;	
+exit(1);
+}
+llvm::raw_fd_ostream TmpOStream(tmpFileDescriptor,true);
+/*std::error_code errorCode;
 llvm::raw_fd_ostream OStream(outputFileName,errorCode);
 if (targetMachine->addPassesToEmitFile(pass,OStream,nullptr,llvm::CodeGenFileType::CGFT_ObjectFile))
 {
@@ -143,7 +158,17 @@ llvm::errs() << "TargetMachine can't emit file of this type.";
 return;
 }
 pass.run(*CurModule);
-OStream.flush();
+OStream.flush();*/
+CurModule->print(TmpOStream,nullptr);
+std::string systemCommand = "clang ";//"lld --entry=main ";
+systemCommand += tmpFileName;
+systemCommand += " -c -o ";
+systemCommand += outputFileName;
+system(systemCommand.c_str());
+if( remove(tmpFileName) != 0 )
+{
+std::cerr << "Error deleting file: " << tmpFileName << std::endl;
+}
 }
 
 void genContext::printExeCode(std::string outputFileName)
@@ -155,13 +180,14 @@ std::cerr << "Cannot create tmp file:" << tmpFileName << std::endl;
 exit(1);
 }
 llvm::raw_fd_ostream TmpOStream(tmpFileDescriptor,true);
-if (targetMachine->addPassesToEmitFile(pass,TmpOStream,nullptr,llvm::CodeGenFileType::CGFT_ObjectFile))
+/*if (targetMachine->addPassesToEmitFile(pass,TmpOStream,nullptr,llvm::CodeGenFileType::CGFT_ObjectFile))
 {
 llvm::errs() << "TargetMachine can't emit file of this type.";
 return;
 }
 pass.run(*CurModule);
-TmpOStream.flush();
+TmpOStream.flush();*/
+CurModule->print(TmpOStream,nullptr);
 std::string systemCommand = "clang ";//"lld --entry=main ";
 systemCommand += tmpFileName;
 systemCommand += " -o ";
@@ -221,6 +247,55 @@ codeObjects.pop();
 AstBlockPtr& genContext::backBlock()
 {
 return blockList.back();
+}
+
+void typeTable::createTypeElement(std::string typeName,const AstType* baseType)
+{
+typeMap.insert(std::make_pair(typeName,typeElement(baseType)));
+}
+
+typeElement* typeTable::getTypeElement(std::string typeName)
+{
+return &typeMap[typeName];
+}
+
+const AstType* typeTable::getBaseType(std::string typeName)
+{
+return typeMap[typeName].getBaseType();
+}
+
+const AstType* typeTable::getExpandTypes(std::string typeName,int depth)
+{
+return typeMap[typeName].getExpandTypes(depth);
+}
+
+const AstType* typeElement::getBaseType()
+{
+return typeChain.front();
+}
+
+const AstType* typeElement::getExpandTypes(int depth)
+{
+if (typeChain.size()>depth)
+{
+return typeChain[depth];
+}
+else
+{
+for (int i = typeChain.size()-1; i<depth; i++)
+{
+typeChain.push_back(new AstPointerType(typeChain[i]));
+}
+return typeChain.back();
+}
+}
+
+typeElement::~typeElement()
+{
+for (std::vector<const AstType*>::iterator it = (typeChain.begin()++); it != typeChain.end(); it++)
+{
+delete const_cast<AstType*>(*it);
+}
 }
 
 genContext currentContext;

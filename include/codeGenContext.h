@@ -20,11 +20,38 @@
 class AstNode;
 class AstBlock;
 class AstType;
-class typeTable
+class typeTable;
 struct variableInformation;
 struct functionInformation;
 struct functionInformation;
 struct globalVariableInformation;
+
+class typeElement
+{
+private:
+std::vector<const AstType*> typeChain;
+
+public: 
+const AstType* getBaseType();
+const AstType* getExpandTypes(int depth);
+
+typeElement(const AstType* baseType){typeChain.push_back(baseType);}
+~typeElement();
+};
+
+class typeTable
+{
+private:
+std::map<std::string,typeElement> typeMap;
+
+public:
+void createTypeElement(std::string typeName,const AstType* baseType);
+typeElement* getTypeElement(std::string typeName);
+
+const AstType* getBaseType(std::string typeName);
+const AstType* getExpandTypes(std::string typeName,int depth);
+};
+
 
 typedef std::unique_ptr<AstBlock> AstBlockPtr;
 typedef std::unique_ptr<AstNode> AstNodePtr;
@@ -39,6 +66,8 @@ std::map <std::string,globalVariableInformation> globalVariableMap;
 const llvm::Target* target;
 llvm::TargetMachine* targetMachine;
 llvm::legacy::PassManager pass;
+
+void initLibaryFunctions();
 
 public:
 std::unique_ptr<llvm::LLVMContext> IRContext;

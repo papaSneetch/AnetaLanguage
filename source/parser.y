@@ -324,9 +324,19 @@ $$ = new AstFloatValue($1);
 std::cerr << "Syntax Object: value. " << std::endl;
 }
 	| stringV {
-$$ = new AstStringValue($1);
+int length = strlen($1);
+if (length==3 && $1[0]=="'")
+{
+$$ = new AstCharValue(*(++$1));
+}
+else
+{
+if ($1[0]=='"')
+{
+$1[--length] = '\0';
+}
+$$ = new AstStringValue(std::string(++$1,--length));
 std::cerr << "Syntax Object: value. " << std::endl;
-
 }
 
 whileloop:
@@ -402,6 +412,10 @@ std::cerr << "Syntax Object: exps. " << std::endl;} %prec preDec
     | deref {
 $$ = $1;
 std::cerr << "Syntax Object: exps. " << std::endl;}
+   | address {
+$$ = $1;
+std::cerr << "Syntax Object: exps. " << std::endl;}
+}
 	| incDecOption inc {
 AstIntValue* one = new AstIntValue(1);
 $$ = new AstAdd($1,one);
@@ -464,6 +478,14 @@ std::cerr << "Syntax Object: Dereference. " << std::endl;
 	| ast arrayCall {
 $$ = new AstDeref($2);
 std::cerr << "Syntax Object: Dereference. " << std::endl;
+}
+
+address:
+	  amp nameV {
+$$ = new AstArrayAddress(new AstName($1));
+}
+	| amp nameV arrayReferenceExp {
+$$ = new AstArrayAddress(new AstName($1),$2);
 }
 
 %%
