@@ -84,7 +84,7 @@ annetaTypesObject = annetaTypes.o
 annetaTypesSourceLoc =  $(sourceDir)/$(annetaTypesSource)
 annetaTypesIncludeLoc = $(includeDir)/$(annetaTypesInclude)
 annetaTypesPrereq = $(annetaTypesSourceLoc) $(annetaTypesIncludeLoc)
-annetaTypesObjectLoc = $(objectDir)
+annetaTypesObjectLoc = $(objectDir)/$(annetaTypesObject)
 annetaTypesTarget = $(annetaTypesObjectLoc)
 
 includes = $(parserIncludeLoc) $(lexIncludeLoc) $(annetaBuilderIncludeLoc) $(codeGenContextIncludeLoc)
@@ -106,6 +106,8 @@ annetaBuilder: $(annetaBuilderTarget)
 
 codeGenContext: $(codeGenContextTarget)
 
+annetaTypes: $(annetaTypesTarget)
+
 $(codeGenContextTarget): $(codeGenContextPrereq)
 	$(CC) -c $(codeGenContextSourceLoc) -o$(codeGenContextObjectLoc)
 
@@ -122,17 +124,15 @@ $(parserLexerTargets): $(parserLexerPrereq)
 	$(CC) -c $(parserLibLoc) -o$(parserLexerObjectLoc)
 
 $(annetaTypesTarget): $(annetaTypesPrereq)
-	$(CC) -c $(annetaTypesLibLoc) -o$(annetaTypesObjectLoc)
+	$(CC) -c $(annetaTypesSourceLoc) -o$(annetaTypesObjectLoc)
 
 $(annetaBuilderMainTargetLoc): $(annetaBuilderMainPrereq)
 	 $(CC) -c $(annetaBuilderMainLoc) -o $(annetaBuilderMainObjectLoc) 
-	 $(CC) -o $(annetaBuilderMainTargetLoc) $(annetaBuilderMainObjectLoc) $(parserLexerObjectLoc) $(codeGenContextObjectLoc) $(annetaBuilderObjectLoc) $(annetaBuilderObjectLoc) @$(llvmFlagsSourceLoc)
+	 $(CC) -o $(annetaBuilderMainTargetLoc) $(annetaBuilderMainObjectLoc) $(parserLexerObjectLoc) $(codeGenContextObjectLoc) $(annetaBuilderObjectLoc) $(annetaTypesObjectLoc) @$(llvmFlagsSourceLoc)
 
 $(parserBinTargets): $(parserBinPrereq)
-	 $(CC) $(parserMainLoc)  $(parserLexerObjectLoc) $(codeGenContextObjectLoc) $(annetaBuilderObjectLoc) $(annetaBuilderObjectLoc) -o$(parserBinLoc) @$(llvmFlagsSourceLoc)
+	 $(CC) -o$(parserBinLoc) $(parserMainLoc)  $(parserLexerObjectLoc) $(codeGenContextObjectLoc) $(annetaBuilderObjectLoc) $(annetaTypesObjectLoc) @$(llvmFlagsSourceLoc)
 
 $(lexerBinTargets): $(lexerBinPrereq)
 	$(CC) $(lexMainLoc) -o$(lexBinLoc) @$(llvmFlagsSourceLoc)
-
-
 

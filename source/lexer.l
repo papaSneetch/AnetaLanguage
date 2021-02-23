@@ -47,7 +47,7 @@ return boolD;
 }
 
 char {
-return charD
+return charD;
 }
 
 "[" {

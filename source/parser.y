@@ -54,14 +54,13 @@ variableList* args;
 %token '[' ']' '{' '}'
 %token ',' ';' '(' ')'
 %token intV boolV floatV stringV nameV
-%token astChain
 
 %type <node> prog funcDecl 
 
 %type <statements> stats 
 %type <statement> stat condStat returnStat whileloop
 %type <expression> call varCall arrayCall funcCall incDecOption
-%type <expression> asgOptions exp arrayReferenceExp
+%type <expression> asgOptions exp arrayReferenceExp deref address
 %type <constant> value 
 %type <intPtr> arrayReference
 
@@ -72,14 +71,14 @@ variableList* args;
 
 %type <name> varNames arrayNames
 
-%type <type> type
+%type <type> type baseType
 
 %type <blockPtr> block condElseBlock
 
 %type <int_val> intV astChain
 %type <bool_val> boolV
 %type <float_val> floatV
-%type <string> stringV stringVTerm
+%type <string> stringV 
 %type <string> nameV
 
 %type <expressions> exps
@@ -215,9 +214,9 @@ type:
 	$$ = $1;
 }
 	| baseType astChain {
-$$=currentContext.types.getExpandTypes($1->name,$2);
+$$=currentContext.types->getExpandTypes($1->name,$2);
 std::cerr << "Syntax Object: type. " << std::endl;}
-}
+
 
 astChain:
 	  ast
@@ -226,7 +225,7 @@ $$ = 1;
 }
 	| astChain ast
 {
-$$ = astChain++;
+$$ = ($1)++;
 }
 
 funcDecl:
@@ -325,7 +324,7 @@ std::cerr << "Syntax Object: value. " << std::endl;
 }
 	| stringV {
 int length = strlen($1);
-if (length==3 && $1[0]=="'")
+if (length==3 && $1[0]=='\'')
 {
 $$ = new AstCharValue(*(++$1));
 }
@@ -335,8 +334,9 @@ if ($1[0]=='"')
 {
 $1[--length] = '\0';
 }
-$$ = new AstStringValue(std::string(++$1,--length));
+$$ = new AstStringValue(++$1,--length);
 std::cerr << "Syntax Object: value. " << std::endl;
+}
 }
 
 whileloop:
@@ -415,7 +415,6 @@ std::cerr << "Syntax Object: exps. " << std::endl;}
    | address {
 $$ = $1;
 std::cerr << "Syntax Object: exps. " << std::endl;}
-}
 	| incDecOption inc {
 AstIntValue* one = new AstIntValue(1);
 $$ = new AstAdd($1,one);
@@ -482,10 +481,10 @@ std::cerr << "Syntax Object: Dereference. " << std::endl;
 
 address:
 	  amp nameV {
-$$ = new AstArrayAddress(new AstName($1));
+$$ = new AstVariableAddress(new AstName($2));
 }
 	| amp nameV arrayReferenceExp {
-$$ = new AstArrayAddress(new AstName($1),$2);
+$$ = new AstArrayAddress(new AstName($2),$3);
 }
 
 %%

@@ -68,40 +68,41 @@ extern int yydebug;
     intD = 263,                    /* intD  */
     floatD = 264,                  /* floatD  */
     boolD = 265,                   /* boolD  */
-    leftSh = 266,                  /* leftSh  */
-    rightSh = 267,                 /* rightSh  */
-    add = 268,                     /* add  */
-    sub = 269,                     /* sub  */
-    mul = 270,                     /* mul  */
-    Div = 271,                     /* Div  */
-    exponent = 272,                /* exponent  */
-    Xor = 273,                     /* Xor  */
-    mod = 274,                     /* mod  */
-    inc = 275,                     /* inc  */
-    dec = 276,                     /* dec  */
-    eql = 277,                     /* eql  */
-    leq = 278,                     /* leq  */
-    geq = 279,                     /* geq  */
-    lt = 280,                      /* lt  */
-    gt = 281,                      /* gt  */
-    neq = 282,                     /* neq  */
-    aeg = 283,                     /* aeg  */
-    meg = 284,                     /* meg  */
-    asg = 285,                     /* asg  */
-    And = 286,                     /* And  */
-    Or = 287,                      /* Or  */
-    intV = 288,                    /* intV  */
-    boolV = 289,                   /* boolV  */
-    floatV = 290,                  /* floatV  */
-    stringV = 291,                 /* stringV  */
-    nameV = 292,                   /* nameV  */
-    aeq = 293,                     /* aeq  */
-    meq = 294,                     /* meq  */
-    asgOptionsPrec = 295,          /* asgOptionsPrec  */
-    postInc = 296,                 /* postInc  */
-    postDec = 297,                 /* postDec  */
-    preInc = 298,                  /* preInc  */
-    preDec = 299                   /* preDec  */
+    charD = 266,                   /* charD  */
+    leftSh = 267,                  /* leftSh  */
+    rightSh = 268,                 /* rightSh  */
+    add = 269,                     /* add  */
+    sub = 270,                     /* sub  */
+    ast = 271,                     /* ast  */
+    Div = 272,                     /* Div  */
+    exponent = 273,                /* exponent  */
+    Xor = 274,                     /* Xor  */
+    mod = 275,                     /* mod  */
+    inc = 276,                     /* inc  */
+    dec = 277,                     /* dec  */
+    eql = 278,                     /* eql  */
+    leq = 279,                     /* leq  */
+    geq = 280,                     /* geq  */
+    lt = 281,                      /* lt  */
+    gt = 282,                      /* gt  */
+    neq = 283,                     /* neq  */
+    aeg = 284,                     /* aeg  */
+    meg = 285,                     /* meg  */
+    asg = 286,                     /* asg  */
+    amp = 287,                     /* amp  */
+    Or = 288,                      /* Or  */
+    intV = 289,                    /* intV  */
+    boolV = 290,                   /* boolV  */
+    floatV = 291,                  /* floatV  */
+    stringV = 292,                 /* stringV  */
+    nameV = 293,                   /* nameV  */
+    aeq = 294,                     /* aeq  */
+    meq = 295,                     /* meq  */
+    asgOptionsPrec = 296,          /* asgOptionsPrec  */
+    postInc = 297,                 /* postInc  */
+    postDec = 298,                 /* postDec  */
+    preInc = 299,                  /* preInc  */
+    preDec = 300                   /* preDec  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -131,7 +132,7 @@ statementList* statements;
 expressionList* expressions;
 variableList* args;
 
-#line 135 "./include/parser.tab.h"
+#line 136 "./include/parser.tab.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

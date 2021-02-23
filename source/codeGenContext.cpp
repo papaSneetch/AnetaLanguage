@@ -19,6 +19,7 @@ CurModule = std::make_unique<llvm::Module>("Module",*IRContext);
 Builder = std::make_unique<llvm::IRBuilder<>>(*IRContext); 
 initPrimativeTypes();
 initLibaryFunctions();
+types = std::make_unique<typeTable>();
 }
 
 void genContext::initLibaryFunctions() {
@@ -30,11 +31,11 @@ std::cerr << "Generated: " << "print." << std::endl;
 
 void genContext::initPrimativeTypes()
 {
-types.createTypeElement(intType.name,&intType);
-types.createTypeElement(floatType.name,&floatType);
-types.createTypeElement(boolType.name,&boolType);
-types.createTypeElement(stringType.name,&stringType);
-types.createTypeElement(charType.name,&charType);
+types->createTypeElement(intType.name,&intType);
+types->createTypeElement(floatType.name,&floatType);
+types->createTypeElement(boolType.name,&boolType);
+types->createTypeElement(stringType.name,&stringType);
+types->createTypeElement(charType.name,&charType);
 }
 
 void genContext::createStart()
@@ -247,55 +248,6 @@ codeObjects.pop();
 AstBlockPtr& genContext::backBlock()
 {
 return blockList.back();
-}
-
-void typeTable::createTypeElement(std::string typeName,const AstType* baseType)
-{
-typeMap.insert(std::make_pair(typeName,typeElement(baseType)));
-}
-
-typeElement* typeTable::getTypeElement(std::string typeName)
-{
-return &typeMap[typeName];
-}
-
-const AstType* typeTable::getBaseType(std::string typeName)
-{
-return typeMap[typeName].getBaseType();
-}
-
-const AstType* typeTable::getExpandTypes(std::string typeName,int depth)
-{
-return typeMap[typeName].getExpandTypes(depth);
-}
-
-const AstType* typeElement::getBaseType()
-{
-return typeChain.front();
-}
-
-const AstType* typeElement::getExpandTypes(int depth)
-{
-if (typeChain.size()>depth)
-{
-return typeChain[depth];
-}
-else
-{
-for (int i = typeChain.size()-1; i<depth; i++)
-{
-typeChain.push_back(new AstPointerType(typeChain[i]));
-}
-return typeChain.back();
-}
-}
-
-typeElement::~typeElement()
-{
-for (std::vector<const AstType*>::iterator it = (typeChain.begin()++); it != typeChain.end(); it++)
-{
-delete const_cast<AstType*>(*it);
-}
 }
 
 genContext currentContext;

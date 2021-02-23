@@ -525,43 +525,19 @@ value.push_back(string[i]);
 
 llvm::Constant* AstStringValue::codeGen(genContext& context)
 {
-std::vector<llvm::ConstantInt*> stringValues;
+std::vector<llvm::Constant*> stringValues;
 for (std::vector<char>::iterator it = value.begin(); it != value.end(); ++it)
 {
 stringValues.push_back(llvm::ConstantInt::get(*(context.IRContext),llvm::APInt(8,*it))
 );
 }
-llvm::ArrayType* = llvm::ArrayType::get(llvm::Type::getInt8Ty(*(context.IRContext)))
-return llvm::ConstantArray::get(ArrayType,stringValues);
+llvm::ArrayType* arrayType = llvm::ArrayType::get(llvm::Type::getInt8Ty(*(context.IRContext)),stringValues.size());
+return llvm::ConstantArray::get(arrayType,stringValues);
 }
 
 llvm::Constant* AstFloatValue::codeGen(genContext& context)
 {
 return llvm::ConstantFP::get(*(context.IRContext),llvm::APFloat(value));
-}
-
-llvm::Constant* AstStringValue::codeGen(genContext& context)
-{
-llvm::Type* arrayType = llvm::ArrayType::get(variableType->typeOf(context),value.size());
-llvm::AllocaInst* arrayLocation = context.Builder->CreateAlloca(arrayType,llvm::ConstantInt::get(*(context.IRContext),llvm::APInt(32,value.size())),variableName->name);
-context.pushVariable(variableName->name,arrayLocation,variableType);
-if (initializer)
-{
-expressionList::iterator it;
-unsigned int curIndex = 0;
-unsigned int arraySizeMod = arraySize->value + 1;
-llvm::Value* zero = llvm::ConstantInt::get(*(context.IRContext), llvm::APInt(64, 0));
-for (it = initializer->begin(); it != initializer->end(); it++)
-{
-llvm::Value* offset = llvm::ConstantInt::get(*(context.IRContext),llvm::APInt(32,curIndex));
-llvm::Value* pointer = context.Builder->CreateGEP(arrayLocation,{zero,offset},"getElementPtr");
-context.Builder->CreateStore((*it)->codeGen(context),pointer);
-//context.Builder->CreateInsertValue(arrayLocation,(*it)->codeGen(context),curIndex,"insertInArray");
-curIndex = (curIndex + 1) % arraySizeMod;
-}
-}
-
-return arrayLocation;
 }
 
 llvm::Constant* AstBoolValue::codeGen(genContext& context)
@@ -661,7 +637,7 @@ exit(1);
 
 llvm::Value* AstArrayAddress::codeGen(genContext& context)
 {
-return context.varLookUp(variableName->name).alloca
+return context.varLookUp(variableName->name).alloca;
 }
 
 llvm::Value* AstVariableCall::codeGen(genContext& context)
@@ -771,9 +747,10 @@ llvm::Value* AstExpStat::codeGen(genContext& context)
 return expression->codeGen(context);
 }
 
-const AstIntType intType;
-const AstStringType stringType;
-const AstCharType stringType;
-const AstBoolType boolType;
-const AstFloatType floatType;
-
+/*
+extern const AstIntType intType;
+extern const AstStringType stringType;
+extern const AstCharType charType;
+extern const AstBoolType boolType;
+extern const AstFloatType floatType;
+*/

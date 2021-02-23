@@ -26,33 +26,6 @@ struct functionInformation;
 struct functionInformation;
 struct globalVariableInformation;
 
-class typeElement
-{
-private:
-std::vector<const AstType*> typeChain;
-
-public: 
-const AstType* getBaseType();
-const AstType* getExpandTypes(int depth);
-
-typeElement(const AstType* baseType){typeChain.push_back(baseType);}
-~typeElement();
-};
-
-class typeTable
-{
-private:
-std::map<std::string,typeElement> typeMap;
-
-public:
-void createTypeElement(std::string typeName,const AstType* baseType);
-typeElement* getTypeElement(std::string typeName);
-
-const AstType* getBaseType(std::string typeName);
-const AstType* getExpandTypes(std::string typeName,int depth);
-};
-
-
 typedef std::unique_ptr<AstBlock> AstBlockPtr;
 typedef std::unique_ptr<AstNode> AstNodePtr;
 
@@ -74,7 +47,7 @@ std::unique_ptr<llvm::LLVMContext> IRContext;
 std::unique_ptr<llvm::IRBuilder<>> Builder;
 std::unique_ptr<llvm::Module> CurModule;
 
-typeTable types;
+std::unique_ptr<typeTable> types;
 
 void initContext();
 void initPrimativeTypes();
