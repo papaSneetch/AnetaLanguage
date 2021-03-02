@@ -12,9 +12,9 @@
 
 class AstType {
 public:
-const std::string name;
 virtual llvm::Type* typeOf(genContext& context) const = 0;
-virtual ~AstType() = 0;
+virtual std::string getTypeName() const = 0;
+virtual ~AstType(){}
 };
 
 class AstIntType: public AstType
@@ -22,6 +22,7 @@ class AstIntType: public AstType
 public:
 const std::string name= "int";
 llvm::IntegerType* typeOf(genContext& context) const ;
+std::string getTypeName() const;
 };
 
 class AstStringType: public AstType
@@ -29,6 +30,7 @@ class AstStringType: public AstType
 public:
 const std::string name= "string";
 llvm::Type* typeOf(genContext& context) const;
+std::string getTypeName() const;
 };
 
 class AstCharType: public AstType
@@ -36,6 +38,7 @@ class AstCharType: public AstType
 public:
 const std::string name= "char";
 llvm::Type* typeOf(genContext& context) const;
+std::string getTypeName() const;
 };
 
 class AstBoolType: public AstType
@@ -43,6 +46,7 @@ class AstBoolType: public AstType
 public:
 const std::string name= "bool";
 llvm::IntegerType* typeOf(genContext& context) const;
+std::string getTypeName() const;
 };
 
 class AstFloatType: public AstType
@@ -50,6 +54,7 @@ class AstFloatType: public AstType
 public:
 const std::string name= "float";
 llvm::Type* typeOf(genContext& context) const;
+std::string getTypeName() const;
 };
 
 class AstPointerType: public AstType
@@ -59,6 +64,7 @@ const AstType* referType;
 const std::string name= "pointer";
 AstPointerType(const AstType* referType):referType(referType){}
 llvm::Type* typeOf(genContext& context) const;
+std::string getTypeName() const;
 };
 
 class typeElement
@@ -80,7 +86,7 @@ private:
 std::map<std::string,std::unique_ptr<typeElement>> typeMap;
 
 public:
-void createTypeElement(std::string typeName,const AstType* baseType);
+void createTypeElement(const AstType* baseType);
 typeElement* getTypeElement(std::string typeName);
 
 const AstType* getBaseType(std::string typeName);

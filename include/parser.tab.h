@@ -64,11 +64,11 @@ extern int yydebug;
     elseS = 259,                   /* elseS  */
     whileS = 260,                  /* whileS  */
     returnS = 261,                 /* returnS  */
-    stringD = 262,                 /* stringD  */
-    intD = 263,                    /* intD  */
-    floatD = 264,                  /* floatD  */
-    boolD = 265,                   /* boolD  */
-    charD = 266,                   /* charD  */
+    intD = 262,                    /* intD  */
+    floatD = 263,                  /* floatD  */
+    boolD = 264,                   /* boolD  */
+    charD = 265,                   /* charD  */
+    stringD = 266,                 /* stringD  */
     leftSh = 267,                  /* leftSh  */
     rightSh = 268,                 /* rightSh  */
     add = 269,                     /* add  */
@@ -94,7 +94,7 @@ extern int yydebug;
     intV = 289,                    /* intV  */
     boolV = 290,                   /* boolV  */
     floatV = 291,                  /* floatV  */
-    stringV = 292,                 /* stringV  */
+    charsV = 292,                  /* charsV  */
     nameV = 293,                   /* nameV  */
     aeq = 294,                     /* aeq  */
     meq = 295,                     /* meq  */
@@ -102,7 +102,9 @@ extern int yydebug;
     postInc = 297,                 /* postInc  */
     postDec = 298,                 /* postDec  */
     preInc = 299,                  /* preInc  */
-    preDec = 300                   /* preDec  */
+    preDec = 300,                  /* preDec  */
+    normalVarPrec = 301,           /* normalVarPrec  */
+    stringVarPrec = 302            /* stringVarPrec  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -132,7 +134,7 @@ statementList* statements;
 expressionList* expressions;
 variableList* args;
 
-#line 136 "./include/parser.tab.h"
+#line 138 "./include/parser.tab.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

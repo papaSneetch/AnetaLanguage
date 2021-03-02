@@ -46,14 +46,14 @@ variableList* args;
 }
 
 %token ifS elseS whileS returnS
-%token stringD intD floatD boolD charD
+%token intD floatD boolD charD stringD
 %token leftSh rightSh add sub
 %token ast Div exponent Xor mod inc dec
 %token eql leq geq lt gt neq
 %token aeg meg asg amp Or
 %token '[' ']' '{' '}'
 %token ',' ';' '(' ')'
-%token intV boolV floatV stringV nameV
+%token intV boolV floatV charsV nameV
 
 %type <node> prog funcDecl 
 
@@ -78,7 +78,7 @@ variableList* args;
 %type <int_val> intV astChain
 %type <bool_val> boolV
 %type <float_val> floatV
-%type <string> stringV 
+%type <string> charsV
 %type <string> nameV
 
 %type <expressions> exps
@@ -185,7 +185,7 @@ $$ = new AstVariableDeclaration($2,$1);
 std::cerr << "Syntax Object: varDecl. " << std::endl;}
 	| type varNames asg exp   {
 $$ = new AstVariableDeclaration($2,$1,$4); 
-std::cerr << "Syntax Object: varDecl. " << std::endl;}
+std::cerr << "Syntax Object: varDecl. " << std::endl;} 
 
 varNames:
 	nameV {
@@ -214,7 +214,7 @@ type:
 	$$ = $1;
 }
 	| baseType astChain {
-$$=currentContext.types->getExpandTypes($1->name,$2);
+$$=currentContext.types->getExpandTypes($1->getTypeName(),$2);
 std::cerr << "Syntax Object: type. " << std::endl;}
 
 
@@ -322,21 +322,22 @@ std::cerr << "Syntax Object: value. " << std::endl;
 $$ = new AstFloatValue($1);
 std::cerr << "Syntax Object: value. " << std::endl;
 }
-	| stringV {
-int length = strlen($1);
+	| charsV {
+int length=strlen($4);
 if (length==3 && $1[0]=='\'')
 {
-$$ = new AstCharValue(*(++$1));
+$$ = new AstCharValue($1[1]);
+}
+else if ($1[0]=='"')
+{
+$1[length-1] = '\0';
+$$ = AstStringValue(++$1,length-1); 
 }
 else
 {
-if ($1[0]=='"')
-{
-$1[--length] = '\0';
+std::cerr << "Not a char or a string value. " << std::endl;
 }
-$$ = new AstStringValue(++$1,--length);
 std::cerr << "Syntax Object: value. " << std::endl;
-}
 }
 
 whileloop:

@@ -97,9 +97,9 @@ else
 currentContext.initializeTargetList();
 }
 
-	yyparse();
 	currentContext.initContext();
 	currentContext.initializeTarget(target,errorString,cpu);
+	yyparse();
 	currentContext.codeGen();
 //	currentContext.createStart();
 

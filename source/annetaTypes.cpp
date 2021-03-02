@@ -30,17 +30,47 @@ llvm::Type* AstPointerType::typeOf(genContext& context) const
 return referType->typeOf(context)->getPointerTo();
 }
 
-void typeTable::createTypeElement(std::string typeName,const AstType* baseType)
+std::string AstIntType::getTypeName() const
 {
-typeMap.insert(std::make_pair(typeName,std::make_unique<typeElement>(baseType)));
+return "int";
 }
 
-typeElement* typeTable::getTypeElement(std::string typeName)
+std::string AstStringType::getTypeName() const
+{
+return "string";
+}
+
+std::string AstCharType::getTypeName() const 
+{
+return "char";
+}
+
+std::string AstBoolType::getTypeName() const
+{
+return "bool";
+}
+
+std::string AstFloatType::getTypeName() const
+{
+return "float";
+}
+
+std::string AstPointerType::getTypeName() const
+{
+return "pointer";
+}
+
+void typeTable::createTypeElement(const AstType* baseType)
+{
+typeMap.insert(std::make_pair(baseType->getTypeName(),std::make_unique<typeElement>(baseType)));
+}
+
+typeElement* typeTable::getTypeElement(std::string typeName) 
 {
 return typeMap[typeName].get();
 }
 
-const AstType* typeTable::getBaseType(std::string typeName)
+const AstType* typeTable::getBaseType(std::string typeName) 
 {
 return typeMap[typeName]->getBaseType();
 }
@@ -73,7 +103,9 @@ return typeChain.back();
 
 typeElement::~typeElement()
 {
-for (std::vector<const AstType*>::iterator it = (typeChain.begin()++); it != typeChain.end(); it++)
+std::vector<const AstType*>::iterator it = typeChain.begin();
+it++;
+for (std::vector<const AstType*>::iterator it = (typeChain.begin()+1); it < typeChain.end(); it++)
 {
 delete const_cast<AstType*>(*it);
 }

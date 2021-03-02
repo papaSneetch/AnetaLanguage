@@ -88,7 +88,7 @@ annetaTypesObjectLoc = $(objectDir)/$(annetaTypesObject)
 annetaTypesTarget = $(annetaTypesObjectLoc)
 
 includes = $(parserIncludeLoc) $(lexIncludeLoc) $(annetaBuilderIncludeLoc) $(codeGenContextIncludeLoc)
-objects = $(parserLexetObjectLoc) $(annetaBuilderObjectLoc) $(codeGenContextObjectLoc)
+objects = $(parserLexetObjectLoc) $(annetaBuilderObjectLoc) $(codeGenContextObjectLoc) $(annetaTypesObjectLoc)
 
 annetaBuilderMain = annetaBuilderMain.cpp
 annetaBuilderMainObject = annetaBuilderMain.o
@@ -98,11 +98,13 @@ annetaBuilderMainLoc = $(mainDir)/$(annetaBuilderMain)
 annetaBuilderMainPrereq = $(includes) $(objects) $(llvmFlagsSourceLoc) $(annetaBuilderMainLoc)
 annetaBuilderMainTargetLoc= $(binDir)/$(annetaBuilderMainBin)
 
-targets = $(codeGenContextTarget) $(annetaBuilderTarget) $(parserTargets) $(lexerTargets) $(parserLexerTargets) $(annetaBuilderMainTargetLoc) $(parserBinTargets) $(lexerBinTargets) 
+targets = $(codeGenContextTarget) $(annetaBuilderTarget) $(parserTargets) $(lexerTargets) $(parserLexerTargets) $(annetaBuilderMainTargetLoc) $(parserBinTargets) $(lexerBinTargets) $(annetaTypesTarget)
 
 all: $(targets)
 
 annetaBuilder: $(annetaBuilderTarget)
+
+lexer: $(lexerBinTargets)
 
 codeGenContext: $(codeGenContextTarget)
 

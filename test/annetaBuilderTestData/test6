@@ -1,0 +1,9 @@
+int main()
+{
+char q = 'c'
+if (c == 'c')
+{
+print("c is c.");
+}
+return 0;
+}

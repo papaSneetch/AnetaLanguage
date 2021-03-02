@@ -17,25 +17,25 @@ void genContext::initContext() {
 IRContext = std::make_unique<llvm::LLVMContext>(); 
 CurModule = std::make_unique<llvm::Module>("Module",*IRContext); 
 Builder = std::make_unique<llvm::IRBuilder<>>(*IRContext); 
+types = std::make_unique<typeTable>();
 initPrimativeTypes();
 initLibaryFunctions();
-types = std::make_unique<typeTable>();
 }
 
 void genContext::initLibaryFunctions() {
 llvm::FunctionType *ft = llvm::FunctionType::get(llvm::IntegerType::getInt32Ty(*IRContext),llvm::Type::getInt8Ty(*IRContext)->getPointerTo(),false);
-llvm::Function* func = llvm::Function::Create(ft,llvm::Function::ExternalLinkage,"print",CurModule.get());
-pushFunction("print",func,std::vector<const AstType*>{&stringType},&intType);
-std::cerr << "Generated: " << "print." << std::endl;
+llvm::Function* func = llvm::Function::Create(ft,llvm::Function::ExternalLinkage,"puts",CurModule.get());
+pushFunction("puts",func,std::vector<const AstType*>{&stringType},&intType);
+std::cerr << "Generated: " << "puts." << std::endl;
 }
 
 void genContext::initPrimativeTypes()
 {
-types->createTypeElement(intType.name,&intType);
-types->createTypeElement(floatType.name,&floatType);
-types->createTypeElement(boolType.name,&boolType);
-types->createTypeElement(stringType.name,&stringType);
-types->createTypeElement(charType.name,&charType);
+types->createTypeElement(&intType);
+types->createTypeElement(&floatType);
+types->createTypeElement(&boolType);
+types->createTypeElement(&stringType);
+types->createTypeElement(&charType);
 }
 
 void genContext::createStart()

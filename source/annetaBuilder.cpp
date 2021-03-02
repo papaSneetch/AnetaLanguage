@@ -507,12 +507,12 @@ rhs.reset(arrayValuesTmp);
 
 llvm::Constant* AstIntValue::codeGen(genContext& context)
 {
-return llvm::ConstantInt::get(*(context.IRContext),llvm::APInt(32,value));
+return llvm::ConstantInt::get(*(context.IRContext),llvm::APInt(32,(uint64_t)value));
 }
 
 llvm::Constant* AstCharValue::codeGen(genContext& context)
 {
-return llvm::ConstantInt::get(*(context.IRContext),llvm::APInt(8,value));
+return llvm::ConstantInt::get(*(context.IRContext),llvm::APInt(8,(uint64_t)value));
 }
 
 AstStringValue::AstStringValue(char* string,unsigned int size):AstConstant(stringType)
@@ -528,11 +528,12 @@ llvm::Constant* AstStringValue::codeGen(genContext& context)
 std::vector<llvm::Constant*> stringValues;
 for (std::vector<char>::iterator it = value.begin(); it != value.end(); ++it)
 {
-stringValues.push_back(llvm::ConstantInt::get(*(context.IRContext),llvm::APInt(8,*it))
+stringValues.push_back(llvm::ConstantInt::get(*(context.IRContext),llvm::APInt(8,(uint64_t)*it))
 );
 }
 llvm::ArrayType* arrayType = llvm::ArrayType::get(llvm::Type::getInt8Ty(*(context.IRContext)),stringValues.size());
-return llvm::ConstantArray::get(arrayType,stringValues);
+llvm::ConstantArray* array = llvm::ConstantArray::get(arrayType,stringValues);
+return context.Builder->CreateBitCast(array,llvm::Type::getInt8Ty(*(context.IRContext))->getPointerTo(),"castToPointer");
 }
 
 llvm::Constant* AstFloatValue::codeGen(genContext& context)
@@ -542,7 +543,7 @@ return llvm::ConstantFP::get(*(context.IRContext),llvm::APFloat(value));
 
 llvm::Constant* AstBoolValue::codeGen(genContext& context)
 {
-return llvm::ConstantInt::get(*(context.IRContext),llvm::APInt(1,value));
+return llvm::ConstantInt::get(*(context.IRContext),llvm::APInt(1,(uint64_t)value));
 }
 
 

@@ -407,14 +407,14 @@ class AstDeref: public AstExp
 {
 public:
 AstExpPtr expNode;
-AstDeref(AstExpPtr& expNodePtr):AstExp((expNodePtr->type->name == "pointer")?expNodePtr->type:nullptr),expNode(std::move(expNodePtr)){
+AstDeref(AstExpPtr& expNodePtr):AstExp((expNodePtr->type->getTypeName() == "pointer")?expNodePtr->type:nullptr),expNode(std::move(expNodePtr)){
 if (type==nullptr)
 {
 std::cerr << "Error: can't dereference a non pointer."<<std::endl;
 exit(1);
 }
 }
-AstDeref(AstExp* expNodePtr):AstExp((expNodePtr->type->name == "pointer")?expNodePtr->type:nullptr){
+AstDeref(AstExp* expNodePtr):AstExp((expNodePtr->type->getTypeName() == "pointer")?expNodePtr->type:nullptr){
 expNode.reset(expNodePtr);
 std::cerr << "Error: can't dereference a non pointer."<<std::endl;
 exit(1);

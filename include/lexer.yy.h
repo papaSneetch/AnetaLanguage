@@ -1133,7 +1133,7 @@ YY_RULE_SETUP
 #line 201 "./source/lexer.l"
 {
 yylval -> string = strdup(yytext);
-return stringV;
+return charsV;
 }
 	YY_BREAK
 case 46:
@@ -1141,7 +1141,7 @@ YY_RULE_SETUP
 #line 206 "./source/lexer.l"
 {
 yylval -> string = strdup(yytext);
-return stringV;
+return charsV;
 }
 	YY_BREAK
 case 47:
