@@ -515,25 +515,28 @@ llvm::Constant* AstCharValue::codeGen(genContext& context)
 return llvm::ConstantInt::get(*(context.IRContext),llvm::APInt(8,(uint64_t)value));
 }
 
-AstStringValue::AstStringValue(char* string,unsigned int size):AstConstant(stringType)
+/*AstStringValue::AstStringValue(char* string,unsigned int size):AstConstant(stringType)
 {
 for (int i = 0; i <= size; i++)
 {
 value.push_back(string[i]);
 }
-}
+}*/
 
 llvm::Constant* AstStringValue::codeGen(genContext& context)
 {
-std::vector<llvm::Constant*> stringValues;
+/*std::vector<llvm::Constant*> stringValues;
 for (std::vector<char>::iterator it = value.begin(); it != value.end(); ++it)
 {
 stringValues.push_back(llvm::ConstantInt::get(*(context.IRContext),llvm::APInt(8,(uint64_t)*it))
 );
 }
 llvm::ArrayType* arrayType = llvm::ArrayType::get(llvm::Type::getInt8Ty(*(context.IRContext)),stringValues.size());
-llvm::ConstantArray* array = llvm::ConstantArray::get(arrayType,stringValues);
-return context.Builder->CreateBitCast(array,llvm::Type::getInt8Ty(*(context.IRContext))->getPointerTo(),"castToPointer");
+llvm::Constant* array = llvm::ConstantArray::get(arrayType,stringValues);
+return llvm::ConstantExpr::getBitCast(array,llvm::Type::getInt8Ty(*(context.IRContext))->getPointerTo());*/
+llvm::ConstantDataArray* stringArray = llvm::ConstantDataArray::getString(*(context.IRContext),value,nullTerminated);
+llvm::GlobalVariable* globalString = new llvm::GlobalVariable(*(context.CurModule),stringArray->getType(),true,GlobalVariable::InternalLinkage,stringArray,utf8string);
+return ConstantExpr::getBitCast(globalString,llvm::Type::getInt8Ty(*context.IRContext)->getPointerTo());
 }
 
 llvm::Constant* AstFloatValue::codeGen(genContext& context)

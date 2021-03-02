@@ -323,15 +323,23 @@ $$ = new AstFloatValue($1);
 std::cerr << "Syntax Object: value. " << std::endl;
 }
 	| charsV {
-int length=strlen($4);
-if (length==3 && $1[0]=='\'')
+int length=strlen($1);
+if ($1[0]=='\'')
+{
+if (length==3)
 {
 $$ = new AstCharValue($1[1]);
 }
+else
+{
+$$ = new AstStringValue(std::string(++$1,length-2),false);
+}
+}
 else if ($1[0]=='"')
 {
-$1[length-1] = '\0';
-$$ = AstStringValue(++$1,length-1); 
+//$1[length-1] = '\0';
+//$$ = new AstStringValue(++$1,length-1); 
+$$ = new AstStringValue(std::string(++$1,length-2),true)
 }
 else
 {
