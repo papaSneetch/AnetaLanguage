@@ -1,5 +1,6 @@
 int main()
 {
-char var = 'c';
+string varPtr = "Hello World!";
+puts(varPtr);
 return 0;
 }
