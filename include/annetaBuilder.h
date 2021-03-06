@@ -123,9 +123,12 @@ llvm::Constant* codeGen(genContext& context);
 
 class AstStringValue: public AstConstant
 {
+std::string value;
+bool nullTerminated;
 public:
-std::vector<char> value;
-AstStringValue(char* string,unsigned int size);
+//std::vector<char> value;
+//AstStringValue(char* string,unsigned int size);
+AstStringValue(std::string string, bool nullTerminated=true):AstConstant(stringType),value(string),nullTerminated(nullTerminated){}
 llvm::Constant* codeGen(genContext& context);
 };
 
@@ -581,6 +584,7 @@ struct functionInformation
 llvm::Function* function;
 std::vector<const AstType*> argumentTypes;
 const AstType* returnType;
+bool varArg;
 };
 
 struct globalVariableInformation

@@ -339,7 +339,7 @@ else if ($1[0]=='"')
 {
 //$1[length-1] = '\0';
 //$$ = new AstStringValue(++$1,length-1); 
-$$ = new AstStringValue(std::string(++$1,length-2),true)
+$$ = new AstStringValue(std::string(++$1,length-2),true);
 }
 else
 {

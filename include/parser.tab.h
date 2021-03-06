@@ -102,9 +102,7 @@ extern int yydebug;
     postInc = 297,                 /* postInc  */
     postDec = 298,                 /* postDec  */
     preInc = 299,                  /* preInc  */
-    preDec = 300,                  /* preDec  */
-    normalVarPrec = 301,           /* normalVarPrec  */
-    stringVarPrec = 302            /* stringVarPrec  */
+    preDec = 300                   /* preDec  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -134,7 +132,7 @@ statementList* statements;
 expressionList* expressions;
 variableList* args;
 
-#line 138 "./include/parser.tab.h"
+#line 136 "./include/parser.tab.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

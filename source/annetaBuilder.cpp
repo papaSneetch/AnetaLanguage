@@ -534,9 +534,9 @@ stringValues.push_back(llvm::ConstantInt::get(*(context.IRContext),llvm::APInt(8
 llvm::ArrayType* arrayType = llvm::ArrayType::get(llvm::Type::getInt8Ty(*(context.IRContext)),stringValues.size());
 llvm::Constant* array = llvm::ConstantArray::get(arrayType,stringValues);
 return llvm::ConstantExpr::getBitCast(array,llvm::Type::getInt8Ty(*(context.IRContext))->getPointerTo());*/
-llvm::ConstantDataArray* stringArray = llvm::ConstantDataArray::getString(*(context.IRContext),value,nullTerminated);
-llvm::GlobalVariable* globalString = new llvm::GlobalVariable(*(context.CurModule),stringArray->getType(),true,GlobalVariable::InternalLinkage,stringArray,utf8string);
-return ConstantExpr::getBitCast(globalString,llvm::Type::getInt8Ty(*context.IRContext)->getPointerTo());
+llvm::Constant* stringArray = llvm::ConstantDataArray::getString(*(context.IRContext),value,nullTerminated);
+llvm::GlobalVariable* globalString = new llvm::GlobalVariable(*(context.CurModule),stringArray->getType(),true,llvm::GlobalVariable::InternalLinkage,stringArray);
+return llvm::ConstantExpr::getBitCast(globalString,llvm::Type::getInt8Ty(*context.IRContext)->getPointerTo());
 }
 
 llvm::Constant* AstFloatValue::codeGen(genContext& context)
@@ -608,9 +608,25 @@ llvm::Value* AstFunctionCall::codeGen(genContext& context)
 functionInformation functionValue = context.functionLookUp(functionName->name);
 type = functionValue.returnType;
 std::vector <llvm::Value*> argsV;
+std::vector<const AstType*>::iterator functionTypesIt = functionValue.argumentTypes.begin();
 for (expressionList::iterator it = args->begin(); it != args->end(); it++)
 {
 argsV.push_back((*it)->codeGen(context));
+if (functionTypesIt != functionValue.argumentTypes.end())
+{
+if ((*it)->type->getTypeName() != (*functionTypesIt)->getTypeName())
+{
+std::cerr << "Function arguments doesn't match type!" << std::endl;
+std::cerr << "Argument Type: " << (*it)->type->getTypeName() << std::endl;
+std::cerr << "Expected Type: " << (*functionTypesIt)->getTypeName() << std::endl;
+exit(1);
+}
+functionTypesIt++;
+}
+else if (functionValue.varArg == false)
+{
+std::cerr << "Too many arguments!" << std::endl;
+}
 }
 return context.Builder->CreateCall(functionValue.function,argsV,"functionCall",nullptr);
 }

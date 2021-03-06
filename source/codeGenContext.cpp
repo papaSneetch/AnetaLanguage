@@ -22,11 +22,52 @@ initPrimativeTypes();
 initLibaryFunctions();
 }
 
-void genContext::initLibaryFunctions() {
+void genContext::create_print()
+{
+llvm::FunctionType *ft = llvm::FunctionType::get(llvm::IntegerType::getInt32Ty(*IRContext),llvm::Type::getInt8Ty(*IRContext)->getPointerTo(),true);
+llvm::Function* func = llvm::Function::Create(ft,llvm::Function::ExternalLinkage,"printf",CurModule.get());
+pushFunction("print",func,std::vector<const AstType*>{&stringType},&intType,true);
+std::cerr << "Generated: " << "printf." << std::endl;
+}
+
+void genContext::create_input()
+{
+llvm::FunctionType *ft = llvm::FunctionType::get(llvm::Type::getInt8Ty(*IRContext)->getPointerTo(),llvm::Type::getInt8Ty(*IRContext)->getPointerTo(),false);
+llvm::Function* func = llvm::Function::Create(ft,llvm::Function::ExternalLinkage,"gets",CurModule.get());
+pushFunction("input",func,std::vector<const AstType*>{&stringType},&stringType);
+std::cerr << "Generated: " << "input." << std::endl;
+}
+
+void genContext::create_atoi()
+{
 llvm::FunctionType *ft = llvm::FunctionType::get(llvm::IntegerType::getInt32Ty(*IRContext),llvm::Type::getInt8Ty(*IRContext)->getPointerTo(),false);
-llvm::Function* func = llvm::Function::Create(ft,llvm::Function::ExternalLinkage,"puts",CurModule.get());
-pushFunction("puts",func,std::vector<const AstType*>{&stringType},&intType);
-std::cerr << "Generated: " << "puts." << std::endl;
+llvm::Function* func = llvm::Function::Create(ft,llvm::Function::ExternalLinkage,"atoi",CurModule.get());
+pushFunction("atoi",func,std::vector<const AstType*>{&stringType},&intType);
+std::cerr << "Generated: " << "atoi." << std::endl;
+}
+
+void genContext::create_atof()
+{
+llvm::FunctionType *ft = llvm::FunctionType::get(llvm::IntegerType::getDoubleTy(*IRContext),llvm::Type::getInt8Ty(*IRContext)->getPointerTo(),false);
+llvm::Function* func = llvm::Function::Create(ft,llvm::Function::ExternalLinkage,"atof",CurModule.get());
+pushFunction("atoi",func,std::vector<const AstType*>{&stringType},&floatType);
+std::cerr << "Generated: " << "atof." << std::endl;
+}
+
+void genContext::create_printStr()
+{
+llvm::FunctionType *ft = llvm::FunctionType::get(llvm::IntegerType::getInt32Ty(*IRContext),{llvm::Type::getInt8Ty(*IRContext)->getPointerTo(),llvm::Type::getInt8Ty(*IRContext)->getPointerTo()},true);
+llvm::Function* func = llvm::Function::Create(ft,llvm::Function::ExternalLinkage,"sprintf",CurModule.get());
+pushFunction("itoa",func,std::vector<const AstType*>{&stringType,&stringType},&intType,true);
+std::cerr << "Generated: " << "printStr." << std::endl;
+}
+
+void genContext::initLibaryFunctions() {
+create_print();
+create_input();
+create_atoi();
+create_atof();
+create_printStr();
 }
 
 void genContext::initPrimativeTypes()
@@ -75,9 +116,9 @@ void genContext::pushVariable(std::string name, llvm::AllocaInst* varPointer,con
 blockList.back()->variableMap.insert(std::make_pair(name,variableInformation{varPointer,type}));
 }
 
-void genContext::pushFunction(std::string name,llvm::Function* function,std::vector<const AstType*> types,const AstType* returnType)
+void genContext::pushFunction(std::string name,llvm::Function* function,std::vector<const AstType*> types,const AstType* returnType,bool varArg)
 {
-functionMap.insert(std::make_pair(name,functionInformation{function,types,returnType}));
+functionMap.insert(std::make_pair(name,functionInformation{function,types,returnType,varArg}));
 }
 
 void genContext::pushGlobalVariable(std::string name,llvm::GlobalVariable* var,const AstType* type)
@@ -144,14 +185,21 @@ llvm::WriteBitcodeToFile(*CurModule,OStream);
 
 void genContext::printObjectCode(std::string outputFileName)
 {
-char tmpFileName[] = "/tmp/llvmTemp.XXXXXX";
+char tmpFileName [L_tmpnam+3];
+tmpnam(tmpFileName);
+strncat(tmpFileName,".ll",4);
+std::error_code errorCode;
+llvm::raw_fd_ostream OStream(tmpFileName,errorCode,llvm::sys::fs::CreationDisposition::CD_CreateNew);
+CurModule->print(OStream,nullptr);
+
+/*char tmpFileName[] = "/tmp/llvmTemp.XXXXXX";
 int tmpFileDescriptor;
 if ((tmpFileDescriptor = mkstemp(tmpFileName))==-1) {
 std::cerr << "Cannot create tmp file:" << tmpFileName << std::endl;	
 exit(1);
 }
 llvm::raw_fd_ostream TmpOStream(tmpFileDescriptor,true);
-/*std::error_code errorCode;
+std::error_code errorCode;
 llvm::raw_fd_ostream OStream(outputFileName,errorCode);
 if (targetMachine->addPassesToEmitFile(pass,OStream,nullptr,llvm::CodeGenFileType::CGFT_ObjectFile))
 {
@@ -160,11 +208,12 @@ return;
 }
 pass.run(*CurModule);
 OStream.flush();*/
-CurModule->print(TmpOStream,nullptr);
-std::string systemCommand = "clang ";//"lld --entry=main ";
-systemCommand += tmpFileName;
-systemCommand += " -c -o ";
+
+std::string systemCommand = "clang";//"lld --entry=main ";
+systemCommand += " -o ";
 systemCommand += outputFileName;
+systemCommand += " -c ";
+systemCommand += tmpFileName;
 system(systemCommand.c_str());
 if( remove(tmpFileName) != 0 )
 {
@@ -174,25 +223,35 @@ std::cerr << "Error deleting file: " << tmpFileName << std::endl;
 
 void genContext::printExeCode(std::string outputFileName)
 {
-char tmpFileName[] = "/tmp/llvmTemp.XXXXXX";
+
+char tmpFileName [L_tmpnam+3];
+tmpnam(tmpFileName);
+strncat(tmpFileName,".ll",4);
+std::error_code errorCode;
+llvm::raw_fd_ostream OStream(tmpFileName,errorCode,llvm::sys::fs::CreationDisposition::CD_CreateNew);
+CurModule->print(OStream,nullptr);
+
+/*char tmpFileName[] = "/tmp/llvmTemp.XXXXXX";
 int tmpFileDescriptor;
 if ((tmpFileDescriptor = mkstemp(tmpFileName))==-1) {
 std::cerr << "Cannot create tmp file:" << tmpFileName << std::endl;	
 exit(1);
 }
 llvm::raw_fd_ostream TmpOStream(tmpFileDescriptor,true);
-/*if (targetMachine->addPassesToEmitFile(pass,TmpOStream,nullptr,llvm::CodeGenFileType::CGFT_ObjectFile))
+if (targetMachine->addPassesToEmitFile(pass,TmpOStream,nullptr,llvm::CodeGenFileType::CGFT_ObjectFile))
 {
 llvm::errs() << "TargetMachine can't emit file of this type.";
 return;
 }
 pass.run(*CurModule);
 TmpOStream.flush();*/
-CurModule->print(TmpOStream,nullptr);
-std::string systemCommand = "clang ";//"lld --entry=main ";
-systemCommand += tmpFileName;
+
+std::string systemCommand = "clang";//"lld --entry=main ";
 systemCommand += " -o ";
 systemCommand += outputFileName;
+systemCommand += " -c ";
+systemCommand += tmpFileName;
+
 system(systemCommand.c_str());
 if( remove(tmpFileName) != 0 )
 {

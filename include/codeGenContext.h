@@ -40,6 +40,12 @@ const llvm::Target* target;
 llvm::TargetMachine* targetMachine;
 llvm::legacy::PassManager pass;
 
+void create_print();
+void create_input();
+void create_atoi();
+void create_atof();
+void create_printStr();
+
 void initLibaryFunctions();
 
 public:
@@ -59,7 +65,7 @@ void popBlock();
 
 void pushVariable(std::string name, llvm::AllocaInst* varPointer,const AstType* type);
 
-void pushFunction(std::string name,llvm::Function* function,std::vector<const AstType*> types,const AstType* returnType); 
+void pushFunction(std::string name,llvm::Function* function,std::vector<const AstType*> types,const AstType* returnType,bool varArg=false); 
 
 void pushGlobalVariable(std::string name,llvm::GlobalVariable* var,const AstType* type);
 

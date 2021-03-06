@@ -17,7 +17,7 @@ return llvm::Type::getInt8Ty(*context.IRContext);
 
 llvm::Type* AstFloatType::typeOf(genContext& context) const
 {
-return llvm::Type::getFloatTy(*(context.IRContext));
+return llvm::Type::getDoubleTy(*(context.IRContext));
 }
 
 llvm::IntegerType* AstBoolType::typeOf(genContext& context) const
