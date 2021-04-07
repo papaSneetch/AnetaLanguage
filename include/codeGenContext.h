@@ -40,11 +40,11 @@ const llvm::Target* target;
 llvm::TargetMachine* targetMachine;
 llvm::legacy::PassManager pass;
 
-void create_print();
-void create_input();
+void create_printf();
+void create_scanf();
 void create_atoi();
 void create_atof();
-void create_printStr();
+void create_sprintf();
 
 void initLibaryFunctions();
 

@@ -65,6 +65,12 @@ void typeTable::createTypeElement(const AstType* baseType)
 typeMap.insert(std::make_pair(baseType->getTypeName(),std::make_unique<typeElement>(baseType)));
 }
 
+
+int typeTable::appendPointerType(std::string baseTypeName,const AstPointerType* pointerType)
+{
+return typeMap[baseTypeName]->appendPointerType(pointerType);
+}
+
 typeElement* typeTable::getTypeElement(std::string typeName) 
 {
 return typeMap[typeName].get();
@@ -78,6 +84,20 @@ return typeMap[typeName]->getBaseType();
 const AstType* typeTable::getExpandTypes(std::string typeName,int depth)
 {
 return typeMap[typeName]->getExpandTypes(depth);
+}
+
+int typeElement::appendPointerType(const AstPointerType* pointerType)
+{
+if (typeChain.size()>depthToNotDelete)
+{
+return 1;
+}
+else
+{
+typeChain.push_back(pointerType);
+depthToNotDelete++;
+return 0;
+}
 }
 
 const AstType* typeElement::getBaseType()
@@ -103,16 +123,14 @@ return typeChain.back();
 
 typeElement::~typeElement()
 {
-std::vector<const AstType*>::iterator it = typeChain.begin();
-it++;
-for (std::vector<const AstType*>::iterator it = (typeChain.begin()+1); it < typeChain.end(); it++)
+for (std::vector<const AstType*>::iterator it = (typeChain.begin()+depthToNotDelete); it < typeChain.end(); it++)
 {
 delete const_cast<AstType*>(*it);
 }
 }
 
 const AstIntType intType;
-const AstStringType stringType;
 const AstCharType charType;
 const AstBoolType boolType;
 const AstFloatType floatType;
+const AstPointerType stringType(&charType);

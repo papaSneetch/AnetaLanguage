@@ -1,0 +1,11 @@
+int getNumber(int filler)
+{
+filler = filler + 1;
+return filler;
+}
+
+int main()
+{
+getNumber(0);
+return 0;
+}

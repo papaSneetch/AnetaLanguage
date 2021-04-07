@@ -128,7 +128,7 @@ bool nullTerminated;
 public:
 //std::vector<char> value;
 //AstStringValue(char* string,unsigned int size);
-AstStringValue(std::string string, bool nullTerminated=true):AstConstant(stringType),value(string),nullTerminated(nullTerminated){}
+AstStringValue(std::string string, bool nullTerminated=true):AstConstant(&stringType),value(string),nullTerminated(nullTerminated){}
 llvm::Constant* codeGen(genContext& context);
 };
 
@@ -143,8 +143,8 @@ llvm::Constant* codeGen(genContext& context);
 class AstFloatValue: public AstConstant
 {
 public:
-float value;
-AstFloatValue(float value):AstConstant(floatType),value(value){}
+double value;
+AstFloatValue(double value):AstConstant(floatType),value(value){}
 llvm::Constant* codeGen(genContext& context);
 };
  

@@ -129,50 +129,6 @@ updateType();
 return context.Builder->CreateAnd(lhsCodeGen,rhsCodeGen,"and");
 }
 
-llvm::Value* AstEql::codeGen(genContext& context)
-{
-llvm::Value* lhsValue = lhs->codeGen(context);
-llvm::Value* rhsValue = rhs->codeGen(context);
-type = new AstBoolType();
-if (typeid(*type) == typeid(AstIntType))
-{
-return context.Builder->CreateICmpEQ(lhsValue,rhsValue,"icmp_eq");
-}
-else if (typeid(*type) == typeid(AstFloatType))
-{
-return context.Builder->CreateFCmpOEQ(lhsValue,rhsValue,"fAddTmp");
-}
-else
-{
-std::cerr << "Error in AstEql:" << std::endl;
-std::cerr<< "Type Mismatch!" << std::endl;
-std::cerr<< "Not A Float or Int!" << std::endl;
-exit(1);
-}
-}
-
-llvm::Value* Astneq::codeGen(genContext& context)
-{
-llvm::Value* lhsValue = lhs->codeGen(context);
-llvm::Value* rhsValue = rhs->codeGen(context);
-type = new AstBoolType();
-if (typeid(*type) == typeid(AstIntType))
-{
-return context.Builder->CreateICmpNE(lhsValue,rhsValue,"icmp_ne");
-}
-else if (typeid(*type) == typeid(AstFloatType))
-{
-return context.Builder->CreateFCmpONE(lhsValue,rhsValue,"fAddTmp");
-}
-else
-{
-std::cerr << "Error in Astneq:" << std::endl;
-std::cerr<< "Type Mismatch!" << std::endl;
-std::cerr<< "Not A Float or Int!" << std::endl;
-exit(1);
-}
-}
-
 llvm::Value* AstLeftSh::codeGen(genContext& context)
 {
 auto lhsCodeGen = lhs->codeGen(context);
@@ -193,33 +149,49 @@ llvm::Value* AstVariableAsg::codeGen(genContext& context)
 {
 variableInformation var = context.varLookUp(variableName->name);
 type = var.type;
-return context.Builder->CreateStore((*rhs)[0]->codeGen(context),var.alloca);
+llvm::Value* generatedValue = (*rhs)[0]->codeGen(context);
+context.Builder->CreateStore(generatedValue,var.alloca);
+return generatedValue;
 }
 
 llvm::Value* AstArrayAsg::codeGen(genContext& context)
 {
 variableInformation var = context.varLookUp(variableName->name);
-type = var.type;
+if (var.type->getTypeName() == "pointer")
+{
+type = static_cast<const AstPointerType*>(var.type)->referType;
 llvm::Value* zero = llvm::ConstantInt::get(*(context.IRContext), llvm::APInt(64, 0));
 llvm::Value* indexPtr = context.Builder->CreateGEP(var.alloca,{zero,index->codeGen(context)},"getElementPtr");
 context.Builder->CreateStore(rhs->codeGen(context),indexPtr,false);
 return indexPtr;
 }
+else
+{
+std::cerr << "Error: Not an array or pointer!" << std::endl;
+exit(1);
+}
+}
 
 llvm::Value* AstArrayListAsg::codeGen(genContext& context)
 {
 variableInformation var = context.varLookUp(variableName->name);
-type = var.type;
+if (var.type->getTypeName() == "pointer")
+{
+type = static_cast<const AstPointerType*>(var.type)->referType;
 llvm::Value* zero = llvm::ConstantInt::get(*(context.IRContext), llvm::APInt(64, 0)); 
 llvm::Value* curIndex = index->codeGen(context);
-llvm::Value* arraySize = AstIntValue(var.alloca->getType()->getArrayNumElements()).codeGen(context);
 llvm::Value* increment = AstIntValue(1).codeGen(context);
 for (expressionList::iterator it = arrayValues->begin(); it != arrayValues->end(); it++)
 {
 llvm::Value* indexPtr = context.Builder->CreateGEP(var.alloca,{zero, curIndex},"getElementPtr");
 context.Builder->CreateStore((*it)->codeGen(context),indexPtr);
 curIndex = context.Builder->CreateAdd(curIndex,increment);
-curIndex = context.Builder->CreateMul(curIndex,context.Builder->CreateICmpSLE(curIndex,arraySize));
+}
+}
+else
+{
+std::cerr << "Error: Not an array or pointer!" << std::endl;
+exit(1);
 }
 return var.alloca;
 }
@@ -363,6 +335,50 @@ exit(1);
 }
 }
 
+llvm::Value* AstEql::codeGen(genContext& context)
+{
+llvm::Value* lhsValue = lhs->codeGen(context);
+llvm::Value* rhsValue = rhs->codeGen(context);
+type = new AstBoolType();
+if (lhs->type == rhs->type)
+{
+if (lhs->type == &intType)
+{
+return context.Builder->CreateICmpEQ(lhsValue,rhsValue,"icmp_eq");
+}
+else if (lhs->type == &floatType)
+{
+return context.Builder->CreateFCmpOEQ(lhsValue,rhsValue,"fAddTmp");
+}
+}
+std::cerr << "Error in AstEql:" << std::endl;
+std::cerr<< "Type Mismatch!" << std::endl;
+std::cerr<< "Not A Float or Int!" << std::endl;
+exit(1);
+}
+
+llvm::Value* Astneq::codeGen(genContext& context)
+{
+llvm::Value* lhsValue = lhs->codeGen(context);
+llvm::Value* rhsValue = rhs->codeGen(context);
+type = new AstBoolType();
+if (lhs->type == rhs->type)
+{
+if (lhs->type == &intType)
+{
+return context.Builder->CreateICmpNE(lhsValue,rhsValue,"icmp_ne");
+}
+else if (lhs->type == &floatType)
+{
+return context.Builder->CreateFCmpONE(lhsValue,rhsValue,"fAddTmp");
+}
+}
+std::cerr << "Error in Astneq:" << std::endl;
+std::cerr<< "Type Mismatch!" << std::endl;
+std::cerr<< "Not A Float or Int!" << std::endl;
+exit(1);
+}
+
 llvm::Value* AstAdd::codeGen(genContext& context)
 {
 llvm::Value* lhsValue = lhs->codeGen(context);
@@ -481,6 +497,7 @@ std::cerr << "Error in AstMod:" << std::endl;
 std::cerr<< "Type Mismatch!" << std::endl;
 std::cerr<< "Not A Float or Int!" << std::endl;
 exit(1);
+return nullptr;
 }
 }
 
@@ -582,8 +599,11 @@ return alloca;
 llvm::Value* AstArrayDeclaration::codeGen(genContext& context)
 {
 llvm::Type* arrayType = llvm::ArrayType::get(variableType->typeOf(context),arraySize->value);
-llvm::AllocaInst* arrayLocation = context.Builder->CreateAlloca(arrayType,arraySize->codeGen(context),variableName->name);
-context.pushVariable(variableName->name,arrayLocation,variableType);
+const AstType* arrayPointerType = context.types->getExpandTypes(variableType->getTypeName(),1);
+llvm::Type* llvmArrayPointerType = arrayPointerType->typeOf(context);
+
+llvm::AllocaInst* arrayLayout = context.Builder->CreateAlloca(arrayType,arraySize->codeGen(context));
+llvm::AllocaInst* arrayLocation = context.Builder->CreateAlloca(llvmArrayPointerType,nullptr,variableName->name);
 if (initializer)
 {
 expressionList::iterator it;
@@ -593,13 +613,14 @@ llvm::Value* zero = llvm::ConstantInt::get(*(context.IRContext), llvm::APInt(64,
 for (it = initializer->begin(); it != initializer->end(); it++)
 {
 llvm::Value* offset = llvm::ConstantInt::get(*(context.IRContext),llvm::APInt(32,curIndex));
-llvm::Value* pointer = context.Builder->CreateGEP(arrayLocation,{zero,offset},"getElementPtr");
+llvm::Value* pointer = context.Builder->CreateGEP(arrayLayout,{zero,offset},"getElementPtr");
 context.Builder->CreateStore((*it)->codeGen(context),pointer);
-//context.Builder->CreateInsertValue(arrayLocation,(*it)->codeGen(context),curIndex,"insertInArray");
+//context.Builder->CreateInsertValue(arrayLayout,(*it)->codeGen(context),curIndex,"insertInArray");
 curIndex = (curIndex + 1) % arraySizeMod;
 }
 }
-
+context.Builder->CreateStore(context.Builder->CreateBitCast(arrayLayout,llvmArrayPointerType),arrayLocation);
+context.pushVariable(variableName->name,arrayLocation,arrayPointerType);
 return arrayLocation;
 }
 
@@ -631,7 +652,6 @@ std::cerr << "Too many arguments!" << std::endl;
 return context.Builder->CreateCall(functionValue.function,argsV,"functionCall",nullptr);
 }
 
-
 llvm::Value* AstVariableAddress::codeGen(genContext& context)
 {
 variableInformation var = context.varLookUp(variableName->name);
@@ -653,7 +673,6 @@ exit(1);
 }
 }
 }
-
 
 llvm::Value* AstArrayAddress::codeGen(genContext& context)
 {
@@ -688,10 +707,19 @@ llvm::Value* AstArrayCall::codeGen(genContext& context)
 {
 variableInformation var = context.varLookUp(variableName->name);
 llvm::AllocaInst* alloca = var.alloca;
-type = var.type;
+
+if (var.type->getTypeName() == "pointer")
+{
+type = static_cast<const AstPointerType*>(var.type)->referType;
 llvm::Value* zero = llvm::ConstantInt::get(*(context.IRContext), llvm::APInt(64, 0));
 llvm::Value* indexPtr = context.Builder->CreateGEP(alloca,{zero,index->codeGen(context)},"getElementPtr");
 return context.Builder->CreateLoad(indexPtr,variableName->name);
+}
+else
+{
+std::cerr << "Error: Not an array or pointer!" << std::endl;
+exit(1);
+}
 }
 
 
@@ -702,29 +730,45 @@ return context.Builder->CreateLoad(type->typeOf(context),expNode->codeGen(contex
 
 llvm::Value* AstFunctionDeclaration::codeGen(genContext& context)
 {
+// std::cerr << "Generating Function: " << functionName->name << std::endl;
+
 std::vector<llvm::Type*> argTypes;
 std::vector<const AstType*> types;
 variableList::iterator it;
+// std::cerr << "Generating Function Type List: " << functionName->name << std::endl;
 for (it = arguments->begin(); it != arguments->end(); it++)
 {
 types.push_back(it->variableType);
 argTypes.push_back(it->variableType->typeOf(context));
 }
+// std::cerr << "Generated Function Type List: " << functionName->name << std::endl;
 llvm::FunctionType *ft = llvm::FunctionType::get(returnType->typeOf(context),argTypes,false);
 llvm::Function* func = llvm::Function::Create(ft,llvm::Function::ExternalLinkage,functionName->name,context.CurModule.get());
 llvm::BasicBlock *BB = llvm::BasicBlock::Create(*(context.IRContext),"entry",func);
+// std::cerr << "Generated InsertPoint For: " << functionName->name << std::endl;
 context.Builder->SetInsertPoint(BB);
 context.pushBlock(block);
+// std::cerr << "Generating Function Arguments: " << functionName->name << std::endl;
+
+auto argPointer = func->arg_begin();
 for (it = arguments->begin(); it!= arguments->end(); it++)
 {
+if (argPointer != arg_end())
+{
 std::string name = ((*it).variableName)->name;
+// std::cerr << "Generating Function Argument Name: " << name << std::endl;
 llvm::AllocaInst* alloca = it->codeGen(context);
-context.pushVariable(name,alloca,returnType);
+context.pushVariable(name,argPointer,it->variableType);
+argPointer++;
+//std::cerr << "Generated Function Argument Name: " << name << std::endl;
 }
+}
+// std::cerr << "Generated Function Arguments. Generating Function Body: " << functionName->name << std::endl;
 context.backBlock()->codeGenInFunction(context);
+// std::cerr << "Generated Function Body: " << functionName->name << std::endl;
 context.popBlock();
 context.pushFunction(functionName->name,func,types,returnType);
-std::cerr << "Generated: " << functionName->name << std::endl;
+// std::cerr << "Generated: " << functionName->name << std::endl;
 return func;
 }
 

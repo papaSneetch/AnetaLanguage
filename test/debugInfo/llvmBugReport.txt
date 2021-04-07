@@ -13,3 +13,9 @@ Example Code:
 codeObjects.front() -> codeGen(*this);
 codeObjects.front().reset();
 codeObjects.pop();
+
+Test 3 has problems with the global variable.
+Test 9 doesn't include escape characters.
+
+The program jumps from generating code for the pi function to the main function.
+The program also prints that the "pi" function was generated when the debugger suggests the line is never encountered.

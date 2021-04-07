@@ -1,0 +1,16 @@
+int increment(int i, int inc)
+{
+int k = i + inc;
+return k;
+}
+
+int main()
+{
+int number = 4;
+int plusValue = 2;
+int returnValue = increment(number,plusValue);
+char buffer[50];
+sprintf(buffer,"%d",returnValue);
+printf(buffer);
+return 0;
+}

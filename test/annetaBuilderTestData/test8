@@ -1,0 +1,7 @@
+int main()
+{
+char magic[50];
+scanf("%50s",&magic);
+printf (magic);
+return 0;
+}

@@ -1,0 +1,10 @@
+int getNumber(int filler)
+{
+return 5;
+}
+
+int main()
+{
+printf("%d",getNumber(0));
+return 0;
+}

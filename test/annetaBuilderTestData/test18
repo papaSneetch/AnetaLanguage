@@ -1,0 +1,12 @@
+int getNumber(int a)
+{
+return a;
+}
+
+int main()
+{
+int number = 4;
+int returnValue = getNumber(number);
+printf("%d",returnValue);
+return 0;
+}

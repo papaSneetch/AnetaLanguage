@@ -22,20 +22,20 @@ initPrimativeTypes();
 initLibaryFunctions();
 }
 
-void genContext::create_print()
+void genContext::create_printf()
 {
 llvm::FunctionType *ft = llvm::FunctionType::get(llvm::IntegerType::getInt32Ty(*IRContext),llvm::Type::getInt8Ty(*IRContext)->getPointerTo(),true);
 llvm::Function* func = llvm::Function::Create(ft,llvm::Function::ExternalLinkage,"printf",CurModule.get());
-pushFunction("print",func,std::vector<const AstType*>{&stringType},&intType,true);
+pushFunction("printf",func,std::vector<const AstType*>{&stringType},&intType,true);
 std::cerr << "Generated: " << "printf." << std::endl;
 }
 
-void genContext::create_input()
+void genContext::create_scanf()
 {
-llvm::FunctionType *ft = llvm::FunctionType::get(llvm::Type::getInt8Ty(*IRContext)->getPointerTo(),llvm::Type::getInt8Ty(*IRContext)->getPointerTo(),false);
-llvm::Function* func = llvm::Function::Create(ft,llvm::Function::ExternalLinkage,"gets",CurModule.get());
-pushFunction("input",func,std::vector<const AstType*>{&stringType},&stringType);
-std::cerr << "Generated: " << "input." << std::endl;
+llvm::FunctionType *ft = llvm::FunctionType::get(llvm::Type::getInt32Ty(*IRContext),llvm::Type::getInt8Ty(*IRContext)->getPointerTo(),true);
+llvm::Function* func = llvm::Function::Create(ft,llvm::Function::ExternalLinkage,"scanf",CurModule.get());
+pushFunction("scanf",func,std::vector<const AstType*>{&stringType},&intType,true);
+std::cerr << "Generated: " << "scanf." << std::endl;
 }
 
 void genContext::create_atoi()
@@ -54,20 +54,20 @@ pushFunction("atoi",func,std::vector<const AstType*>{&stringType},&floatType);
 std::cerr << "Generated: " << "atof." << std::endl;
 }
 
-void genContext::create_printStr()
+void genContext::create_sprintf()
 {
 llvm::FunctionType *ft = llvm::FunctionType::get(llvm::IntegerType::getInt32Ty(*IRContext),{llvm::Type::getInt8Ty(*IRContext)->getPointerTo(),llvm::Type::getInt8Ty(*IRContext)->getPointerTo()},true);
 llvm::Function* func = llvm::Function::Create(ft,llvm::Function::ExternalLinkage,"sprintf",CurModule.get());
-pushFunction("itoa",func,std::vector<const AstType*>{&stringType,&stringType},&intType,true);
-std::cerr << "Generated: " << "printStr." << std::endl;
+pushFunction("sprintf",func,std::vector<const AstType*>{&stringType,&stringType},&intType,true);
+std::cerr << "Generated: " << "sprintf." << std::endl;
 }
 
 void genContext::initLibaryFunctions() {
-create_print();
-create_input();
+create_printf();
+create_scanf();
 create_atoi();
 create_atof();
-create_printStr();
+create_sprintf();
 }
 
 void genContext::initPrimativeTypes()
@@ -75,8 +75,8 @@ void genContext::initPrimativeTypes()
 types->createTypeElement(&intType);
 types->createTypeElement(&floatType);
 types->createTypeElement(&boolType);
-types->createTypeElement(&stringType);
 types->createTypeElement(&charType);
+types->appendPointerType("char",&stringType);
 }
 
 void genContext::createStart()
@@ -214,7 +214,7 @@ systemCommand += " -o ";
 systemCommand += outputFileName;
 systemCommand += " -c ";
 systemCommand += tmpFileName;
-system(systemCommand.c_str());
+system(systemCommand.c_str()
 if( remove(tmpFileName) != 0 )
 {
 std::cerr << "Error deleting file: " << tmpFileName << std::endl;
@@ -249,7 +249,6 @@ TmpOStream.flush();*/
 std::string systemCommand = "clang";//"lld --entry=main ";
 systemCommand += " -o ";
 systemCommand += outputFileName;
-systemCommand += " -c ";
 systemCommand += tmpFileName;
 
 system(systemCommand.c_str());

@@ -1,0 +1,16 @@
+int multiply(int i, int mul)
+{
+int k = i + mul;
+return k;
+}
+
+int main()
+{
+int number = 4;
+int multiplyValue = 2;
+int returnValue = multiply(number,multiplyValue);
+char buffer[50];
+sprintf(buffer,"%d",returnValue);
+printf(buffer);
+return 0;
+}

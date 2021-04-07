@@ -1,0 +1,6 @@
+int main()
+{
+float dec = 3.15;
+printf("%f",dec);
+return 0;
+}

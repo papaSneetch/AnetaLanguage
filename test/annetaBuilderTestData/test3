@@ -1,15 +1,25 @@
-float pi = 3.14;
 bool lessThanPi(float ki)
 {
-return (ki <= pi);
+if (ki<=3.14)
+{
+return true;
+}
+else
+{
+return false;
+}
 }
 
 int main()
 {
 int i = 0;
-if (lessThanPi(3.15) & true)
+float comparison = 3.15;
+if (lessThanPi(comparison) & true)
 {
 i = 1;
 }
+char buffer[50];
+sprintf(buffer,"%d",i);
+printf(buffer);
 return i;
 }

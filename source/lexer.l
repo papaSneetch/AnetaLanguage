@@ -3,10 +3,18 @@
 #include <stdio.h>
 #include <iostream>
 #include "parser.tab.h"
+
+const int maxStringSize = 4096;
+static char string_buf [maxStringSize];  
+static char* string_buf_ptr;
 %}
 
 %option noyywrap
 %option bison-bridge
+
+%x STRING
+%x CHARSTRING
+%x ESC
 
 %{
 /* Lex Statements/Rules */
@@ -198,14 +206,143 @@ yylval -> string = strdup(yytext);
 return nameV;
 }
 
-\"[^\n"]+\"  {
+\" {
+BEGIN(STRING);
+stringPointer = string_buf;
 yylval -> string = strdup(yytext);
 return charsV;
 }
 
-\'[^\n"]+\'  {
+\' {
+BEGIN(CHARSTRING);
+stringPointer = string_buf;
 yylval -> string = strdup(yytext);
 return charsV;
 }
+
+<STRING>{
+
+[^\\\n\"]* {
+*string_buf_ptr++ = yytext;
+}
+
+\" {
+*string_buf_ptr = '\0' 
+yylval -> string = strdup(string_buf);
+return stringV;
+}
+
+\\a {
+*string_buf_ptr = '\a' 
+}
+
+\\b {
+*string_buf_ptr = '\b' 
+}
+
+\\f {
+*string_buf_ptr = '\f'
+}
+
+\\n {
+*string_buf_ptr = '\n'
+}
+
+\\r {
+*string_buf_ptr = '\r'
+}
+
+\\t {
+*string_buf_ptr = '\t'
+}
+
+\\v {
+*string_buf_ptr = '\v'
+}
+
+\\\\  {
+*string_buf_ptr = '\\'
+}
+
+\\\' {
+*string_buf_ptr = '\''
+}
+
+\\\" {
+*string_buf_ptr = '\"'
+}
+
+\\? {
+*string_buf_ptr = '\?'
+}
+
+
+\\0 {
+*string_buf_ptr = '\0'
+}
+
+}
+
+<CHARSTRING>{
+
+\' {
+yylval -> string = strdup(string_buf);
+return charsV;
+}
+
+[^\\\n\"]* {
+*string_buf_ptr++ = yytext;
+}
+
+\\a {
+*string_buf_ptr = '\a' 
+}
+
+\\b {
+*string_buf_ptr = '\b' 
+}
+
+\\f {
+*string_buf_ptr = '\f'
+}
+
+\\n {
+*string_buf_ptr = '\n'
+}
+
+\\r {
+*string_buf_ptr = '\r'
+}
+
+\\t {
+*string_buf_ptr = '\t'
+}
+
+\\v {
+*string_buf_ptr = '\v'
+}
+
+\\\\  {
+*string_buf_ptr = '\\'
+}
+
+\\\' {
+*string_buf_ptr = '\''
+}
+
+\\\" {
+*string_buf_ptr = '\"'
+}
+
+\\? {
+*string_buf_ptr = '\?'
+}
+
+\\0 {
+*string_buf_ptr = '\0'
+}
+
+}
+
 
 %%

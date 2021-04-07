@@ -1,0 +1,11 @@
+int printFloat(float v)
+{
+printf("%f",v);
+return 0;
+}
+
+int main()
+{
+printFloat(3.15);
+return 0;
+}

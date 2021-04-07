@@ -71,10 +71,12 @@ class typeElement
 {
 private:
 std::vector<const AstType*> typeChain;
-
+int depthToNotDelete = 1;
 public: 
 typeElement(const AstType* base):typeChain(1,base){}
 ~typeElement();
+
+int appendPointerType(const AstPointerType* pointerType);
 
 const AstType* getBaseType();
 const AstType* getExpandTypes(int depth);
@@ -87,6 +89,8 @@ std::map<std::string,std::unique_ptr<typeElement>> typeMap;
 
 public:
 void createTypeElement(const AstType* baseType);
+int appendPointerType(std::string baseTypeName,const AstPointerType* pointerType);
+
 typeElement* getTypeElement(std::string typeName);
 
 const AstType* getBaseType(std::string typeName);
@@ -96,7 +100,7 @@ const AstType* getExpandTypes(std::string typeName,int depth);
 extern const AstIntType intType;
 extern const AstFloatType floatType;
 extern const AstBoolType boolType;
-extern const AstStringType stringType;
 extern const AstCharType charType;
+extern const AstPointerType stringType;
 
 #endif 

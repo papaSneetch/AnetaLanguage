@@ -1,6 +1,6 @@
 int main()
 {
 string varPtr = "Hello World!";
-puts(varPtr);
+printf(varPtr);
 return 0;
 }

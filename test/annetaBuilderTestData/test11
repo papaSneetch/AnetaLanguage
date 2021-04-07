@@ -1,0 +1,10 @@
+int main()
+{
+int a = 4;
+int b = 2;
+int result = a+b;
+char buffer[50];
+sprintf(buffer,"%d",result);
+printf(buffer);
+return 0;
+}

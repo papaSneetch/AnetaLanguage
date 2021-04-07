@@ -1,0 +1,13 @@
+int printNumber(int printValue)
+{
+char buffer[50];
+sprintf(buffer,"%d",printValue);
+printf(buffer);
+return 0;
+}
+
+int main()
+{
+printNumber(42);
+return 0;
+}

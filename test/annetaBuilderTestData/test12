@@ -1,0 +1,9 @@
+int main()
+{
+float comparison = 3.15;
+if (comparison <= 3.14)
+{
+printf("3.15 is not less than pi.");
+}
+return 0;
+}

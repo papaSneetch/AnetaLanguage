@@ -99,7 +99,10 @@ currentContext.initializeTargetList();
 
 	currentContext.initContext();
 	currentContext.initializeTarget(target,errorString,cpu);
-	yyparse();
+	if (yyparse() != 0)
+	{
+	exit(1);
+	}
 	currentContext.codeGen();
 //	currentContext.createStart();
 

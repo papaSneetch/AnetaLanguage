@@ -27,7 +27,7 @@ void yyerror (char const *s)
 {
 int int_val;
 bool bool_val;
-float float_val;
+double float_val;
 char* string;
 AstNode* node;
 AstStat* statement;
@@ -281,6 +281,9 @@ std::cerr << "Syntax Object: arrayNames. " << std::endl;}
 funcCall:
 	  nameV '(' exps ')' {
 $$ = new AstFunctionCall(new AstName($1),$3);
+std::cerr << "Syntax Object: listInit. " << std::endl;}
+   | nameV '('')' {
+$$ = new AstFunctionCall(new AstName($1),new expressionList());
 std::cerr << "Syntax Object: listInit. " << std::endl;}
 
 arrayCall:
