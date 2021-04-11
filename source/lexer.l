@@ -208,77 +208,66 @@ return nameV;
 
 \" {
 BEGIN(STRING);
-stringPointer = string_buf;
-yylval -> string = strdup(yytext);
-return charsV;
+string_buf_ptr = string_buf;
 }
 
 \' {
 BEGIN(CHARSTRING);
-stringPointer = string_buf;
-yylval -> string = strdup(yytext);
-return charsV;
+string_buf_ptr = string_buf;
 }
 
 <STRING>{
 
-[^\\\n\"]* {
-*string_buf_ptr++ = yytext;
+[^\\\n\'\"]* {
+strcpy(string_buf_ptr,yytext);
+string_buf_ptr += strlen(yytext);
 }
 
 \" {
-*string_buf_ptr = '\0' 
+*string_buf_ptr = '\0';
 yylval -> string = strdup(string_buf);
+BEGIN(0);
 return stringV;
 }
 
 \\a {
-*string_buf_ptr = '\a' 
+*string_buf_ptr++ = '\a';
 }
 
 \\b {
-*string_buf_ptr = '\b' 
+*string_buf_ptr++ = '\b'; 
 }
 
 \\f {
-*string_buf_ptr = '\f'
+*string_buf_ptr++ = '\f';
 }
 
 \\n {
-*string_buf_ptr = '\n'
+*string_buf_ptr++ = '\n';
 }
 
 \\r {
-*string_buf_ptr = '\r'
+*string_buf_ptr++ = '\r';
 }
 
 \\t {
-*string_buf_ptr = '\t'
+*string_buf_ptr++ = '\t';
 }
 
 \\v {
-*string_buf_ptr = '\v'
+*string_buf_ptr++ = '\v';
 }
 
 \\\\  {
-*string_buf_ptr = '\\'
+*string_buf_ptr++ = '\\';
 }
 
 \\\' {
-*string_buf_ptr = '\''
+*string_buf_ptr++ = '\'';
 }
 
 \\\" {
-*string_buf_ptr = '\"'
-}
-
-\\? {
-*string_buf_ptr = '\?'
-}
-
-
-\\0 {
-*string_buf_ptr = '\0'
+*string_buf_ptr++ = '\"';
 }
 
 }
@@ -286,63 +275,57 @@ return stringV;
 <CHARSTRING>{
 
 \' {
+*string_buf_ptr = '\0';
 yylval -> string = strdup(string_buf);
+BEGIN(0);
 return charsV;
 }
 
-[^\\\n\"]* {
-*string_buf_ptr++ = yytext;
+[^\\\n\'\"]* {
+strcpy(string_buf_ptr,yytext);
+string_buf_ptr += strlen(yytext);
 }
 
 \\a {
-*string_buf_ptr = '\a' 
+*string_buf_ptr++ = '\a';
 }
 
 \\b {
-*string_buf_ptr = '\b' 
+*string_buf_ptr++ = '\b'; 
 }
 
 \\f {
-*string_buf_ptr = '\f'
+*string_buf_ptr++ = '\f';
 }
 
 \\n {
-*string_buf_ptr = '\n'
+*string_buf_ptr++ = '\n';
 }
 
 \\r {
-*string_buf_ptr = '\r'
+*string_buf_ptr++ = '\r';
 }
 
 \\t {
-*string_buf_ptr = '\t'
+*string_buf_ptr++ = '\t';
 }
 
 \\v {
-*string_buf_ptr = '\v'
+*string_buf_ptr++ = '\v';
 }
 
 \\\\  {
-*string_buf_ptr = '\\'
+*string_buf_ptr++ = '\\';
 }
 
 \\\' {
-*string_buf_ptr = '\''
+*string_buf_ptr++ = '\'';
 }
 
 \\\" {
-*string_buf_ptr = '\"'
-}
-
-\\? {
-*string_buf_ptr = '\?'
-}
-
-\\0 {
-*string_buf_ptr = '\0'
+*string_buf_ptr++ = '\"';
 }
 
 }
-
 
 %%

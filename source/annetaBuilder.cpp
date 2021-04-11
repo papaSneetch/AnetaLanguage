@@ -156,14 +156,15 @@ return generatedValue;
 
 llvm::Value* AstArrayAsg::codeGen(genContext& context)
 {
-variableInformation var = context.varLookUp(variableName->name);
+arrayInformation array= context.arrayLookUp(variableName->name);
 if (var.type->getTypeName() == "pointer")
 {
 type = static_cast<const AstPointerType*>(var.type)->referType;
 llvm::Value* zero = llvm::ConstantInt::get(*(context.IRContext), llvm::APInt(64, 0));
-llvm::Value* indexPtr = context.Builder->CreateGEP(var.alloca,{zero,index->codeGen(context)},"getElementPtr");
-context.Builder->CreateStore(rhs->codeGen(context),indexPtr,false);
-return indexPtr;
+llvm::Value* indexPtr = context.Builder->CreateGEP(allocaLoc,{zero,index->codeGen(context)},"getElementPtr");
+llvm::Value* asignedValue = rhs->codeGen(context);
+context.Builder->CreateStore(asignedValue,indexPtr,false);
+return asignedValue;
 }
 else
 {
@@ -171,31 +172,26 @@ std::cerr << "Error: Not an array or pointer!" << std::endl;
 exit(1);
 }
 }
+
+llvm::Value* AstArrayStringAsg::codeGen(genContext& context)
+{
+arrayInformation array= context.arrayLookUp(variableName->name);
+}
+
 
 llvm::Value* AstArrayListAsg::codeGen(genContext& context)
 {
-variableInformation var = context.varLookUp(variableName->name);
-if (var.type->getTypeName() == "pointer")
+arrayInformation array = context.arrayLookUp(variableName->name);
+llvm::Value* zero = AstIntValue(0).codeGen(context);
+int index = 0;
+for (expressionList::iterator it = list->begin(); it != list->end(); it++)
 {
-type = static_cast<const AstPointerType*>(var.type)->referType;
-llvm::Value* zero = llvm::ConstantInt::get(*(context.IRContext), llvm::APInt(64, 0)); 
-llvm::Value* curIndex = index->codeGen(context);
-llvm::Value* increment = AstIntValue(1).codeGen(context);
-for (expressionList::iterator it = arrayValues->begin(); it != arrayValues->end(); it++)
-{
-llvm::Value* indexPtr = context.Builder->CreateGEP(var.alloca,{zero, curIndex},"getElementPtr");
-context.Builder->CreateStore((*it)->codeGen(context),indexPtr);
-curIndex = context.Builder->CreateAdd(curIndex,increment);
+llvm::Value* indexPtr = context.Builder->CreateGEP(array.alloca,{zero,AstIntValue(index).codeGen(context)},"getElementPtr");
+context.Builder->CreateStore(it->codeGen(context),indexPtr,false);
+index++;
 }
+return array.alloca;
 }
-else
-{
-std::cerr << "Error: Not an array or pointer!" << std::endl;
-exit(1);
-}
-return var.alloca;
-}
-
 
 llvm::Value* Astleq::codeGen(genContext& context)
 {
@@ -598,30 +594,26 @@ return alloca;
 
 llvm::Value* AstArrayDeclaration::codeGen(genContext& context)
 {
-llvm::Type* arrayType = llvm::ArrayType::get(variableType->typeOf(context),arraySize->value);
-const AstType* arrayPointerType = context.types->getExpandTypes(variableType->getTypeName(),1);
-llvm::Type* llvmArrayPointerType = arrayPointerType->typeOf(context);
-
-llvm::AllocaInst* arrayLayout = context.Builder->CreateAlloca(arrayType,arraySize->codeGen(context));
-llvm::AllocaInst* arrayLocation = context.Builder->CreateAlloca(llvmArrayPointerType,nullptr,variableName->name);
-if (initializer)
-{
-expressionList::iterator it;
-unsigned int curIndex = 0;
-unsigned int arraySizeMod = arraySize->value + 1;
-llvm::Value* zero = llvm::ConstantInt::get(*(context.IRContext), llvm::APInt(64, 0));
-for (it = initializer->begin(); it != initializer->end(); it++)
-{
-llvm::Value* offset = llvm::ConstantInt::get(*(context.IRContext),llvm::APInt(32,curIndex));
-llvm::Value* pointer = context.Builder->CreateGEP(arrayLayout,{zero,offset},"getElementPtr");
-context.Builder->CreateStore((*it)->codeGen(context),pointer);
-//context.Builder->CreateInsertValue(arrayLayout,(*it)->codeGen(context),curIndex,"insertInArray");
-curIndex = (curIndex + 1) % arraySizeMod;
-}
-}
-context.Builder->CreateStore(context.Builder->CreateBitCast(arrayLayout,llvmArrayPointerType),arrayLocation);
-context.pushVariable(variableName->name,arrayLocation,arrayPointerType);
+llvm::Type* arrayType = llvm::ArrayType::get(variableType->typeOf(context),arraySize);
+llvm::AllocaInst* arrayLocation = context.Builder->CreateAlloca(arrayType,AstIntValue(arraySize).codeGen(context),variableName->name);
+context.pushArrayVariable(variableName->name,arrayLocation,variableType);
 return arrayLocation;
+}
+
+
+llvm::Value* AstArrayListDeclaration::codeGen(genContext& context)
+{
+llvm::Type* arrayType = llvm::ArrayType::get(variableType->typeOf(context),arraySize);
+llvm::AllocaInst* arrayLocation = context.Builder->CreateAlloca(arrayType,AstIntValue(arraySize).codeGen(context),variableName->name);
+context.pushArrayVariable(variableName->name,arrayLocation,variableType);
+llvm::Value* zero = AstIntValue(0).codeGen(context);
+int index = 0;
+for (expressionList::iterator it = list->begin(); it != list->end(); it++)
+{
+llvm::Value* indexPtr = context.Builder->CreateGEP(arrayLocation,{zero,AstIntValue(index).codeGen(context)},"getElementPtr");
+context.Builder->CreateStore(it->codeGen(context),indexPtr,false);
+index++;
+}
 }
 
 llvm::Value* AstFunctionCall::codeGen(genContext& context)
@@ -676,7 +668,34 @@ exit(1);
 
 llvm::Value* AstArrayAddress::codeGen(genContext& context)
 {
-return context.varLookUp(variableName->name).alloca;
+arrayInformation array = context.arrayLookUp(variableName->name);
+if (var.alloca)
+{
+type = var.type;
+llvm::Value* zero = llvm::ConstantInt::get(*(context.IRContext), llvm::APInt(64, 0));
+return context.Builder->CreateGEP(context.Builder->CreateLoad(var.alloca,variableName->name),{zero,index->codeGen(context)},"getElementPtr");
+}
+else
+{
+std::cerr << "Couldn't find array: " << variableName->name << std::endl;
+exit(1);
+}
+}
+
+
+llvm::Value* AstArrayCallAddress::codeGen(genContext& context)
+{
+arrayInformation array = context.arrayLookUp(variableName->name);
+if (var.alloca)
+{
+type = var.type;
+return var.alloca;
+}
+else
+{
+std::cerr << "Couldn't find array: " << variableName->name << std::endl;
+exit(1);
+}
 }
 
 llvm::Value* AstVariableCall::codeGen(genContext& context)
@@ -706,13 +725,12 @@ exit(1);
 llvm::Value* AstArrayCall::codeGen(genContext& context)
 {
 variableInformation var = context.varLookUp(variableName->name);
-llvm::AllocaInst* alloca = var.alloca;
-
 if (var.type->getTypeName() == "pointer")
 {
 type = static_cast<const AstPointerType*>(var.type)->referType;
 llvm::Value* zero = llvm::ConstantInt::get(*(context.IRContext), llvm::APInt(64, 0));
-llvm::Value* indexPtr = context.Builder->CreateGEP(alloca,{zero,index->codeGen(context)},"getElementPtr");
+llvm::Value* allocaLoc = context.Builder->CreateLoad(var.alloca,variableName->name);
+llvm::Value* indexPtr = context.Builder->CreateGEP(allocaLoc,{zero,index->codeGen(context)},"getelementptr");
 return context.Builder->CreateLoad(indexPtr,variableName->name);
 }
 else
@@ -721,7 +739,6 @@ std::cerr << "Error: Not an array or pointer!" << std::endl;
 exit(1);
 }
 }
-
 
 llvm::Value* AstDeref::codeGen(genContext& context)
 {
@@ -753,12 +770,13 @@ context.pushBlock(block);
 auto argPointer = func->arg_begin();
 for (it = arguments->begin(); it!= arguments->end(); it++)
 {
-if (argPointer != arg_end())
+if (argPointer != func->arg_end())
 {
 std::string name = ((*it).variableName)->name;
 // std::cerr << "Generating Function Argument Name: " << name << std::endl;
-llvm::AllocaInst* alloca = it->codeGen(context);
-context.pushVariable(name,argPointer,it->variableType);
+llvm::AllocaInst* alloca = context.Builder->CreateAlloca(it->variableType->typeOf(context),nullptr,name);
+context.Builder->CreateStore(argPointer,alloca);
+context.pushVariable(name,alloca,it->variableType);
 argPointer++;
 //std::cerr << "Generated Function Argument Name: " << name << std::endl;
 }

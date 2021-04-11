@@ -116,6 +116,11 @@ void genContext::pushVariable(std::string name, llvm::AllocaInst* varPointer,con
 blockList.back()->variableMap.insert(std::make_pair(name,variableInformation{varPointer,type}));
 }
 
+void genContext::pushArrayVariable(std::string name, llvm::AllocaInst* varPointer,const AstType* type, int size)
+{
+blockList.back()->arrayMap.insert(std::make_pair(name,arrayInformation{varPointer,type,size}));
+}
+
 void genContext::pushFunction(std::string name,llvm::Function* function,std::vector<const AstType*> types,const AstType* returnType,bool varArg)
 {
 functionMap.insert(std::make_pair(name,functionInformation{function,types,returnType,varArg}));
@@ -176,6 +181,20 @@ return mapIt->second;
 return {nullptr,nullptr};
 }
 
+
+variableInformation genContext::arrayLookUp (std::string name)
+{
+for (std::vector<AstBlockPtr>::reverse_iterator it = blockList.rbegin(); it != blockList.rend(); ++it)
+{
+std::map<std::string,arrayInformation>::iterator mapIt = (*it) -> arrayMap.find(name);
+if (mapIt != ((*it) -> arrayMap.end()))
+{
+return mapIt->second;
+}
+}
+return {nullptr,nullptr,nullptr};
+}
+
 void genContext::printBitCode(std::string outputFileName)
 {
 std::error_code errorCode;
@@ -214,8 +233,8 @@ systemCommand += " -o ";
 systemCommand += outputFileName;
 systemCommand += " -c ";
 systemCommand += tmpFileName;
-system(systemCommand.c_str()
-if( remove(tmpFileName) != 0 )
+system(systemCommand.c_str());
+if (remove(tmpFileName) != 0 )
 {
 std::cerr << "Error deleting file: " << tmpFileName << std::endl;
 }
@@ -246,10 +265,10 @@ return;
 pass.run(*CurModule);
 TmpOStream.flush();*/
 
-std::string systemCommand = "clang";//"lld --entry=main ";
+std::string systemCommand = "clang ";//"lld --entry=main ";
+systemCommand += tmpFileName;
 systemCommand += " -o ";
 systemCommand += outputFileName;
-systemCommand += tmpFileName;
 
 system(systemCommand.c_str());
 if( remove(tmpFileName) != 0 )

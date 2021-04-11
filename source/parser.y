@@ -31,8 +31,8 @@ double float_val;
 char* string;
 AstNode* node;
 AstStat* statement;
-AstExp* expression;
 AstConstant* constant;
+AstExp* expression;
 AstIntValue* intPtr;
 AstBlock* blockPtr;
 AstVariableDeclaration* varDecl;
@@ -53,16 +53,15 @@ variableList* args;
 %token aeg meg asg amp Or
 %token '[' ']' '{' '}'
 %token ',' ';' '(' ')'
-%token intV boolV floatV charsV nameV
+%token intV boolV floatV charsV nameV stringV
 
 %type <node> prog funcDecl 
 
 %type <statements> stats 
 %type <statement> stat condStat returnStat whileloop
-%type <expression> call varCall arrayCall funcCall incDecOption
+%type <expression> call varCall arrayCall funcCall incDecOption listInit
 %type <expression> asgOptions exp arrayReferenceExp deref address
 %type <constant> value 
-%type <intPtr> arrayReference
 
 %type <varDecl> varDecl
 %type<globalVarDecl> globalVarDecl
@@ -75,10 +74,10 @@ variableList* args;
 
 %type <blockPtr> block condElseBlock
 
-%type <int_val> intV astChain
+%type <int_val> intV astChain arrayReference
 %type <bool_val> boolV
 %type <float_val> floatV
-%type <string> charsV
+%type <string> charsV stringV
 %type <string> nameV
 
 %type <expressions> exps
@@ -208,6 +207,7 @@ std::cerr << "Syntax Object: type. " << std::endl;}
 	| charD {
 $$ = &charType;
 std::cerr << "Syntax Object: type. " << std::endl;}
+
     
 type:
 	baseType {
@@ -253,25 +253,75 @@ $$ = new variableList(); $$->emplace_back($2,$1);
 std::cerr << "Syntax Object: argDecl. " << std::endl;}
 
 arrayDecl:
-      arrayDefine  {
-$$ = $1;
+	  type arrayNames '[' intV ']' {
+$$ = new AstArrayDeclaration($2,$1,$4);
 std::cerr << "Syntax Object: arrayDecl. " << std::endl;}
-	| arrayDefine asg '{' exps '}'  {
-$$ = $1; $$->initializer.reset($4);
+	| type arrayNames '[' ']' asg '{' exps '}'{
+$$ = new AstArrayListDeclaration($2,$7,$1,$7->size())
 std::cerr << "Syntax Object: arrayDecl. " << std::endl;}
+    | type arrayNames '[' ']' asg charsV {
+$$ = new AstArrayStringDeclaration($2,$6,$1,strlen($6),false);
+std::cerr << "Syntax Object: arrayDecl. " << std::endl;}
+	| type arrayNames '[' ']' asg stringV {
+$$ = new AstArrayStringDeclaration($2,$6,$1,strlen($6)+1,true);
+std::cerr << "Syntax Object: arrayDecl. " << std::endl;}
+	| type arrayNames '[' intV ']' asg '{' exps '}'{
+if ( $4 < $8->size())
+{
+std::cerr << "Array size is too small." << std::endl;
+exit(1);
+}
+else 
+{
+$$ = new AstArrayListDeclaration($2,$8,$1,$4)
+std::cerr << "Syntax Object: arrayDecl. " << std::endl;}
+}
+}
+    | type arrayNames '[' intV ']' asg charsV {
+if ($4 < strlen($7))
+{
+std::cerr << "Array size is too small." << std::endl;
+}
+else
+{
+$$ = new AstArrayStringDeclaration($2,$7,$1,$4,false);
+std::cerr << "Syntax Object: arrayDecl. " << std::endl;
+}
+}
+
+	| type arrayNames '[' intV ']' asg stringV {
+if ($4 < strlen($7)+1)
+{
+std::cerr << "Array size is too small." << std::endl;
+}
+else
+{
+$$ = new AstArrayStringDeclaration($2,$7,$1,$4,true);
+std::cerr << "Syntax Object: arrayDecl. " << std::endl;
+}
+}
+
+arrayAsg:
+	| nameV '[' ']' asg charsV {
+$$ = new AstArrayAsgString($1,$4);
+}
+	| nameV '[' ']' asg stringV {
+$$ = new AstArrayAsgString($1,$4);
+}
+	| nameV arrayReferenceExp asg exp {
+$$ = new AstArrayAsg($1,$4,$2);
+}
 
 arrayDefine:
 	  type arrayNames arrayReference {
 $$ = new AstArrayDeclaration($2,$1,$3);
 std::cerr << "Syntax Object: arrayDefine. " << std::endl;}
 
-arrayReference:
-	  '[' intV ']' {
-$$ = new AstIntValue($2);}
 
 arrayReferenceExp:
 	  '[' exp ']' {
 $$ = $2;}
+}
 
 arrayNames:
 	nameV {
@@ -290,6 +340,9 @@ arrayCall:
 	  nameV arrayReferenceExp {
 $$ = new AstArrayCall(new AstName($1),$2);
 std::cerr << "Syntax Object: arrayCall. " << std::endl;}
+   | nameV '['']' {
+$$ = new AstArrayCallAddress(new AstName($1));
+}
 
 varCall:
 	  nameV {
@@ -326,29 +379,26 @@ $$ = new AstFloatValue($1);
 std::cerr << "Syntax Object: value. " << std::endl;
 }
 	| charsV {
-int length=strlen($1);
-if ($1[0]=='\'')
+if (strlen($1)==1)
 {
-if (length==3)
-{
-$$ = new AstCharValue($1[1]);
+$$ = new AstCharValue($1[0]);
 }
 else
 {
-$$ = new AstStringValue(std::string(++$1,length-2),false);
+$$ = new AstStringValue(std::string($1),false);
 }
 }
-else if ($1[0]=='"')
-{
+	| stringV {
 //$1[length-1] = '\0';
 //$$ = new AstStringValue(++$1,length-1); 
-$$ = new AstStringValue(std::string(++$1,length-2),true);
-}
-else
-{
-std::cerr << "Not a char or a string value. " << std::endl;
-}
+$$ = new AstStringValue(std::string($1),true);
 std::cerr << "Syntax Object: value. " << std::endl;
+}
+
+listInit:
+	  '{' exps '}'{
+$$ = $2;
+std::cerr << "Syntax Object: listInit. " << std::endl;
 }
 
 whileloop:
@@ -454,18 +504,10 @@ asgOptions:
 $$ = new AstVariableAsg(new AstName($1),$3);
 std::cerr << "Syntax Object: asgOptions." << std::endl;
 }
-	| nameV arrayReferenceExp asg exp {
-$$ = new AstArrayAsg(new AstName($1),$4,$2);
+	| arrayAsg {
+$$ = $1;
 std::cerr << "Syntax Object: asgOptions." << std::endl;
 }
-	| nameV arrayReferenceExp asg '{' exps '}' {
-$$ = new AstArrayListAsg(new AstName($1),$5,$2);
-std::cerr << "Syntax Object: asgOptions." << std::endl;
-}
-
-	| nameV '[' ']' asg '{' exps '}' {
-$$ = new AstArrayListAsg(new AstName($1),$6,new AstIntValue(0));
-std::cerr << "Syntax Object: asgOptions." << std::endl;
 }
 
 incDecOption:

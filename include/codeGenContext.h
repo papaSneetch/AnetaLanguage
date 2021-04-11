@@ -65,6 +65,8 @@ void popBlock();
 
 void pushVariable(std::string name, llvm::AllocaInst* varPointer,const AstType* type);
 
+void pushArrayVariable(std::string name, llvm::AllocaInst* varPointer,const AstType* type, int size);
+
 void pushFunction(std::string name,llvm::Function* function,std::vector<const AstType*> types,const AstType* returnType,bool varArg=false); 
 
 void pushGlobalVariable(std::string name,llvm::GlobalVariable* var,const AstType* type);
@@ -85,6 +87,8 @@ void pushAstNode(AstNodePtr& node);
 AstNode* popAndGetAstNode();
 
 variableInformation varLookUp (std::string name);
+
+arrayInformation arrayLookUp (std::string name);
 
 void codeGen();
 

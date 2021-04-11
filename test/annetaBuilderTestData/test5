@@ -1,6 +1,6 @@
 int main()
 {
-string varPtr = "Hello World!";
+string varPtr = "Hello Wo\vrld!";
 printf(varPtr);
 return 0;
 }

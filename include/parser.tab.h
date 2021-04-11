@@ -96,13 +96,14 @@ extern int yydebug;
     floatV = 291,                  /* floatV  */
     charsV = 292,                  /* charsV  */
     nameV = 293,                   /* nameV  */
-    aeq = 294,                     /* aeq  */
-    meq = 295,                     /* meq  */
-    asgOptionsPrec = 296,          /* asgOptionsPrec  */
-    postInc = 297,                 /* postInc  */
-    postDec = 298,                 /* postDec  */
-    preInc = 299,                  /* preInc  */
-    preDec = 300                   /* preDec  */
+    stringV = 294,                 /* stringV  */
+    aeq = 295,                     /* aeq  */
+    meq = 296,                     /* meq  */
+    asgOptionsPrec = 297,          /* asgOptionsPrec  */
+    postInc = 298,                 /* postInc  */
+    postDec = 299,                 /* postDec  */
+    preInc = 300,                  /* preInc  */
+    preDec = 301                   /* preDec  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -115,12 +116,12 @@ union YYSTYPE
 
 int int_val;
 bool bool_val;
-float float_val;
+double float_val;
 char* string;
 AstNode* node;
 AstStat* statement;
-AstExp* expression;
 AstConstant* constant;
+AstExp* expression;
 AstIntValue* intPtr;
 AstBlock* blockPtr;
 AstVariableDeclaration* varDecl;
@@ -132,7 +133,7 @@ statementList* statements;
 expressionList* expressions;
 variableList* args;
 
-#line 136 "./include/parser.tab.h"
+#line 137 "./include/parser.tab.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

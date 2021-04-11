@@ -1,0 +1,12 @@
+int number = 5;
+
+int getExternNumber()
+{
+return number;
+}
+
+int main()
+{
+printf("%d",getExternNumber());
+return 0;
+}

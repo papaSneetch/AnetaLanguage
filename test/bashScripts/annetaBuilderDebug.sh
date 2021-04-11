@@ -1,5 +1,5 @@
 !/bin/bash 
 cd $(dirname $0)
-inputFile="../annetaBuilderTestData/test19"; 
-outputFile="../annetaBuilderTestData/testResults.ll";
-lldb -- ../../bin/annetaBuilder.bin -emit-llvm $inputFile -o $outputFile; 
+inputFile="../annetaBuilderTestData/test24"; 
+outputFile="../annetaBuilderTestData/testResults.bin";
+lldb -- ../../bin/annetaBuilder.bin $inputFile -o $outputFile; 

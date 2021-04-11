@@ -15,6 +15,7 @@ public:
 virtual llvm::Type* typeOf(genContext& context) const = 0;
 virtual std::string getTypeName() const = 0;
 virtual ~AstType(){}
+
 };
 
 class AstIntType: public AstType
