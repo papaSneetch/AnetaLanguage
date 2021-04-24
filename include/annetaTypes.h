@@ -26,14 +26,6 @@ llvm::IntegerType* typeOf(genContext& context) const ;
 std::string getTypeName() const;
 };
 
-class AstStringType: public AstType
-{
-public:
-const std::string name= "string";
-llvm::Type* typeOf(genContext& context) const;
-std::string getTypeName() const;
-};
-
 class AstCharType: public AstType
 {
 public:
@@ -102,6 +94,5 @@ extern const AstIntType intType;
 extern const AstFloatType floatType;
 extern const AstBoolType boolType;
 extern const AstCharType charType;
-extern const AstPointerType stringType;
 
 #endif 

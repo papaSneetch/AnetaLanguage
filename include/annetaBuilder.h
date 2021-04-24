@@ -22,12 +22,12 @@ class AstName;
 class AstConstant;
 class AstIntValue;
 
+typedef std::unique_ptr<AstName> AstNamePtr;
 typedef std::unique_ptr<AstNode> AstNodePtr;
 typedef std::unique_ptr<AstStat> AstStatPtr;
 typedef std::unique_ptr<AstType> AstTypePtr;
 typedef std::unique_ptr<AstExp> AstExpPtr;
 typedef std::unique_ptr<AstBlock> AstBlockPtr;
-typedef std::unique_ptr<AstName> AstNamePtr;
 typedef std::unique_ptr<AstConstant> AstConstantPtr;
 typedef std::unique_ptr<AstIntValue> AstIntValuePtr;
 typedef std::unique_ptr<AstVariableDeclaration> AstVariableDeclarationPtr;
@@ -66,7 +66,7 @@ struct arrayInformation
 {
 llvm::AllocaInst* alloca;
 const AstType* type;
-AstConstantPtr arraySize;
+int arraySize;
 };
 
 class AstStat: public AstNode {
@@ -128,17 +128,6 @@ class AstCharValue: public AstConstant
 public:
 char value;
 AstCharValue(char value):AstConstant(charType),value(value){}
-llvm::Constant* codeGen(genContext& context);
-};
-
-class AstStringValue: public AstConstant
-{
-std::string value;
-bool nullTerminated;
-public:
-//std::vector<char> value;
-//AstStringValue(char* string,unsigned int size);
-AstStringValue(std::string string, bool nullTerminated=true):AstConstant(&stringType),value(string),nullTerminated(nullTerminated){}
 llvm::Constant* codeGen(genContext& context);
 };
 
@@ -225,7 +214,6 @@ class AstXor: public AstBinOp
 public:
 AstXor( AstExpPtr& lhs, AstExpPtr& rhs):AstBinOp(lhs,rhs){}
 AstXor( AstExp* lhs, AstExp* rhs):AstBinOp(lhs,rhs){} 
-
 llvm::Value* codeGen(genContext& context);
 };
 
@@ -364,8 +352,6 @@ llvm::Value* codeGen(genContext& context);
 class AstArrayAsg: public AstAsg
 {
 public:
-AstNamePtr variableName;
-AstExpPtr rhs;
 AstExpPtr index;
 AstArrayAsg(AstNamePtr& variableName, AstExpPtr& rhs, AstExpPtr& index):AstAsg(variableName,rhs),index(std::move(index)){}
 AstArrayAsg(AstName* variableNameTmp, AstExp* rhsTmp, AstExp* indexTmp):AstAsg(variableNameTmp,rhsTmp)
@@ -376,13 +362,14 @@ llvm::Value* codeGen(genContext& context);
 };
 
 
-class AstArrayStringAsg: public AstAsg
+class AstArrayStringAsg: public AstExp
 {
 public:
 AstNamePtr variableName;
-char* string
-AstArrayAsg(AstNamePtr& variableName,char* string):variableName(std::move(variableName),string(string){}
-AstArrayAsg(AstName* variableNameTmp, char* string):string(string){
+std::string str;
+bool nullTerm; 
+AstArrayStringAsg(AstNamePtr& variableNameTmp,char* strTmp,bool nullTermTmp):AstExp(charType),variableName(std::move(variableNameTmp)),str(std::string(strTmp)),nullTerm(nullTermTmp){};
+AstArrayStringAsg(AstName* variableNameTmp, char* strTmp,bool nullTermTmp):AstExp(charType),str(std::string(strTmp)),nullTerm(nullTermTmp){
 variableName.reset(variableNameTmp);
 }
 llvm::Value* codeGen(genContext& context);
@@ -392,13 +379,8 @@ llvm::Value* codeGen(genContext& context);
 class AstArrayListAsg: public AstAsg
 {
 public:
-AstNamePtr variableName;
-expressionListPtr list;
-AstArrayAsg(AstNamePtr& variableName,expressionListPtr& listEle):variableName(std::move(variableName),list(std::move(listEle)){}
-AstArrayAsg(AstName* variableNameTmp, expressionList* listEle):{
-variableName.reset(variableNameTmp);
-list.reset(listEle);
-}
+AstArrayListAsg(AstNamePtr& variableNameTmp,expressionListPtr& listEle):AstAsg(variableNameTmp,listEle){}
+AstArrayListAsg(AstName* variableNameTmp, expressionList* listEle):AstAsg(variableNameTmp,listEle){}
 llvm::Value* codeGen(genContext& context);
 };
 
@@ -516,24 +498,24 @@ public:
 AstNamePtr variableName;
 const AstType* variableType;
 int arraySize;
-; 
-AstArrayDeclaration( AstNamePtr& variableName,const AstType& variableTypeTmp, int size): variableName(std::move(variableName)), variableType(&variableTypeTmp), arraySize(int) {}
-AstArrayDeclaration(AstName* variableNameTmp, const AstType* variableTypeTmp, AstConstant* size):variableType(variableTypeTmp), arraySize(size) {
+
+AstArrayDeclaration(AstNamePtr& variableName,const AstType& variableTypeTmp, int size): variableName(std::move(variableName)), variableType(&variableTypeTmp), arraySize(size) {}
+AstArrayDeclaration(AstName* variableNameTmp, const AstType* variableTypeTmp, int size):variableType(variableTypeTmp), arraySize(size) {
 variableName.reset(variableNameTmp);
 }
 llvm::Value* codeGen(genContext& context);
 };
 
 
-class AstArrayListDeclaration: public AstAsg
+class AstArrayListDeclaration: public AstStat
 {
 public:
 AstNamePtr variableName;
 expressionListPtr list;
 const AstType* variableType;
 int arraySize;
-AstArrayAsg(AstNamePtr& variableName,expressionListPtr& listEle,const AstType& variableTypeTmp, int size):variableName(std::move(variableName),list(std::move(listEle)),variableType(&variableTypeTmp), arraySize(int){}
-AstArrayAsg(AstName* variableNameTmp, expressionList* listEle,const AstType* variableTypeTmp, AstConstant* size):variableType(variableTypeTmp), arraySize(size){
+AstArrayListDeclaration(AstNamePtr& variableName,expressionListPtr& listEle,const AstType& variableTypeTmp, int size):variableName(std::move(variableName)),list(std::move(listEle)),variableType(&variableTypeTmp), arraySize(size){}
+AstArrayListDeclaration(AstName* variableNameTmp, expressionList* listEle,const AstType* variableTypeTmp,int size):variableType(variableTypeTmp), arraySize(size){
 variableName.reset(variableNameTmp);
 list.reset(listEle);
 }
@@ -541,7 +523,7 @@ llvm::Value* codeGen(genContext& context);
 };
 
 
-class AstArrayStringDeclaration: public AstAsg
+class AstArrayStringDeclaration: public AstStat
 {
 public:
 AstNamePtr variableName;
@@ -549,8 +531,8 @@ std::string string;
 const AstType* variableType;
 int arraySize;
 bool nullTerminate;
-AstArrayAsg(AstNamePtr& variableName,char* charPtr,const AstType& variableTypeTmp, int size,bool nullTerminate):variableName(std::move(variableName),string(std::string(charPtr)),variableType(&variableTypeTmp), arraySize(int),nullTerminate(nullTerminate){}
-AstArrayAsg(AstName* variableNameTmp, char* charPtr,const AstType* variableTypeTmp, AstConstant* size):string(std::string(charPtr),variableType(variableTypeTmp), arraySize(size),nullTerminate(nullTerminate){
+AstArrayStringDeclaration(AstNamePtr& variableName,char* charPtr,const AstType& variableTypeTmp, int size,bool nullTerminate):variableName(std::move(variableName)),string(std::string(charPtr)),variableType(&variableTypeTmp), arraySize(size),nullTerminate(nullTerminate){}
+AstArrayStringDeclaration(AstName* variableNameTmp, char* charPtr,const AstType* variableTypeTmp, int size, bool nullTerminate):string(std::string(charPtr)),variableType(variableTypeTmp), arraySize(size),nullTerminate(nullTerminate){
 variableName.reset(variableNameTmp);
 }
 llvm::Value* codeGen(genContext& context);
@@ -611,8 +593,8 @@ class AstArrayCallAddress : public AstCall
 public:
 AstNamePtr variableName;
 AstExpPtr index;
-AstArrayAddress( AstNamePtr& variableName):variableName(std::move(variableName)) {}
-AstArrayAddress( AstName* variableNameTmp) {
+AstArrayCallAddress( AstNamePtr& variableName):variableName(std::move(variableName)) {}
+AstArrayCallAddress( AstName* variableNameTmp) {
 variableName.reset(variableNameTmp);
 }
 llvm::Value* codeGen(genContext& context);

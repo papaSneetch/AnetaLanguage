@@ -22,6 +22,7 @@ class AstBlock;
 class AstType;
 class typeTable;
 struct variableInformation;
+struct arrayInformation;
 struct functionInformation;
 struct functionInformation;
 struct globalVariableInformation;

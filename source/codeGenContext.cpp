@@ -26,7 +26,7 @@ void genContext::create_printf()
 {
 llvm::FunctionType *ft = llvm::FunctionType::get(llvm::IntegerType::getInt32Ty(*IRContext),llvm::Type::getInt8Ty(*IRContext)->getPointerTo(),true);
 llvm::Function* func = llvm::Function::Create(ft,llvm::Function::ExternalLinkage,"printf",CurModule.get());
-pushFunction("printf",func,std::vector<const AstType*>{&stringType},&intType,true);
+pushFunction("printf",func,std::vector<const AstType*>{types->getExpandTypes("char",1)},&intType,true);
 std::cerr << "Generated: " << "printf." << std::endl;
 }
 
@@ -34,7 +34,7 @@ void genContext::create_scanf()
 {
 llvm::FunctionType *ft = llvm::FunctionType::get(llvm::Type::getInt32Ty(*IRContext),llvm::Type::getInt8Ty(*IRContext)->getPointerTo(),true);
 llvm::Function* func = llvm::Function::Create(ft,llvm::Function::ExternalLinkage,"scanf",CurModule.get());
-pushFunction("scanf",func,std::vector<const AstType*>{&stringType},&intType,true);
+pushFunction("scanf",func,std::vector<const AstType*>{types->getExpandTypes("char",1)},&intType,true);
 std::cerr << "Generated: " << "scanf." << std::endl;
 }
 
@@ -42,7 +42,7 @@ void genContext::create_atoi()
 {
 llvm::FunctionType *ft = llvm::FunctionType::get(llvm::IntegerType::getInt32Ty(*IRContext),llvm::Type::getInt8Ty(*IRContext)->getPointerTo(),false);
 llvm::Function* func = llvm::Function::Create(ft,llvm::Function::ExternalLinkage,"atoi",CurModule.get());
-pushFunction("atoi",func,std::vector<const AstType*>{&stringType},&intType);
+pushFunction("atoi",func,std::vector<const AstType*>{types->getExpandTypes("char",1)},&intType);
 std::cerr << "Generated: " << "atoi." << std::endl;
 }
 
@@ -50,7 +50,7 @@ void genContext::create_atof()
 {
 llvm::FunctionType *ft = llvm::FunctionType::get(llvm::IntegerType::getDoubleTy(*IRContext),llvm::Type::getInt8Ty(*IRContext)->getPointerTo(),false);
 llvm::Function* func = llvm::Function::Create(ft,llvm::Function::ExternalLinkage,"atof",CurModule.get());
-pushFunction("atoi",func,std::vector<const AstType*>{&stringType},&floatType);
+pushFunction("atoi",func,std::vector<const AstType*>{types->getExpandTypes("char",1)},&floatType);
 std::cerr << "Generated: " << "atof." << std::endl;
 }
 
@@ -58,7 +58,7 @@ void genContext::create_sprintf()
 {
 llvm::FunctionType *ft = llvm::FunctionType::get(llvm::IntegerType::getInt32Ty(*IRContext),{llvm::Type::getInt8Ty(*IRContext)->getPointerTo(),llvm::Type::getInt8Ty(*IRContext)->getPointerTo()},true);
 llvm::Function* func = llvm::Function::Create(ft,llvm::Function::ExternalLinkage,"sprintf",CurModule.get());
-pushFunction("sprintf",func,std::vector<const AstType*>{&stringType,&stringType},&intType,true);
+pushFunction("sprintf",func,std::vector<const AstType*>{types->getExpandTypes("char",1)},&intType,true);
 std::cerr << "Generated: " << "sprintf." << std::endl;
 }
 
@@ -76,7 +76,7 @@ types->createTypeElement(&intType);
 types->createTypeElement(&floatType);
 types->createTypeElement(&boolType);
 types->createTypeElement(&charType);
-types->appendPointerType("char",&stringType);
+types->getExpandTypes("char",1);
 }
 
 void genContext::createStart()
@@ -182,7 +182,7 @@ return {nullptr,nullptr};
 }
 
 
-variableInformation genContext::arrayLookUp (std::string name)
+arrayInformation genContext::arrayLookUp (std::string name)
 {
 for (std::vector<AstBlockPtr>::reverse_iterator it = blockList.rbegin(); it != blockList.rend(); ++it)
 {
@@ -192,7 +192,7 @@ if (mapIt != ((*it) -> arrayMap.end()))
 return mapIt->second;
 }
 }
-return {nullptr,nullptr,nullptr};
+return {nullptr,nullptr,0};
 }
 
 void genContext::printBitCode(std::string outputFileName)

@@ -59,14 +59,14 @@ variableList* args;
 
 %type <statements> stats 
 %type <statement> stat condStat returnStat whileloop
-%type <expression> call varCall arrayCall funcCall incDecOption listInit
-%type <expression> asgOptions exp arrayReferenceExp deref address
+%type <expression> call varCall arrayCall funcCall incDecOption 
+%type <expression> asgOptions exp arrayReferenceExp deref address arrayAsg
 %type <constant> value 
 
 %type <varDecl> varDecl
 %type<globalVarDecl> globalVarDecl
 
-%type <arrayDecl> arrayDefine arrayDecl
+%type <arrayDecl> arrayDecl
 
 %type <name> varNames arrayNames
 
@@ -74,7 +74,7 @@ variableList* args;
 
 %type <blockPtr> block condElseBlock
 
-%type <int_val> intV astChain arrayReference
+%type <int_val> intV astChain 
 %type <bool_val> boolV
 %type <float_val> floatV
 %type <string> charsV stringV
@@ -149,6 +149,9 @@ std::cerr << "Syntax Object: exps. " << std::endl;}
     | block {
 $$ = $1;
 std::cerr << "Syntax Object: Block. " << std::endl;}
+   | asgOptions {
+$$ = $1;
+std::cerr << "Syntax Object: stat. " << std::endl;}
 
 
 condStat:
@@ -200,9 +203,6 @@ $$ = &floatType;
 std::cerr << "Syntax Object: type. " << std::endl;}
 	| boolD {
 $$ = &boolType;
-std::cerr << "Syntax Object: type. " << std::endl;}
-	| stringD {
-$$ = &stringType;
 std::cerr << "Syntax Object: type. " << std::endl;}
 	| charD {
 $$ = &charType;
@@ -261,9 +261,11 @@ $$ = new AstArrayListDeclaration($2,$7,$1,$7->size())
 std::cerr << "Syntax Object: arrayDecl. " << std::endl;}
     | type arrayNames '[' ']' asg charsV {
 $$ = new AstArrayStringDeclaration($2,$6,$1,strlen($6),false);
+delete []$6;
 std::cerr << "Syntax Object: arrayDecl. " << std::endl;}
 	| type arrayNames '[' ']' asg stringV {
 $$ = new AstArrayStringDeclaration($2,$6,$1,strlen($6)+1,true);
+delete []$6;
 std::cerr << "Syntax Object: arrayDecl. " << std::endl;}
 	| type arrayNames '[' intV ']' asg '{' exps '}'{
 if ( $4 < $8->size())
@@ -276,16 +278,18 @@ else
 $$ = new AstArrayListDeclaration($2,$8,$1,$4)
 std::cerr << "Syntax Object: arrayDecl. " << std::endl;}
 }
-}
+
     | type arrayNames '[' intV ']' asg charsV {
 if ($4 < strlen($7))
 {
 std::cerr << "Array size is too small." << std::endl;
+delete []$7;
 }
 else
 {
 $$ = new AstArrayStringDeclaration($2,$7,$1,$4,false);
 std::cerr << "Syntax Object: arrayDecl. " << std::endl;
+delete []$7;
 }
 }
 
@@ -293,35 +297,33 @@ std::cerr << "Syntax Object: arrayDecl. " << std::endl;
 if ($4 < strlen($7)+1)
 {
 std::cerr << "Array size is too small." << std::endl;
+delete []$7;
 }
 else
 {
 $$ = new AstArrayStringDeclaration($2,$7,$1,$4,true);
 std::cerr << "Syntax Object: arrayDecl. " << std::endl;
+delete []$7;
 }
 }
 
 arrayAsg:
-	| nameV '[' ']' asg charsV {
-$$ = new AstArrayAsgString($1,$4);
+	  nameV '[' ']' asg charsV {
+$$ = new AstArrayAsgString($1,$5);
+delete []$5;
 }
 	| nameV '[' ']' asg stringV {
-$$ = new AstArrayAsgString($1,$4);
+$$ = new AstArrayAsgString($1,$5);
+delete []$5;
 }
 	| nameV arrayReferenceExp asg exp {
 $$ = new AstArrayAsg($1,$4,$2);
 }
 
-arrayDefine:
-	  type arrayNames arrayReference {
-$$ = new AstArrayDeclaration($2,$1,$3);
-std::cerr << "Syntax Object: arrayDefine. " << std::endl;}
-
-
 arrayReferenceExp:
 	  '[' exp ']' {
 $$ = $2;}
-}
+
 
 arrayNames:
 	nameV {
@@ -377,28 +379,6 @@ std::cerr << "Syntax Object: value. " << std::endl;
 	| floatV {
 $$ = new AstFloatValue($1);
 std::cerr << "Syntax Object: value. " << std::endl;
-}
-	| charsV {
-if (strlen($1)==1)
-{
-$$ = new AstCharValue($1[0]);
-}
-else
-{
-$$ = new AstStringValue(std::string($1),false);
-}
-}
-	| stringV {
-//$1[length-1] = '\0';
-//$$ = new AstStringValue(++$1,length-1); 
-$$ = new AstStringValue(std::string($1),true);
-std::cerr << "Syntax Object: value. " << std::endl;
-}
-
-listInit:
-	  '{' exps '}'{
-$$ = $2;
-std::cerr << "Syntax Object: listInit. " << std::endl;
 }
 
 whileloop:
@@ -485,10 +465,6 @@ std::cerr << "Syntax Object: exps. " << std::endl;} %prec postInc
 AstIntValue* one = new AstIntValue(1);
 $$ = new AstSub($1,one);
 std::cerr << "Syntax Object: exps. " << std::endl;} %prec postDec 
-	| asgOptions {
-$$ = $1;
-std::cerr << "Syntax Object: exp. " << std::endl;}
-%prec asgOptionsPrec	
 	| call {
 $$ = $1;
 std::cerr << "Syntax Object: exp. " << std::endl;}
@@ -508,7 +484,7 @@ std::cerr << "Syntax Object: asgOptions." << std::endl;
 $$ = $1;
 std::cerr << "Syntax Object: asgOptions." << std::endl;
 }
-}
+
 
 incDecOption:
 	  call {

@@ -157,12 +157,12 @@ return generatedValue;
 llvm::Value* AstArrayAsg::codeGen(genContext& context)
 {
 arrayInformation array= context.arrayLookUp(variableName->name);
-if (var.type->getTypeName() == "pointer")
+if (array.type->getTypeName() == "pointer")
 {
-type = static_cast<const AstPointerType*>(var.type)->referType;
+type = static_cast<const AstPointerType*>(array.type)->referType;
 llvm::Value* zero = llvm::ConstantInt::get(*(context.IRContext), llvm::APInt(64, 0));
-llvm::Value* indexPtr = context.Builder->CreateGEP(allocaLoc,{zero,index->codeGen(context)},"getElementPtr");
-llvm::Value* asignedValue = rhs->codeGen(context);
+llvm::Value* indexPtr = context.Builder->CreateGEP(array.alloca,{zero,index->codeGen(context)},"getElementPtr");
+llvm::Value* asignedValue = rhs->front()->codeGen(context);
 context.Builder->CreateStore(asignedValue,indexPtr,false);
 return asignedValue;
 }
@@ -175,7 +175,17 @@ exit(1);
 
 llvm::Value* AstArrayStringAsg::codeGen(genContext& context)
 {
+
 arrayInformation array= context.arrayLookUp(variableName->name);
+llvm::Value* zero = AstIntValue(0).codeGen(context);
+int index = 0;
+for (std::string::iterator it = str.begin(); it != str.end(); it++)
+{
+llvm::Value* indexPtr = context.Builder->CreateGEP(array.alloca,{zero,AstIntValue(index).codeGen(context)},"getElementPtr");
+context.Builder->CreateStore(AstCharValue(*it).codeGen(context),indexPtr,false);
+index++;
+}
+return context.Builder->CreateGEP(array.alloca,{zero,zero},"getElementPtr");
 }
 
 
@@ -184,10 +194,10 @@ llvm::Value* AstArrayListAsg::codeGen(genContext& context)
 arrayInformation array = context.arrayLookUp(variableName->name);
 llvm::Value* zero = AstIntValue(0).codeGen(context);
 int index = 0;
-for (expressionList::iterator it = list->begin(); it != list->end(); it++)
+for (expressionList::iterator it = rhs->begin(); it != rhs->end(); it++)
 {
 llvm::Value* indexPtr = context.Builder->CreateGEP(array.alloca,{zero,AstIntValue(index).codeGen(context)},"getElementPtr");
-context.Builder->CreateStore(it->codeGen(context),indexPtr,false);
+context.Builder->CreateStore((*it)->codeGen(context),indexPtr,false);
 index++;
 }
 return array.alloca;
@@ -528,30 +538,6 @@ llvm::Constant* AstCharValue::codeGen(genContext& context)
 return llvm::ConstantInt::get(*(context.IRContext),llvm::APInt(8,(uint64_t)value));
 }
 
-/*AstStringValue::AstStringValue(char* string,unsigned int size):AstConstant(stringType)
-{
-for (int i = 0; i <= size; i++)
-{
-value.push_back(string[i]);
-}
-}*/
-
-llvm::Constant* AstStringValue::codeGen(genContext& context)
-{
-/*std::vector<llvm::Constant*> stringValues;
-for (std::vector<char>::iterator it = value.begin(); it != value.end(); ++it)
-{
-stringValues.push_back(llvm::ConstantInt::get(*(context.IRContext),llvm::APInt(8,(uint64_t)*it))
-);
-}
-llvm::ArrayType* arrayType = llvm::ArrayType::get(llvm::Type::getInt8Ty(*(context.IRContext)),stringValues.size());
-llvm::Constant* array = llvm::ConstantArray::get(arrayType,stringValues);
-return llvm::ConstantExpr::getBitCast(array,llvm::Type::getInt8Ty(*(context.IRContext))->getPointerTo());*/
-llvm::Constant* stringArray = llvm::ConstantDataArray::getString(*(context.IRContext),value,nullTerminated);
-llvm::GlobalVariable* globalString = new llvm::GlobalVariable(*(context.CurModule),stringArray->getType(),true,llvm::GlobalVariable::InternalLinkage,stringArray);
-return llvm::ConstantExpr::getBitCast(globalString,llvm::Type::getInt8Ty(*context.IRContext)->getPointerTo());
-}
-
 llvm::Constant* AstFloatValue::codeGen(genContext& context)
 {
 return llvm::ConstantFP::get(*(context.IRContext),llvm::APFloat(value));
@@ -596,7 +582,7 @@ llvm::Value* AstArrayDeclaration::codeGen(genContext& context)
 {
 llvm::Type* arrayType = llvm::ArrayType::get(variableType->typeOf(context),arraySize);
 llvm::AllocaInst* arrayLocation = context.Builder->CreateAlloca(arrayType,AstIntValue(arraySize).codeGen(context),variableName->name);
-context.pushArrayVariable(variableName->name,arrayLocation,variableType);
+context.pushArrayVariable(variableName->name,arrayLocation,variableType,arraySize);
 return arrayLocation;
 }
 
@@ -605,15 +591,32 @@ llvm::Value* AstArrayListDeclaration::codeGen(genContext& context)
 {
 llvm::Type* arrayType = llvm::ArrayType::get(variableType->typeOf(context),arraySize);
 llvm::AllocaInst* arrayLocation = context.Builder->CreateAlloca(arrayType,AstIntValue(arraySize).codeGen(context),variableName->name);
-context.pushArrayVariable(variableName->name,arrayLocation,variableType);
+context.pushArrayVariable(variableName->name,arrayLocation,variableType,arraySize);
 llvm::Value* zero = AstIntValue(0).codeGen(context);
 int index = 0;
 for (expressionList::iterator it = list->begin(); it != list->end(); it++)
 {
 llvm::Value* indexPtr = context.Builder->CreateGEP(arrayLocation,{zero,AstIntValue(index).codeGen(context)},"getElementPtr");
-context.Builder->CreateStore(it->codeGen(context),indexPtr,false);
+context.Builder->CreateStore((*it)->codeGen(context),indexPtr,false);
 index++;
 }
+return context.Builder->CreateGEP(arrayLocation,{zero,zero},"getElementPtr");
+}
+
+llvm::Value* AstArrayStringDeclaration::codeGen(genContext& context)
+{
+llvm::Type* arrayType = llvm::ArrayType::get(variableType->typeOf(context),arraySize);
+llvm::AllocaInst* arrayLocation = context.Builder->CreateAlloca(arrayType,AstIntValue(arraySize).codeGen(context),variableName->name);
+context.pushArrayVariable(variableName->name,arrayLocation,variableType,arraySize);
+llvm::Value* zero = AstIntValue(0).codeGen(context);
+int index = 0;
+for (std::string::iterator it = string.begin(); it != string.end(); it++)
+{
+llvm::Value* indexPtr = context.Builder->CreateGEP(arrayLocation,{zero,AstIntValue(index).codeGen(context)},"getElementPtr");
+context.Builder->CreateStore(AstCharValue(*it).codeGen(context),indexPtr,false);
+index++;
+}
+return context.Builder->CreateGEP(arrayLocation,{zero,zero},"getElementPtr");
 }
 
 llvm::Value* AstFunctionCall::codeGen(genContext& context)
@@ -669,11 +672,11 @@ exit(1);
 llvm::Value* AstArrayAddress::codeGen(genContext& context)
 {
 arrayInformation array = context.arrayLookUp(variableName->name);
-if (var.alloca)
+if (array.alloca)
 {
-type = var.type;
+type = array.type;
 llvm::Value* zero = llvm::ConstantInt::get(*(context.IRContext), llvm::APInt(64, 0));
-return context.Builder->CreateGEP(context.Builder->CreateLoad(var.alloca,variableName->name),{zero,index->codeGen(context)},"getElementPtr");
+return context.Builder->CreateGEP(context.Builder->CreateLoad(array.alloca,variableName->name),{zero,index->codeGen(context)},"getElementPtr");
 }
 else
 {
@@ -686,10 +689,10 @@ exit(1);
 llvm::Value* AstArrayCallAddress::codeGen(genContext& context)
 {
 arrayInformation array = context.arrayLookUp(variableName->name);
-if (var.alloca)
+if (array.alloca)
 {
-type = var.type;
-return var.alloca;
+type = array.type;
+return array.alloca;
 }
 else
 {
@@ -831,7 +834,6 @@ return expression->codeGen(context);
 
 /*
 extern const AstIntType intType;
-extern const AstStringType stringType;
 extern const AstCharType charType;
 extern const AstBoolType boolType;
 extern const AstFloatType floatType;

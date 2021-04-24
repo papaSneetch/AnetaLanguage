@@ -230,6 +230,13 @@ BEGIN(0);
 return stringV;
 }
 
+\\0\" {
+*string_buf_ptr = '\0';
+yylval -> string = strdup(string_buf);
+BEGIN(0);
+return stringV;
+}
+
 \\a {
 *string_buf_ptr++ = '\a';
 }
@@ -278,7 +285,14 @@ return stringV;
 *string_buf_ptr = '\0';
 yylval -> string = strdup(string_buf);
 BEGIN(0);
-return charsV;
+return stringV;
+}
+
+\\0\' {
+*string_buf_ptr = '\0';
+yylval -> string = strdup(string_buf);
+BEGIN(0);
+return stringV;
 }
 
 [^\\\n\'\"]* {

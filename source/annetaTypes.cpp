@@ -35,10 +35,6 @@ std::string AstIntType::getTypeName() const
 return "int";
 }
 
-std::string AstStringType::getTypeName() const
-{
-return "string";
-}
 
 std::string AstCharType::getTypeName() const 
 {
@@ -133,4 +129,3 @@ const AstIntType intType;
 const AstCharType charType;
 const AstBoolType boolType;
 const AstFloatType floatType;
-const AstPointerType stringType(&charType);
