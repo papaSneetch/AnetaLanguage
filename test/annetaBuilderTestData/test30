@@ -1,0 +1,12 @@
+int printAt8th(char* word)
+{
+printf(word+7);
+return 0;
+}
+
+int main()
+{
+char buffer[] = "First, Second.\n";
+printAt8th(buffer[]);
+return 0;
+}

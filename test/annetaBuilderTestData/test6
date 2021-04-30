@@ -1,9 +1,10 @@
 int main()
 {
 char q = 'c'
+char buffer[] = "c is c.";
 if (c == 'c')
 {
-printf("c is c.");
+printf(buffer[]);
 }
 return 0;
 }

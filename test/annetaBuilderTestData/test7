@@ -2,7 +2,8 @@ int main()
 {
 int i = 42;
 char buffer[50];
-sprintf(buffer,"%d",i);
+char outputBuffer[] = "%d";
+sprintf(buffer[],outputBuffer[],i);
 print(buffer);
 return 0;
 }

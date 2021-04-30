@@ -19,7 +19,7 @@ if (lessThanPi(comparison) & true)
 i = 1;
 }
 char buffer[50];
-sprintf(buffer,"%d",i);
+sprintf(buffer[],"%d",i);
 printf(buffer);
 return i;
 }

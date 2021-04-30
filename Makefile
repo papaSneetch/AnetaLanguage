@@ -110,6 +110,8 @@ codeGenContext: $(codeGenContextTarget)
 
 annetaTypes: $(annetaTypesTarget)
 
+annetaBuilderBin: $(annetaBuilderMainTargetLoc)
+
 $(codeGenContextTarget): $(codeGenContextPrereq)
 	$(CC) -c $(codeGenContextSourceLoc) -o$(codeGenContextObjectLoc)
 

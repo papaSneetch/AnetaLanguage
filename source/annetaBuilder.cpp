@@ -16,6 +16,7 @@
 #include <llvm/IR/Type.h>
 
 #include <vector>
+#include <tuple> 
 #include <iostream>
 #include <stdlib.h>
 
@@ -157,9 +158,9 @@ return generatedValue;
 llvm::Value* AstArrayAsg::codeGen(genContext& context)
 {
 arrayInformation array= context.arrayLookUp(variableName->name);
-if (array.type->getTypeName() == "pointer")
+if (array.alloca)
 {
-type = static_cast<const AstPointerType*>(array.type)->referType;
+type = array.type;
 llvm::Value* zero = llvm::ConstantInt::get(*(context.IRContext), llvm::APInt(64, 0));
 llvm::Value* indexPtr = context.Builder->CreateGEP(array.alloca,{zero,index->codeGen(context)},"getElementPtr");
 llvm::Value* asignedValue = rhs->front()->codeGen(context);
@@ -168,7 +169,7 @@ return asignedValue;
 }
 else
 {
-std::cerr << "Error: Not an array or pointer!" << std::endl;
+std::cerr << "Error: Array not found!" << std::endl;
 exit(1);
 }
 }
@@ -392,7 +393,7 @@ llvm::Value* rhsValue = rhs->codeGen(context);
 
 updateType();
 
-if (typeid(*type) == typeid(AstIntType))
+if (typeid(*type) == typeid(AstIntType)) 
 {
 return context.Builder->CreateAdd(lhsValue,rhsValue,"addTmp");
 }
@@ -465,7 +466,7 @@ llvm::Value* rhsValue = rhs->codeGen(context);
 
 updateType();
 
-if (typeid(*type) == typeid(AstIntType))
+if (typeid(*type) == typeid(AstIntType)) 
 {
 return context.Builder->CreateSDiv(lhsValue,rhsValue,"uDivTmp");
 }
@@ -652,14 +653,16 @@ llvm::Value* AstVariableAddress::codeGen(genContext& context)
 variableInformation var = context.varLookUp(variableName->name);
 if (var.alloca)
 {
-	return var.alloca;
+std::tuple<const AstType*,int> baseInfo = var.type->getBaseInfo(0);
+type = context.types->getExpandTypes(std::get<0>(baseInfo)->getTypeName(),std::get<1>(baseInfo)+1);
+return var.alloca;
 }
 else
 {
 globalVariableInformation globalVar = context.globalVariableLookUp(variableName->name);
 if (globalVar.alloca)
 {
-	return var.alloca;
+return var.alloca;
 }
 else
 {
@@ -674,25 +677,10 @@ llvm::Value* AstArrayAddress::codeGen(genContext& context)
 arrayInformation array = context.arrayLookUp(variableName->name);
 if (array.alloca)
 {
-type = array.type;
+std::tuple<const AstType*,int> baseInfo = array.type->getBaseInfo(0);
+type = context.types->getExpandTypes(std::get<0>(baseInfo)->getTypeName(),std::get<1>(baseInfo)+1);
 llvm::Value* zero = llvm::ConstantInt::get(*(context.IRContext), llvm::APInt(64, 0));
-return context.Builder->CreateGEP(context.Builder->CreateLoad(array.alloca,variableName->name),{zero,index->codeGen(context)},"getElementPtr");
-}
-else
-{
-std::cerr << "Couldn't find array: " << variableName->name << std::endl;
-exit(1);
-}
-}
-
-
-llvm::Value* AstArrayCallAddress::codeGen(genContext& context)
-{
-arrayInformation array = context.arrayLookUp(variableName->name);
-if (array.alloca)
-{
-type = array.type;
-return array.alloca;
+return context.Builder->CreateGEP(array.alloca,{zero,index->codeGen(context)},"getelementptr");
 }
 else
 {
@@ -727,18 +715,17 @@ exit(1);
 
 llvm::Value* AstArrayCall::codeGen(genContext& context)
 {
-variableInformation var = context.varLookUp(variableName->name);
-if (var.type->getTypeName() == "pointer")
+arrayInformation array = context.arrayLookUp(variableName->name);
+if (array.alloca)
 {
-type = static_cast<const AstPointerType*>(var.type)->referType;
+type = array.type;
 llvm::Value* zero = llvm::ConstantInt::get(*(context.IRContext), llvm::APInt(64, 0));
-llvm::Value* allocaLoc = context.Builder->CreateLoad(var.alloca,variableName->name);
-llvm::Value* indexPtr = context.Builder->CreateGEP(allocaLoc,{zero,index->codeGen(context)},"getelementptr");
+llvm::Value* indexPtr = context.Builder->CreateGEP(array.alloca,{zero,index->codeGen(context)},"getelementptr");
 return context.Builder->CreateLoad(indexPtr,variableName->name);
 }
 else
 {
-std::cerr << "Error: Not an array or pointer!" << std::endl;
+std::cerr << "Error: Invalid Array!" << std::endl;
 exit(1);
 }
 }

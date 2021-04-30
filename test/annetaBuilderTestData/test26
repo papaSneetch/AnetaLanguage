@@ -1,0 +1,11 @@
+int main()
+{
+int numbers[] = {4,10,6,8,10}; 
+int index = 0;
+while (index < 5)
+{
+numbers[index] = numbers[index] + 1;
+index = index + 1;
+}
+return 0;
+}

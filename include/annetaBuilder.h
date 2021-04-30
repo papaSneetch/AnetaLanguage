@@ -512,9 +512,9 @@ class AstArrayListDeclaration: public AstStat
 public:
 AstNamePtr variableName;
 expressionListPtr list;
-const AstType* variableType;
+const AstType* const variableType = &charType;
 int arraySize;
-AstArrayListDeclaration(AstNamePtr& variableName,expressionListPtr& listEle,const AstType& variableTypeTmp, int size):variableName(std::move(variableName)),list(std::move(listEle)),variableType(&variableTypeTmp), arraySize(size){}
+AstArrayListDeclaration(AstNamePtr& variableName,expressionListPtr& listEle,const AstType& variableTypeTmp, int size):variableName(std::move(variableName)),list(std::move(listEle)),arraySize(size){}
 AstArrayListDeclaration(AstName* variableNameTmp, expressionList* listEle,const AstType* variableTypeTmp,int size):variableType(variableTypeTmp), arraySize(size){
 variableName.reset(variableNameTmp);
 list.reset(listEle);
@@ -528,11 +528,11 @@ class AstArrayStringDeclaration: public AstStat
 public:
 AstNamePtr variableName;
 std::string string;
-const AstType* variableType;
+const AstType* const variableType = &charType;
 int arraySize;
 bool nullTerminate;
-AstArrayStringDeclaration(AstNamePtr& variableName,char* charPtr,const AstType& variableTypeTmp, int size,bool nullTerminate):variableName(std::move(variableName)),string(std::string(charPtr)),variableType(&variableTypeTmp), arraySize(size),nullTerminate(nullTerminate){}
-AstArrayStringDeclaration(AstName* variableNameTmp, char* charPtr,const AstType* variableTypeTmp, int size, bool nullTerminate):string(std::string(charPtr)),variableType(variableTypeTmp), arraySize(size),nullTerminate(nullTerminate){
+AstArrayStringDeclaration(AstNamePtr& variableName,char* charPtr,int size,bool nullTerminate):variableName(std::move(variableName)),string(std::string(charPtr)), arraySize(size),nullTerminate(nullTerminate){}
+AstArrayStringDeclaration(AstName* variableNameTmp, char* charPtr,int size, bool nullTerminate):string(std::string(charPtr)), arraySize(size),nullTerminate(nullTerminate){
 variableName.reset(variableNameTmp);
 }
 llvm::Value* codeGen(genContext& context);
@@ -583,19 +583,6 @@ AstArrayAddress( AstNamePtr& variableName, AstExpPtr& index):variableName(std::m
 AstArrayAddress( AstName* variableNameTmp, AstExp* indexTmp) {
 variableName.reset(variableNameTmp);
 index.reset(indexTmp);
-}
-llvm::Value* codeGen(genContext& context);
-};
-
-
-class AstArrayCallAddress : public AstCall
-{
-public:
-AstNamePtr variableName;
-AstExpPtr index;
-AstArrayCallAddress( AstNamePtr& variableName):variableName(std::move(variableName)) {}
-AstArrayCallAddress( AstName* variableNameTmp) {
-variableName.reset(variableNameTmp);
 }
 llvm::Value* codeGen(genContext& context);
 };

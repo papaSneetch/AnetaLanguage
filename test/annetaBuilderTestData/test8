@@ -1,7 +1,8 @@
 int main()
 {
 char magic[50];
-scanf("%50s",&magic);
+char output[] = "%50s"
+scanf(output[],&magic);
 printf (magic);
 return 0;
 }

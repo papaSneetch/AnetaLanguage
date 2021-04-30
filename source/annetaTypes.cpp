@@ -1,14 +1,14 @@
 #include "annetaTypes.h"
 
+std::tuple<const AstType*,int> AstType::getBaseInfo(int depth) const
+{
+return std::make_tuple (this,depth);
+}
+
 llvm::IntegerType* AstIntType::typeOf(genContext& context) const 
 {
 return llvm::Type::getInt32Ty(*(context.IRContext));
 } 
-
-llvm::Type* AstStringType::typeOf(genContext& context) const
-{
-return llvm::Type::getInt8Ty(*context.IRContext)->getPointerTo();
-}
 
 llvm::Type* AstCharType::typeOf(genContext& context) const
 {
@@ -30,11 +30,15 @@ llvm::Type* AstPointerType::typeOf(genContext& context) const
 return referType->typeOf(context)->getPointerTo();
 }
 
+std::tuple<const AstType*,int> AstPointerType::getBaseInfo(int depth) const
+{
+return referType->getBaseInfo(++depth);
+}
+
 std::string AstIntType::getTypeName() const
 {
 return "int";
 }
-
 
 std::string AstCharType::getTypeName() const 
 {

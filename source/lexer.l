@@ -38,10 +38,6 @@ return {
 return returnS;
 }
 
-string {
-return stringD;
-}
-
 int {
 return intD;
 }
@@ -119,14 +115,6 @@ return Xor;
 return mod;
 }
 
-"++" {
-return inc;
-}
-
-"--" {
-return dec;
-}
-
 "==" {
 return eql;
 }
@@ -166,6 +154,10 @@ return asg;
 
 "&" {
 return amp;
+}
+
+"@" {
+return at;
 }
 
 "|" {

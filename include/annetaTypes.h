@@ -4,6 +4,7 @@
 #include <vector>
 #include <map>
 #include <string>
+#include <tuple> 
 
 #include <llvm/IR/Type.h>
 #include <llvm/IR/DerivedTypes.h>
@@ -14,6 +15,7 @@ class AstType {
 public:
 virtual llvm::Type* typeOf(genContext& context) const = 0;
 virtual std::string getTypeName() const = 0;
+virtual std::tuple<const AstType*,int> getBaseInfo(int depth) const;
 virtual ~AstType(){}
 
 };
@@ -57,6 +59,7 @@ const AstType* referType;
 const std::string name= "pointer";
 AstPointerType(const AstType* referType):referType(referType){}
 llvm::Type* typeOf(genContext& context) const;
+std::tuple<const AstType*,int> getBaseInfo(int depth) const;
 std::string getTypeName() const;
 };
 
@@ -88,6 +91,7 @@ typeElement* getTypeElement(std::string typeName);
 
 const AstType* getBaseType(std::string typeName);
 const AstType* getExpandTypes(std::string typeName,int depth);
+
 };
 
 extern const AstIntType intType;

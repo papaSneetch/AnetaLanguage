@@ -10,7 +10,9 @@ int number = 4;
 int plusValue = 2;
 int returnValue = increment(number,plusValue);
 char buffer[50];
-sprintf(buffer,"%d",returnValue);
-printf(buffer);
+char output[] = "%d";
+char* outputPointer = @output[0];
+sprintf(buffer[],outputPointer,returnValue);
+printf(buffer[]);
 return 0;
 }

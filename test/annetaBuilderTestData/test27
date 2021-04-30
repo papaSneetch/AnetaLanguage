@@ -1,0 +1,8 @@
+int main()
+{
+int numbers[] = {4,10,6,8,10}; 
+int in = numbers[0];
+int out = numbers[1];
+int excess = numbers[5];
+return 0;
+}
